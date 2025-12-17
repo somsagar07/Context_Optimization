@@ -1,0 +1,13 @@
+torch
+transformers
+accelerate
+bitsandbytes
+gymnasium
+stable-baselines3
+datasets
+sympy
+numpy
+tqdm
+duckduckgo-search
+beautifulsoup4
+requests
