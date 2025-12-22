@@ -4,7 +4,7 @@ transformers>=4.35.0
 accelerate>=0.24.0
 
 # RL
-stable-baselines3>=2.0.0
+stable-baselines3[extra]
 gymnasium>=0.29.0
 
 # Tools

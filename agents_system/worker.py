@@ -89,17 +89,34 @@ class LLMWorker:
 
     def _generate(self, prompt: str, active_tools: list = None, max_tokens: int = 512) -> str:
         """Core generation method with optional tool prompting."""
+        # Tool descriptions with usage examples
+        TOOL_DESCRIPTIONS = {
+            "calculator": (
+                "calculator - Evaluate mathematical expressions.\n"
+                "  Example: TOOL: calculator || QUERY: 125 * 4 + 89"
+            ),
+            "web_search": (
+                "web_search - Search the web for current information.\n"
+                "  Example: TOOL: web_search || QUERY: population of Tokyo 2024"
+            ),
+            "python": (
+                "python - Execute Python code. Use print() to output results. Has access to math module.\n"
+                "  Example: TOOL: python || QUERY: print(sum([i**2 for i in range(1, 11)]))"
+            ),
+        }
+        
         # Build system prompt
-        sys_prompt = "You are a helpful assistant."
+        sys_prompt = "You are a helpful assistant that solves problems step by step."
+        
         if active_tools:
+            tools_text = "\n".join([TOOL_DESCRIPTIONS[t] for t in active_tools if t in TOOL_DESCRIPTIONS])
             sys_prompt += (
-                f" You have access to these tools: {active_tools}. "
-                "If you need to use one, output EXACTLY in this format: "
-                "TOOL: <tool_name> || QUERY: <query>. "
-                "Otherwise, just answer the question."
+                f"\n\nYou have access to these tools:\n{tools_text}\n\n"
+                "To use a tool, write EXACTLY: TOOL: <tool_name> || QUERY: <your_query>\n"
+                "Use tools to calculate, verify, or look up information when helpful."
             )
         else:
-            sys_prompt += " You have NO external tools. Answer using your own knowledge."
+            sys_prompt += " Answer using your own knowledge only."
 
         messages = [
             {"role": "system", "content": sys_prompt},

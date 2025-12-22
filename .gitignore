@@ -1,0 +1,21 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+env/
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and models (optional - uncomment if you don't want to track these)
+logs/
+models/
+*.csv
+

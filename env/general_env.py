@@ -7,11 +7,11 @@ sys.path.append('..')
 from agents_system import LLMWorker
 from tools import ToolRegistry
 from utils import get_dataset_loader
-import config
+
 
 class GeneralAgentEnv(gym.Env):
     """
-    RL Environment for optimizing LLM agent configurations.
+    Single-Step RL Environment for optimizing LLM agent configurations.
     
     Action Space: [3, 8, 3, 8, 3, 3] = 5,184 combinations
         0: Workflow Depth [0=Direct, 1=Reason+Ans, 2=Reason+Verify+Ans]
@@ -22,14 +22,28 @@ class GeneralAgentEnv(gym.Env):
         5: Answerer Budget [0=Low, 1=Mid, 2=High]
     
     Observation: Question embedding from LLM hidden states
+    
+    Note: This is a single-step environment (contextual bandit).
+    All actions are selected at once, no temporal credit assignment.
     """
     
-    def __init__(self):
+    def __init__(self, cfg=None):
+        """
+        Initialize the environment.
+        
+        Args:
+            cfg: Configuration module. If None, imports default config.
+        """
         super(GeneralAgentEnv, self).__init__()
+        
+        # Store config (import default if not provided)
+        if cfg is None:
+            import config as cfg
+        self.cfg = cfg
         
         self.worker = LLMWorker()
         self.tools = ToolRegistry()
-        self.dataset = get_dataset_loader(config.DATASET_NAME)
+        self.dataset = get_dataset_loader(cfg.DATASET_NAME)
         
         # Action Space
         self.action_space = spaces.MultiDiscrete([3, 8, 3, 8, 3, 3])
@@ -168,15 +182,15 @@ class GeneralAgentEnv(gym.Env):
         
         # Calculate Reward
         correctness = self.dataset.evaluate_correctness(final_text, self.current_a)
-        reward = correctness * 2.0 
+        reward = correctness * 5.0 
         
-        # Penalties
-        reward -= cost_steps * config.COST_PER_STEP
-        reward -= tools_used_count * config.COST_TOOL_USAGE
+        # Penalties (use config values)
+        reward -= cost_steps * self.cfg.COST_PER_STEP
+        reward -= tools_used_count * self.cfg.COST_TOOL_USAGE
         
         # Token budget penalty (normalized)
         max_tokens = 1024 + 512 + 256
-        token_penalty = (total_tokens_used / max_tokens) * config.COST_TOKEN_BUDGET
+        token_penalty = (total_tokens_used / max_tokens) * self.cfg.COST_TOKEN_BUDGET
         reward -= token_penalty
         
         terminated = True
@@ -197,4 +211,3 @@ class GeneralAgentEnv(gym.Env):
         }
         
         return self.worker.get_embedding(final_text), reward, terminated, truncated, info
-
