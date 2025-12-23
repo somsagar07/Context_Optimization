@@ -1,0 +1,72 @@
+# Models
+models/
+*.pt
+*.pth
+*.ckpt
+*.zip
+*.h5
+*.pb
+
+# Logs
+logs/
+*.log
+*.json
+*.csv
+benchmark_results*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Environment variables
+.env
+.env.local
+
+# Data (if large)
+data/
+*.pkl
+*.pickle
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+

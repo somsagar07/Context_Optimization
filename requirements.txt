@@ -1,0 +1,22 @@
+# Core ML
+torch>=2.0.0
+transformers>=4.35.0
+accelerate>=0.24.0
+
+# RL
+stable-baselines3[extra]
+gymnasium>=0.29.0
+
+# Tools
+sympy>=1.12
+ddgs>=6.0.0
+
+# Data
+datasets>=2.14.0
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Progress/Logging
+tqdm>=4.65.0
+tensorboard>=2.14.0
+
