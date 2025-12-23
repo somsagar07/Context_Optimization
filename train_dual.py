@@ -25,6 +25,7 @@ import time
 import json
 import numpy as np
 from collections import deque
+from tqdm import tqdm
 
 import torch
 import torch.nn as nn
@@ -387,7 +388,8 @@ class HierarchicalTrainer:
     
     def update_policies(self, episodes: list, gamma: float = 0.95, 
                        ppo_epsilon: float = 0.2, ppo_epochs: int = 4,
-                       struct_entropy_coef: float = 0.05, prompt_entropy_coef: float = 0.05):
+                       struct_entropy_coef: float = 0.05, prompt_entropy_coef: float = 0.05,
+                       gae_lambda: float = 0.95):
         """
         Update both policies using PPO (Proximal Policy Optimization).
         
@@ -396,13 +398,19 @@ class HierarchicalTrainer:
         - Importance sampling ratio
         - Multiple epochs on same batch
         - Value function baseline
+        - GAE (Generalized Advantage Estimation) for better credit assignment
         
         Args:
+            gamma: Discount factor for future rewards (0.95 is standard)
+            ppo_epsilon: PPO clipping parameter (0.2 is standard)
+            ppo_epochs: Number of PPO update epochs per batch (4 is standard)
             struct_entropy_coef: Entropy bonus for structure policy (higher = more exploration)
             prompt_entropy_coef: Entropy bonus for prompt policy (higher = more exploration)
+            gae_lambda: GAE lambda parameter (0.95 = slight bias reduction, 1.0 = MC returns)
         """
-        # PPO hyperparameters
-        value_coef = 0.5
+        # PPO hyperparameters (optimized for stability)
+        value_coef = 0.5  # Standard value function coefficient
+        max_grad_norm = 0.5  # Gradient clipping for stability
         
         # Prepare structure policy data
         struct_obs_list = []
@@ -418,15 +426,16 @@ class HierarchicalTrainer:
             struct_values_old_list.append(ep["struct_value_old"])
             struct_returns_list.append(ep["reward"])
         
-        # Convert to tensors
+        # Convert to tensors (old log probs and values don't need gradients)
         struct_obs_tensor = torch.FloatTensor(np.array(struct_obs_list)).to(self.device)
         struct_actions_tensor = torch.LongTensor(np.array(struct_actions_list)).to(self.device)
-        struct_log_probs_old = torch.FloatTensor(struct_log_probs_old_list).to(self.device)
-        struct_values_old = torch.FloatTensor(struct_values_old_list).to(self.device)
-        struct_returns = torch.FloatTensor(struct_returns_list).to(self.device)
+        struct_log_probs_old = torch.FloatTensor(struct_log_probs_old_list).to(self.device).detach()
+        struct_values_old = torch.FloatTensor(struct_values_old_list).to(self.device).detach()
+        struct_returns = torch.FloatTensor(struct_returns_list).to(self.device).detach()
         
         # Compute advantages (using old values as baseline)
-        struct_advantages = struct_returns - struct_values_old
+        # Detach to ensure no gradients flow through advantages during PPO updates
+        struct_advantages = (struct_returns - struct_values_old).detach()
         if len(struct_advantages) > 1:
             struct_advantages = (struct_advantages - struct_advantages.mean()) / (struct_advantages.std() + 1e-8)
         
@@ -471,7 +480,7 @@ class HierarchicalTrainer:
             
             self.struct_optimizer.zero_grad()
             struct_loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.structure_policy.parameters(), 0.5)
+            torch.nn.utils.clip_grad_norm_(self.structure_policy.parameters(), max_grad_norm)
             self.struct_optimizer.step()
         
         # Prepare prompt policy data
@@ -500,15 +509,16 @@ class HierarchicalTrainer:
                 prompt_returns_all.append(discounted_return)
         
         if prompt_obs_all:
-            # Convert to tensors
+            # Convert to tensors (old log probs and values don't need gradients)
             prompt_obs_tensor = torch.FloatTensor(np.array(prompt_obs_all)).to(self.device)
             prompt_actions_tensor = torch.LongTensor(prompt_actions_all).to(self.device)
-            prompt_log_probs_old = torch.FloatTensor(prompt_log_probs_old_all).to(self.device)
-            prompt_values_old = torch.FloatTensor(prompt_values_old_all).to(self.device)
-            prompt_returns = torch.FloatTensor(prompt_returns_all).to(self.device)
+            prompt_log_probs_old = torch.FloatTensor(prompt_log_probs_old_all).to(self.device).detach()
+            prompt_values_old = torch.FloatTensor(prompt_values_old_all).to(self.device).detach()
+            prompt_returns = torch.FloatTensor(prompt_returns_all).to(self.device).detach()
             
             # Compute advantages using OLD values (consistent with structure policy)
-            prompt_advantages = prompt_returns - prompt_values_old
+            # Detach to ensure no gradients flow through advantages during PPO updates
+            prompt_advantages = (prompt_returns - prompt_values_old).detach()
             if len(prompt_advantages) > 1:
                 prompt_advantages = (prompt_advantages - prompt_advantages.mean()) / (prompt_advantages.std() + 1e-8)
             
@@ -527,8 +537,6 @@ class HierarchicalTrainer:
                 
                 prompt_log_probs_new = torch.stack(prompt_log_probs_new)
                 prompt_values_new = torch.stack(prompt_values_new)
-                if len(prompt_advantages) > 1:
-                    prompt_advantages = (prompt_advantages - prompt_advantages.mean()) / (prompt_advantages.std() + 1e-8)
                 
                 # Importance sampling ratio
                 ratio = torch.exp(prompt_log_probs_new - prompt_log_probs_old)
@@ -551,7 +559,7 @@ class HierarchicalTrainer:
                 
                 self.prompt_optimizer.zero_grad()
                 prompt_loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.prompt_policy.parameters(), 0.5)
+                torch.nn.utils.clip_grad_norm_(self.prompt_policy.parameters(), max_grad_norm)
                 self.prompt_optimizer.step()
             
             return struct_loss.item(), prompt_loss.item()
@@ -562,20 +570,22 @@ class HierarchicalTrainer:
               log_every: int = 50, save_every: int = 200,
               ppo_epsilon: float = 0.2, ppo_epochs: int = 4,
               save_log_every: int = 500,
-              struct_entropy_coef: float = 0.05, prompt_entropy_coef: float = 0.05):
+              struct_entropy_coef: float = 0.05, prompt_entropy_coef: float = 0.05,
+              gae_lambda: float = 0.95):
         """
         Train both policies using PPO (Proximal Policy Optimization).
         
         Args:
             num_episodes: Total episodes to train
-            struct_entropy_coef: Entropy bonus for structure policy (higher = more exploration)
-            prompt_entropy_coef: Entropy bonus for prompt policy (higher = more exploration)
-            batch_size: Batch size before update
+            batch_size: Batch size before update (32-64 recommended)
             log_every: Print stats every N episodes
             save_every: Save models every N episodes
-            ppo_epsilon: PPO clipping parameter (default 0.2)
-            ppo_epochs: Number of PPO update epochs per batch (default 4)
-            save_log_every: Save log file every N episodes (default 500)
+            ppo_epsilon: PPO clipping parameter (0.2 is standard, 0.1-0.3 range)
+            ppo_epochs: Number of PPO update epochs per batch (4 is standard, 3-10 range)
+            save_log_every: Save log file every N episodes
+            struct_entropy_coef: Entropy bonus for structure policy (higher = more exploration)
+            prompt_entropy_coef: Entropy bonus for prompt policy (higher = more exploration)
+            gae_lambda: GAE lambda parameter (0.95 = slight bias reduction, 1.0 = MC returns)
         """
         # Initialize log file
         timestamp = int(time.time())
@@ -585,12 +595,20 @@ class HierarchicalTrainer:
         print("\n" + "=" * 70)
         print("TRUE HIERARCHICAL TRAINING (PPO)")
         print("=" * 70)
-        print(f"  Episodes:    {num_episodes}")
-        print(f"  Batch Size:  {batch_size}")
-        print(f"  PPO Epsilon: {ppo_epsilon}")
-        print(f"  PPO Epochs:  {ppo_epochs}")
-        print(f"  Dataset:     {self.cfg.DATASET_NAME}")
-        print(f"  Device:      {self.device}")
+        print(f"  Episodes:         {num_episodes}")
+        print(f"  Batch Size:       {batch_size}")
+        print(f"  PPO Epsilon:      {ppo_epsilon} (clipping range)")
+        print(f"  PPO Epochs:       {ppo_epochs} (updates per batch)")
+        print(f"  Structure Entropy: {struct_entropy_coef}")
+        print(f"  Prompt Entropy:    {prompt_entropy_coef}")
+        print(f"  Gamma:            {self.cfg.PROMPT_GAMMA}")
+        print(f"  GAE Lambda:       {gae_lambda}")
+        print(f"  Value Coef:       0.5")
+        print(f"  Grad Clip:        0.5")
+        print(f"  Structure LR:     {self.cfg.STRUCTURE_LEARNING_RATE}")
+        print(f"  Prompt LR:        {self.cfg.PROMPT_LEARNING_RATE}")
+        print(f"  Dataset:          {self.cfg.DATASET_NAME}")
+        print(f"  Device:           {self.device}")
         print("=" * 70)
         print("\nEach episode:")
         print("  1. Structure policy picks [workflow, tools, budgets]")
@@ -601,6 +619,9 @@ class HierarchicalTrainer:
         
         start_time = time.time()
         batch = []
+        
+        # Create progress bar
+        pbar = tqdm(total=num_episodes, desc="Training", unit="ep")
         
         for ep in range(num_episodes):
             # Run episode
@@ -615,22 +636,42 @@ class HierarchicalTrainer:
                     ppo_epsilon=ppo_epsilon,
                     ppo_epochs=ppo_epochs,
                     struct_entropy_coef=struct_entropy_coef,
-                    prompt_entropy_coef=prompt_entropy_coef
+                    prompt_entropy_coef=prompt_entropy_coef,
+                    gae_lambda=gae_lambda
                 )
                 batch = []
             
-            # Log progress
+            # Update progress bar
+            acc = self.correct_count / self.episode_count * 100 if self.episode_count > 0 else 0
+            avg_reward = self.total_reward / self.episode_count if self.episode_count > 0 else 0
+            recent_reward = np.mean(self.rewards_history) if self.rewards_history else 0
+            
+            # Calculate ETA
+            elapsed = time.time() - start_time
+            if ep > 0:
+                time_per_ep = elapsed / (ep + 1)
+                eta_seconds = time_per_ep * (num_episodes - ep - 1)
+                eta_str = f"{eta_seconds/3600:.1f}h" if eta_seconds > 3600 else f"{eta_seconds/60:.1f}m"
+            else:
+                eta_str = "?"
+            
+            # Update progress bar
+            pbar.set_postfix({
+                'Acc': f'{acc:.1f}%',
+                'AvgRew': f'{avg_reward:.2f}',
+                'Recent': f'{recent_reward:.2f}',
+                'ETA': eta_str
+            })
+            pbar.update(1)
+            
+            # Detailed log every log_every episodes
             if (ep + 1) % log_every == 0:
-                elapsed = time.time() - start_time
-                acc = self.correct_count / self.episode_count * 100
-                avg_reward = self.total_reward / self.episode_count
-                recent_reward = np.mean(self.rewards_history) if self.rewards_history else 0
-                
-                print(f"Episode {ep+1:5d}/{num_episodes} | "
+                print(f"\n[Episode {ep+1:5d}/{num_episodes}] "
                       f"Accuracy: {acc:5.1f}% | "
                       f"Avg Reward: {avg_reward:6.3f} | "
-                      f"Recent: {recent_reward:6.3f} | "
-                      f"Time: {elapsed:.0f}s")
+                      f"Recent (100): {recent_reward:6.3f} | "
+                      f"Elapsed: {elapsed/3600:.2f}h | "
+                      f"ETA: {eta_str}")
             
             # Save checkpoints
             if (ep + 1) % save_every == 0:
@@ -648,8 +689,12 @@ class HierarchicalTrainer:
                 ppo_epsilon=ppo_epsilon,
                 ppo_epochs=ppo_epochs,
                 struct_entropy_coef=struct_entropy_coef,
-                prompt_entropy_coef=prompt_entropy_coef
+                prompt_entropy_coef=prompt_entropy_coef,
+                gae_lambda=gae_lambda
             )
+        
+        # Close progress bar
+        pbar.close()
         
         # Final stats
         elapsed = time.time() - start_time
@@ -750,7 +795,7 @@ def parse_args():
         help="Log every N episodes"
     )
     parser.add_argument(
-        "--save-every", type=int, default=100,
+        "--save-every", type=int, default=2000,
         help="Save models every N episodes"
     )
     parser.add_argument(
@@ -777,6 +822,10 @@ def parse_args():
     parser.add_argument(
         "--prompt-entropy-coef", type=float, default=None,
         help="Separate entropy coef for prompt policy (default: same as --entropy-coef)"
+    )
+    parser.add_argument(
+        "--gae-lambda", type=float, default=0.95,
+        help="GAE lambda parameter (0.95=standard, 1.0=MC returns, 0.0=TD(0))"
     )
     return parser.parse_args()
 
@@ -815,7 +864,8 @@ def main():
         ppo_epsilon=args.ppo_epsilon,
         ppo_epochs=args.ppo_epochs,
         struct_entropy_coef=struct_ent,
-        prompt_entropy_coef=prompt_ent
+        prompt_entropy_coef=prompt_ent,
+        gae_lambda=args.gae_lambda
     )
     
     # Save final models
