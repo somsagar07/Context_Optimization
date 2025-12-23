@@ -36,13 +36,13 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual environments
+# Virtual environments (but not our env/ code directory)
 venv/
-env/
 ENV/
 .venv
 env.bak/
 venv.bak/
+/.env/
 
 # IDE
 .vscode/
