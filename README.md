@@ -151,7 +151,6 @@ Uses **two separate policy networks**:
 
 #### Benefits
 - ✅ **Specialization**: Each policy focuses on its domain (structure vs. prompts)
-- ✅ **Interpretability**: Structure decisions are clear and interpretable
 - ✅ **Efficient Learning**: Smaller action spaces per policy
 - ✅ **Separation of Concerns**: Structure policy doesn't need to learn prompt effects
 
