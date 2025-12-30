@@ -24,7 +24,7 @@ from prompts.library import (
     PROMPT_ATOMS, NUM_ATOMS, build_prompt_suffix,
     NUM_REASONER_ATOMS, NUM_VERIFIER_ATOMS, NUM_ANSWERER_ATOMS
 )
-
+import re
 
 class PromptEnv(gym.Env):
     """
@@ -283,8 +283,23 @@ class PromptEnv(gym.Env):
             final_text, exec_info = self._execute_workflow()
             
             # Calculate final reward
+            # Base correctness reward
             correctness = self.dataset.evaluate_correctness(final_text, self.current_a)
             reward += correctness * 5.0
+            
+            # Check the dataset and apply reward/penalties
+            if self.dataset.name in ["gaia"]:
+                # Reward for valid code execution (encourages syntax correctness and tool use)
+                if exec_info["valid_code_count"] > 0:
+                    reward += 0.2 * exec_info["valid_code_count"]
+                
+                # Reward for accessing the specific file (encourages file usage)
+                if exec_info["file_access_count"] > 0:
+                    reward += 0.5
+                
+                # Reward for providing a final answer (encourages format compliance)
+                if "Final Answer:" in final_text:
+                    reward += 0.1
             
             # Cost penalties
             reward -= exec_info["steps"] * self.cfg.COST_PER_STEP
@@ -311,6 +326,7 @@ class PromptEnv(gym.Env):
                 "verifier_budget": ["Low", "Mid", "High"][self.verifier_budget_idx] if self.workflow_depth == 2 else "N/A",
                 "answerer_budget": ["Low", "Mid", "High"][self.answerer_budget_idx],
                 "final_answer": final_text,
+                "ground_truth": self.current_a,
             }
         
         return self._get_observation(), reward, terminated, False, info
@@ -343,6 +359,60 @@ class PromptEnv(gym.Env):
         if idx & 8: tools.append("ocr_reader")
         return tools
     
+    def _process_tool_calls(self, text_response: str, allowed_tools: list) -> tuple:
+        """
+        Manually parse and execute tools to track dense reward metrics.
+        Returns: (updated_text, stats_dict)
+        """
+        stats = {
+            "tool_calls": 0,
+            "valid_code": False,
+            "file_access": False
+        }
+        
+        # 1. Identify the target file from the prompt (if any)
+        target_file = None
+        if self.current_q:
+            match = re.search(r"File Attachment:\s*(.+)", self.current_q)
+            if match:
+                target_file = match.group(1).strip()
+
+        # 2. Parse TOOL: ... || QUERY: ... pattern
+        # This matches the format expected by your ToolRegistry
+        tool_matches = list(re.finditer(r"TOOL:\s*(\w+)\s*\|\|\s*QUERY:\s*(.*)", text_response))
+        
+        updated_text = text_response
+        
+        for match in tool_matches:
+            t_name, t_query = match.groups()
+            t_name = t_name.strip().lower()
+            t_query = t_query.strip()
+            
+            if t_name in allowed_tools:
+                stats["tool_calls"] += 1
+                
+                # METRIC: File Access
+                # Check if the generated code/query references the file path
+                if target_file and target_file in t_query:
+                    stats["file_access"] = True
+                
+                # Execute the tool
+                # We assume self.tools.execute(name, query) exists
+                try:
+                    tool_result = self.tools.execute(t_name, t_query)
+                except Exception as e:
+                    tool_result = f"Error executing tool: {e}"
+
+                # METRIC: Valid Code
+                # If python tool runs without "Error" or "Syntax Error", it's valid
+                if t_name == "python":
+                    if "Error:" not in tool_result and "Syntax Error:" not in tool_result:
+                        stats["valid_code"] = True
+                
+                updated_text += f"\nTool Output: {tool_result}"
+                
+        return updated_text, stats
+    
     def _execute_workflow(self) -> tuple:
         """Execute the configured workflow and return (final_text, info)."""
         # Build prompt suffixes
@@ -363,7 +433,15 @@ class PromptEnv(gym.Env):
             "steps": 0,
             "tools_count": 0,
             "total_tokens": 0,
+            "valid_code_count": 0,
+            "file_access_count": 0,
         }
+        
+        # Helper to merge stats
+        def merge_stats(stats):
+            exec_info["tools_count"] += stats["tool_calls"]
+            if stats["valid_code"]: exec_info["valid_code_count"] += 1
+            if stats["file_access"]: exec_info["file_access_count"] += 1
         
         if self.workflow_depth == 0:
             # Direct Answer
@@ -388,9 +466,11 @@ class PromptEnv(gym.Env):
             
             # Execute tools if any
             if reasoner_tools:
-                tool_result = self.tools.parse_and_execute(reasoning, reasoner_tools)
-                if tool_result:
-                    reasoning += f"\nTool Output: {tool_result}"
+                # tool_result = self.tools.parse_and_execute(reasoning, reasoner_tools)
+                # if tool_result:
+                #     reasoning += f"\nTool Output: {tool_result}"
+                reasoning, stats = self._process_tool_calls(reasoning, reasoner_tools)
+                merge_stats(stats)
             
             final_text = self.worker.answer_with_context(
                 self.current_q,
@@ -413,9 +493,11 @@ class PromptEnv(gym.Env):
             exec_info["tools_count"] += len(reasoner_tools)
             
             if reasoner_tools:
-                tool_result = self.tools.parse_and_execute(reasoning, reasoner_tools)
-                if tool_result:
-                    reasoning += f"\nTool Output: {tool_result}"
+                # tool_result = self.tools.parse_and_execute(reasoning, reasoner_tools)
+                # if tool_result:
+                #     reasoning += f"\nTool Output: {tool_result}"
+                reasoning, stats = self._process_tool_calls(reasoning, reasoner_tools)
+                merge_stats(stats)
             
             critique = self.worker.verify(
                 self.current_q,
@@ -427,9 +509,11 @@ class PromptEnv(gym.Env):
             exec_info["tools_count"] += len(verifier_tools)
             
             if verifier_tools:
-                tool_result = self.tools.parse_and_execute(critique, verifier_tools)
-                if tool_result:
-                    critique += f"\nTool Output: {tool_result}"
+                # tool_result = self.tools.parse_and_execute(critique, verifier_tools)
+                # if tool_result:
+                #     critique += f"\nTool Output: {tool_result}"
+                critique, stats = self._process_tool_calls(critique, verifier_tools)
+                merge_stats(stats)
             
             context = f"Reasoning: {reasoning}\nReview: {critique}"
             final_text = self.worker.answer_with_context(

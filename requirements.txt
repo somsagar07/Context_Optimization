@@ -32,3 +32,4 @@ scipy
 markitdown
 pytesseract # Have to install this as well ``sudo apt install tesseract-ocr``
 SpeechRecognition
+pdf2image

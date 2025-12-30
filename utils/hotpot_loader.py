@@ -9,6 +9,7 @@ class HotPotQADataset(BaseDataset):
     def __init__(self, split="train"):
         print(f"Loading HotPotQA ({split})...")
         self.data = load_dataset("hotpot_qa", "fullwiki", split=split)
+        self.name = "hotpot_qa"
     
     def get_sample(self):
         idx = random.randint(0, len(self.data) - 1)

@@ -16,6 +16,7 @@ class GAIADataset(BaseDataset):
         assert split in ["validation", "test"], "Split must be 'validation' or 'test'."
         
         # Download the dataset snapshot.  This function caches the content locally.
+        self.name = "gaia"
         self.data_dir = snapshot_download(
             repo_id="gaia-benchmark/GAIA", repo_type="dataset"
         )

@@ -514,6 +514,7 @@ class BaseTrainer(ABC):
             "answerer_budget": ["Low", "Mid", "High"][answerer_budget_idx],
             "question": info.get("question", ""),
             "final_answer": info.get("final_answer", ""),
+            "ground_truth": info.get("ground_truth", "")
         })
         
         return {

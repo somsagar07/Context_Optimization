@@ -31,6 +31,20 @@ class TimeoutError(Exception):
 def _timeout_handler(signum, frame):
     raise TimeoutError("Code execution timed out")
 
+ALLOWED_IMPORTS = {
+    'pandas', 'numpy', 'scipy', 'math', 'json', 'csv', 're', 
+    'zipfile', 'tarfile', 'xml', 'cv2', 'pdfplumber', 'PIL', 
+    'speech_recognition', 'os', 'datetime', 'random', 'collections', 'itertools',
+    'pytesseract', 'io',
+}
+
+def safe_import(name, globals=None, locals=None, fromlist=(), level=0):
+    # Allow the module if it's in our whitelist
+    root_name = name.split('.')[0] # e.g., "xml.etree" -> "xml"
+    if root_name in ALLOWED_IMPORTS:
+        return __import__(name, globals, locals, fromlist, level)
+    raise ImportError(f"Import of module '{name}' is restricted for safety.")
+
 # Safe builtins for Python executor
 _SAFE_BUILTINS = {
     'abs': abs, 'all': all, 'any': any, 'bin': bin,
@@ -44,7 +58,18 @@ _SAFE_BUILTINS = {
     'round': round, 'set': set, 'slice': slice, 'sorted': sorted,
     'str': str, 'sum': sum, 'tuple': tuple, 'type': type,
     'zip': zip, 'True': True, 'False': False, 'None': None,
+    '__import__': safe_import,
     'open': open, 'help': help, # Important for GAIA compatibility
+    'Exception': Exception,
+    'ImportError': ImportError,
+    'ValueError': ValueError,
+    'TypeError': TypeError,
+    'IndexError': IndexError,
+    'KeyError': KeyError,
+    'NameError': NameError,
+    'AttributeError': AttributeError,
+    'SyntaxError': SyntaxError,
+    'RuntimeError': RuntimeError,
 }
 
 # Pre-populated globals acting as "Standard Imports"

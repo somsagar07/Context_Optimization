@@ -9,6 +9,7 @@ class GSM8kDataset(BaseDataset):
     def __init__(self, split="train"):
         print(f"Loading GSM8k ({split})...")
         self.data = load_dataset("gsm8k", "main", split=split)
+        self.name = "gsm8k"
     
     def get_sample(self):
         idx = random.randint(0, len(self.data) - 1)

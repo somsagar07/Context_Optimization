@@ -282,6 +282,7 @@ class MultiStepAgentEnv(gym.Env):
                 "total_tokens": execution_info["total_tokens"],
                 "episode_length": self._get_episode_length(),
                 "final_answer": final_text,
+                "ground_truth": self.current_a,
             }
         
         return self._get_observation(), reward, terminated, truncated, info
