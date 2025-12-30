@@ -20,3 +20,15 @@ pandas>=2.0.0
 tqdm>=4.65.0
 tensorboard>=2.14.0
 
+# For Agent Tools
+sympy>=1.12
+ddgs>=6.0.0
+openpyxl
+pdfplumber
+beautifulsoup4
+xmltodict
+scikit-learn
+scipy
+markitdown
+pytesseract # Have to install this as well ``sudo apt install tesseract-ocr``
+SpeechRecognition
