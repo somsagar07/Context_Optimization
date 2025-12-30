@@ -1,3 +1,9 @@
+"""
+- This is a modified version of python code executor with ability to read files from the disk. These files can be json, csv, images, pdfs, zip/tar files etc. The code will be provided from the LLM and executed in a restricted environment with limited built-in functions and pre-imported libraries.
+
+- The code execution has a timeout of 10 seconds to prevent long-running code. The standard output
+"""
+
 import io
 import signal
 import math

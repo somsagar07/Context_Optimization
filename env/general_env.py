@@ -207,7 +207,8 @@ class GeneralAgentEnv(gym.Env):
             "reasoner_budget": ["Low", "Mid", "High"][reasoner_budget],
             "verifier_budget": ["Low", "Mid", "High"][verifier_budget],
             "answerer_budget": ["Low", "Mid", "High"][answerer_budget],
-            "total_tokens": total_tokens_used
+            "total_tokens": total_tokens_used,
+            "final_answer": final_text
         }
         
         return self.worker.get_embedding(final_text), reward, terminated, truncated, info

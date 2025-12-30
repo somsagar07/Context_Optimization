@@ -1,16 +1,20 @@
 """
 Configuration loader for Context_Opt.
 
+Available configurations:
+- single_step: All decisions in one action (baseline)
+- multi_step: Sequential decisions with credit assignment
+- hierarchical: Dual-policy approach (structure + prompts)
+
 Usage:
     from configs import load_config
-    cfg = load_config("multi_step")  # or "single_step"
+    cfg = load_config("hierarchical")
     
     # Access settings
     print(cfg.ENV_MODE)
     print(cfg.LEARNING_RATE)
 """
 import importlib
-import sys
 from types import ModuleType
 
 
@@ -19,12 +23,12 @@ def load_config(config_name: str) -> ModuleType:
     Load a configuration module by name.
     
     Args:
-        config_name: Either "single_step" or "multi_step"
+        config_name: "single_step", "multi_step", or "hierarchical"
         
     Returns:
         The configuration module with all settings as attributes
     """
-    valid_configs = ["single_step", "multi_step"]
+    valid_configs = ["single_step", "multi_step", "hierarchical"]
     
     if config_name not in valid_configs:
         raise ValueError(f"Invalid config: {config_name}. Must be one of {valid_configs}")
@@ -45,8 +49,8 @@ def get_config_from_args():
     """
     import argparse
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--config", type=str, default="multi_step",
-                        choices=["single_step", "multi_step"],
+    parser.add_argument("--config", type=str, default="hierarchical",
+                        choices=["single_step", "multi_step", "hierarchical"],
                         help="Configuration to use")
     args, _ = parser.parse_known_args()
     
@@ -55,4 +59,3 @@ def get_config_from_args():
 
 # For backwards compatibility, also expose base settings
 from configs.base import *
-

@@ -87,8 +87,16 @@ class LLMWorker:
                 hidden_states = outputs.hidden_states[-1]
                 return hidden_states.mean(dim=1).squeeze().float().cpu().numpy()
 
-    def _generate(self, prompt: str, active_tools: list = None, max_tokens: int = 512) -> str:
-        """Core generation method with optional tool prompting."""
+    def _generate(self, prompt: str, active_tools: list = None, max_tokens: int = 512, prompt_suffix: str = None) -> str:
+        """
+        Core generation method with optional tool prompting and prompt modifiers.
+        
+        Args:
+            prompt: The user prompt
+            active_tools: List of tool names to enable
+            max_tokens: Maximum tokens to generate
+            prompt_suffix: Additional instructions to add to system prompt (from RL)
+        """
         # Tool descriptions with usage examples
         TOOL_DESCRIPTIONS = {
             "calculator": (
@@ -115,6 +123,7 @@ class LLMWorker:
             )
         }
         
+        # NOTE: Changed this prompt but maybe can be seperated with RL prompt modifiers.
         # Build system prompt
         # sys_prompt = "You are a helpful assistant that solves problems step by step."
         sys_prompt = (
@@ -127,6 +136,10 @@ class LLMWorker:
             "4. Format your final conclusion exactly as: Final Answer: <your_answer>"
         )
         
+        # Add RL-selected prompt modifiers (if any)
+        if prompt_suffix:
+            sys_prompt += f" {prompt_suffix}"
+        
         if active_tools:
             tools_text = "\n".join([TOOL_DESCRIPTIONS[t] for t in active_tools if t in TOOL_DESCRIPTIONS])
             sys_prompt += (
@@ -134,6 +147,8 @@ class LLMWorker:
                 "To use a tool, write EXACTLY: TOOL: <tool_name> || QUERY: <your_query>\n"
                 "Use tools to calculate, verify, or look up information when helpful."
             )
+        
+        # TODO: Check if we need this as it was not in zip file.
         else:
             sys_prompt += " Answer using your own knowledge only."
 
@@ -176,16 +191,16 @@ class LLMWorker:
             skip_special_tokens=True
         )
 
-    def reason(self, question: str, tools: list = None, tokens: int = 512) -> str:
+    def reason(self, question: str, tools: list = None, tokens: int = 512, prompt_suffix: str = None) -> str:
         """Generate step-by-step reasoning for a question."""
         prompt = (
             f"Question: {question}\n"
             "Please break this down and think step-by-step to solve it. "
             "Do not just give the answer, show your work."
         )
-        return self._generate(prompt, active_tools=tools, max_tokens=tokens)
+        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix)
 
-    def verify(self, question: str, reasoning: str, tools: list = None, tokens: int = 256) -> str:
+    def verify(self, question: str, reasoning: str, tools: list = None, tokens: int = 256, prompt_suffix: str = None) -> str:
         """Verify and critique reasoning for a question."""
         prompt = (
             f"Question: {question}\n"
@@ -194,19 +209,19 @@ class LLMWorker:
             "If it is correct, say 'The reasoning is correct.' "
             "If there is an error, point it out."
         )
-        return self._generate(prompt, active_tools=tools, max_tokens=tokens)
+        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix)
 
-    def answer_direct(self, question: str, tools: list = None, tokens: int = 128) -> str:
+    def answer_direct(self, question: str, tools: list = None, tokens: int = 128, prompt_suffix: str = None) -> str:
         """Generate a direct, concise answer."""
         prompt = f"Question: {question}\nAnswer concisely."
-        return self._generate(prompt, active_tools=tools, max_tokens=tokens)
+        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix)
 
-    def answer_with_context(self, question: str, context: str, tools: list = None, tokens: int = 128) -> str:
+    def answer_with_context(self, question: str, context: str, tools: list = None, tokens: int = 128, prompt_suffix: str = None) -> str:
         """Generate an answer based on provided context/reasoning."""
         prompt = (
             f"Question: {question}\n"
             f"Context/Reasoning: {context}\n"
             "Based on the above, provide the final answer."
         )
-        return self._generate(prompt, active_tools=tools, max_tokens=tokens)
+        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix)
 

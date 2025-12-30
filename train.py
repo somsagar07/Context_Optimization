@@ -1,132 +1,139 @@
 """
-Training script for RL-based LLM agent configuration optimization.
+Unified Training Script for Hierarchical RL
+
+Supports both PPO and GRPO algorithms:
+- PPO: Proximal Policy Optimization (with value function)
+- GRPO: Group Relative Policy Optimization (critic-free, better for sparse rewards)
 
 Usage:
-    python train.py --config multi_step    # Multi-step environment (recommended)
-    python train.py --config single_step   # Single-step environment (baseline)
-    python train.py --config multi_step --timesteps 50000  # Override timesteps
+    python train.py --algorithm grpo --episodes 20000
+    python train.py --algorithm ppo --episodes 20000
+    python train.py --algorithm grpo --episodes 20000 --entropy-coef 0.08 --tool-bonus 0.02
+    python train.py --algorithm grpo --episodes 20000 --pretrain-structure models/sft_posttrained/structure_policy_sft.pt --pretrain-prompt models/sft_posttrained/prompt_policy_sft.pt
 """
 import argparse
 import os
-import time
-
-from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import DummyVecEnv
 
 from configs import load_config
-from env import GeneralAgentEnv, MultiStepAgentEnv
-from utils.callbacks import TrainingMetricsCallback
+from algorithms import Algorithm, PPOTrainer, GRPOTrainer
 
 
 def parse_args():
-    """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Train RL agent for LLM configuration optimization",
+        description="Train hierarchical RL with PPO or GRPO",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
+    
+    # Algorithm selection
     parser.add_argument(
-        "--config", 
-        type=str, 
-        default="multi_step",
-        choices=["single_step", "multi_step"],
-        help="Configuration to use (single_step or multi_step)"
+        "--algorithm", type=str, default="grpo",
+        choices=["ppo", "grpo"],
+        help="RL algorithm: ppo (with value function) or grpo (critic-free)"
     )
-    parser.add_argument(
-        "--timesteps", 
-        type=int, 
-        default=None,
-        help="Override total timesteps from config"
-    )
-    parser.add_argument(
-        "--dataset", 
-        type=str, 
-        default=None,
-        choices=["gsm8k", "hotpotqa"],
-        help="Override dataset from config"
-    )
+    
+    # Basic training args
+    parser.add_argument("--config", type=str, default="hierarchical", help="Config to use")
+    parser.add_argument("--episodes", type=int, default=20000, help="Number of episodes")
+    parser.add_argument("--batch-size", type=int, default=32, help="Batch size")
+    parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa"])
+    
+    # Algorithm hyperparameters
+    parser.add_argument("--clip-epsilon", type=float, default=0.2, help="Clipping parameter")
+    parser.add_argument("--epochs", type=int, default=4, help="Update epochs per batch")
+    parser.add_argument("--entropy-coef", type=float, default=0.05, help="Entropy coefficient")
+    parser.add_argument("--struct-entropy-coef", type=float, default=None, help="Structure entropy")
+    parser.add_argument("--prompt-entropy-coef", type=float, default=None, help="Prompt entropy")
+    
+    # Learning rate (useful when continuing from pretrained models)
+    parser.add_argument("--struct-lr", type=float, default=None, help="Structure learning rate (overrides config, recommended: 1e-4 for pretrained)")
+    parser.add_argument("--prompt-lr", type=float, default=None, help="Prompt learning rate (overrides config, recommended: 5e-5 for pretrained)")
+    
+    # GRPO-specific
+    parser.add_argument("--kl-coef", type=float, default=0.0, help="KL regularization (GRPO only)")
+    parser.add_argument("--ref-update-every", type=int, default=1000, help="Reference policy update freq")
+    
+    # Reward tuning
+    parser.add_argument("--reward-scale", type=float, default=1.0, help="Scale correctness reward")
+    parser.add_argument("--tool-bonus", type=float, default=0.0, help="Bonus per tool (+ or -)")
+    
+    # Logging
+    parser.add_argument("--log-every", type=int, default=50, help="Log frequency")
+    parser.add_argument("--save-every", type=int, default=2000, help="Checkpoint frequency")
+    
+    # Pretrained models (e.g., from SFT)
+    parser.add_argument("--pretrain-structure", type=str, default=None,
+                       help="Path to pretrained structure policy (e.g., from SFT)")
+    parser.add_argument("--pretrain-prompt", type=str, default=None,
+                       help="Path to pretrained prompt policy (e.g., from SFT)")
+    
     return parser.parse_args()
 
 
-def run_training(cfg, timesteps_override=None, dataset_override=None):
-    """
-    Main training loop for the RL agent.
+def main():
+    args = parse_args()
     
-    Args:
-        cfg: Configuration module (from configs/)
-        timesteps_override: Optional override for total timesteps
-        dataset_override: Optional override for dataset name
-    """
-    # Apply overrides
-    total_timesteps = timesteps_override or cfg.TOTAL_TIMESTEPS
-    dataset_name = dataset_override or cfg.DATASET_NAME
+    # Load config
+    cfg = load_config(args.config)
+    if args.dataset:
+        cfg.DATASET_NAME = args.dataset
     
-    # Create models directory
-    if not os.path.exists("models"):
-        os.makedirs("models")
-
-    print(f"=" * 60)
-    print(f"Starting Training")
-    print(f"=" * 60)
-    print(f"  Config:       {cfg.ENV_MODE}")
-    print(f"  Dataset:      {dataset_name}")
-    print(f"  Timesteps:    {total_timesteps}")
-    print(f"  Learning Rate: {cfg.LEARNING_RATE}")
-    print(f"  Gamma:        {cfg.GAMMA}")
-    print(f"  N_Steps:      {cfg.N_STEPS}")
-    print(f"  Batch Size:   {cfg.BATCH_SIZE}")
-    print(f"=" * 60)
+    # Create model directory
+    os.makedirs(f"models/{args.algorithm}_models", exist_ok=True)
     
-    # Setup Environment based on mode
-    if cfg.ENV_MODE == "multi_step":
-        print("\nUsing MultiStepAgentEnv (sequential decisions, proper credit assignment)")
-        env = DummyVecEnv([lambda: MultiStepAgentEnv(cfg)])
+    # Create trainer
+    if args.algorithm == "ppo":
+        trainer = PPOTrainer(cfg)
     else:
-        print("\nUsing GeneralAgentEnv (single-step, all actions at once)")
-        env = DummyVecEnv([lambda: GeneralAgentEnv(cfg)])
-
-    # Setup PPO Agent
-    ent_coef = getattr(cfg, 'ENT_COEF', 0.01)  # Use config value or default
+        trainer = GRPOTrainer(cfg)
     
-    model = PPO(
-        "MlpPolicy", 
-        env, 
-        verbose=1, 
-        ent_coef=ent_coef,
-        learning_rate=cfg.LEARNING_RATE,
-        n_steps=cfg.N_STEPS,    
-        batch_size=cfg.BATCH_SIZE,
-        gamma=cfg.GAMMA,
-    )
-
+    # Load pretrained models if provided (e.g., from SFT)
+    if args.pretrain_structure or args.pretrain_prompt:
+        trainer.load_pretrained(args.pretrain_structure, args.pretrain_prompt, reset_optimizers=True)
+        # If using pretrained models, optionally use lower learning rates for fine-tuning
+        if args.struct_lr is None and args.pretrain_structure:
+            # Suggest lower LR when continuing from pretrained
+            print("  Tip: Consider using --struct-lr 1e-4 for gentler fine-tuning from pretrained models")
+        if args.prompt_lr is None and args.pretrain_prompt:
+            print("  Tip: Consider using --prompt-lr 5e-5 for gentler fine-tuning from pretrained models")
+    
+    # Override learning rates if specified
+    if args.struct_lr is not None or args.prompt_lr is not None:
+        trainer._init_optimizers(struct_lr=args.struct_lr, prompt_lr=args.prompt_lr)
+        if args.struct_lr:
+            print(f"  Using structure LR: {args.struct_lr}")
+        if args.prompt_lr:
+            print(f"  Using prompt LR: {args.prompt_lr}")
+    
+    # Entropy coefficients
+    struct_ent = args.struct_entropy_coef or args.entropy_coef
+    prompt_ent = args.prompt_entropy_coef or args.entropy_coef
+    
     # Train
-    print("\nStarting training loop...")
-    save_every = getattr(cfg, 'SAVE_EVERY_EPISODES', 500)
-    callback = TrainingMetricsCallback(verbose=1, save_every_episodes=save_every)
-    model.learn(
-        total_timesteps=total_timesteps, 
-        progress_bar=True, 
-        callback=callback
+    trainer.train(
+        num_episodes=args.episodes,
+        batch_size=args.batch_size,
+        log_every=args.log_every,
+        save_every=args.save_every,
+        # Algorithm params
+        gamma=cfg.PROMPT_GAMMA,
+        clip_epsilon=args.clip_epsilon,
+        epochs=args.epochs,
+        struct_entropy_coef=struct_ent,
+        prompt_entropy_coef=prompt_ent,
+        # GRPO-specific
+        kl_coef=args.kl_coef,
+        ref_update_every=args.ref_update_every,
+        # Reward
+        reward_scale=args.reward_scale,
+        tool_bonus=args.tool_bonus,
     )
     
-    # Save with descriptive name
-    timestamp = int(time.time())
-    save_path = f"models/controller_{cfg.ENV_MODE}_{dataset_name}_{total_timesteps}_{timestamp}"
-    model.save(save_path)
-    print(f"\nModel saved to {save_path}.zip")
+    # Save final
+    struct_path, prompt_path = trainer.save_models("_final")
     
-    return model
+    print(f"\nTo evaluate:")
+    print(f"  python eval.py --structure-model {struct_path} --prompt-model {prompt_path}")
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    
-    # Load configuration
-    cfg = load_config(args.config)
-    print(f"Loaded config: {args.config}")
-    
-    # Run training
-    run_training(
-        cfg=cfg,
-        timesteps_override=args.timesteps,
-        dataset_override=args.dataset
-    )
+    main()
