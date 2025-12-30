@@ -3,6 +3,22 @@ import signal
 import math
 from contextlib import redirect_stdout, redirect_stderr
 
+# --- GAIA REQUIRED LIBRARIES ---
+import pandas as pd
+import numpy as np
+import scipy
+import zipfile
+import tarfile
+import json
+import csv
+import xml.etree.ElementTree as ET
+import cv2
+import pdfplumber
+import PIL.Image
+import speech_recognition as sr
+import os
+# -------------------------------
+
 class TimeoutError(Exception):
     pass
 
@@ -22,10 +38,31 @@ _SAFE_BUILTINS = {
     'round': round, 'set': set, 'slice': slice, 'sorted': sorted,
     'str': str, 'sum': sum, 'tuple': tuple, 'type': type,
     'zip': zip, 'True': True, 'False': False, 'None': None,
-    'math': math,
+    'open': open, 'help': help, # Important for GAIA compatibility
 }
 
-def python_executor(code: str, timeout: int = 5) -> str:
+# Pre-populated globals acting as "Standard Imports"
+_GLOBAL_ENV = {
+    '__builtins__': _SAFE_BUILTINS,
+    '__name__': '__main__',
+    'math': math,
+    'pd': pd,
+    'np': np,
+    'scipy': scipy,
+    'os': os,           
+    'json': json,
+    'csv': csv,
+    'zipfile': zipfile,
+    'tarfile': tarfile,
+    'ET': ET,
+    'cv2': cv2,
+    'pdfplumber': pdfplumber,
+    'Image': PIL.Image,
+    'sr': sr,
+    'datetime': pd.to_datetime,
+}
+
+def python_executor(code: str, timeout: int = 10) -> str:
     """
     Safely execute Python code with restrictions.
     - No file I/O, no imports, no system access
@@ -50,10 +87,7 @@ def python_executor(code: str, timeout: int = 5) -> str:
     stderr_capture = io.StringIO()
     
     # Restricted globals
-    restricted_globals = {
-        '__builtins__': _SAFE_BUILTINS,
-        '__name__': '__main__',
-    }
+    restricted_globals = _GLOBAL_ENV.copy()
     local_vars = {}
     
     try:
@@ -87,4 +121,3 @@ def python_executor(code: str, timeout: int = 5) -> str:
         return f"Name Error: {e} (Note: imports are disabled for safety)"
     except Exception as e:
         return f"Execution Error: {type(e).__name__}: {e}"
-

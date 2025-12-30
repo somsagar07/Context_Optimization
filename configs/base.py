@@ -8,7 +8,7 @@ LLM_MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # --- Experiment Config ---
-# Options: "gsm8k", "hotpotqa" 
+# Options: "gsm8k", "hotpotqa", "gaia"
 DATASET_NAME = "gsm8k" 
 
 # --- Callback Config ---

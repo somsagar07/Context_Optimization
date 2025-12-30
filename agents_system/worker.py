@@ -99,14 +99,33 @@ class LLMWorker:
                 "web_search - Search the web for current information.\n"
                 "  Example: TOOL: web_search || QUERY: population of Tokyo 2024"
             ),
+            # "python": (
+            #     "python - Execute Python code. Use print() to output results. Has access to math module.\n"
+            #     "  Example: TOOL: python || QUERY: print(sum([i**2 for i in range(1, 11)]))"
+            # ),
             "python": (
-                "python - Execute Python code. Use print() to output results. Has access to math module.\n"
-                "  Example: TOOL: python || QUERY: print(sum([i**2 for i in range(1, 11)]))"
+                "python - Execute Python code. Use print() to output results. \n"
+                "  Pre-imported libraries: pandas as pd, numpy as np, scipy, cv2, pdfplumber, PIL.Image, sklearn.\n"
+                "  File access: You can read files using open() or pd.read_csv(), etc.\n"
+                "  Example: TOOL: python || QUERY: df = pd.read_csv('file.csv'); print(df.head())"
             ),
+            "ocr_reader": (
+                "ocr_reader - Read and extract text from image files.\n"
+                "  Example: TOOL: ocr_reader || QUERY: '/path/to/image.jpg'"
+            )
         }
         
         # Build system prompt
-        sys_prompt = "You are a helpful assistant that solves problems step by step."
+        # sys_prompt = "You are a helpful assistant that solves problems step by step."
+        sys_prompt = (
+            "You are an expert autonomous agent capable of solving complex tasks. "
+            "Your goal is to provide the correct Final Answer.\n\n"
+            "CRITICAL INSTRUCTIONS:\n"
+            "1. IF you are given a file path, you MUST use a tool (like 'python' or 'vision') to read it.\n"
+            "2. Do NOT guess specific numbers or data from files you haven't read.\n"
+            "3. Use Python for all complex calculations or data filtering.\n"
+            "4. Format your final conclusion exactly as: Final Answer: <your_answer>"
+        )
         
         if active_tools:
             tools_text = "\n".join([TOOL_DESCRIPTIONS[t] for t in active_tools if t in TOOL_DESCRIPTIONS])
