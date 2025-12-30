@@ -23,7 +23,7 @@ class GeneralAgentEnv(gym.Env):
     
     Observation: Question embedding from LLM hidden states
     
-    Note: This is a single-step environment (contextual bandit).
+    NOTE: This is a single-step environment (contextual bandit).
     All actions are selected at once, no temporal credit assignment.
     """
     
@@ -47,6 +47,7 @@ class GeneralAgentEnv(gym.Env):
         self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
         # NOTE: Updated the action space to include 4 tools.
+        # TODO: Maybe make it dynamic to accomodate for more tools in the future?
         self.action_space = spaces.MultiDiscrete([3, 16, 3, 16, 3, 3])
         
         # Token budgets for each level (Low/Mid/High)
@@ -65,14 +66,10 @@ class GeneralAgentEnv(gym.Env):
 
         self.current_q = None
         self.current_a = None
-        self.current_fp = None # File path (if applicable)
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        self.current_q, self.current_a, self.current_fp = self.dataset.get_sample()
-        
-        if self.current_fp:
-            self.current_q += f"\n\n[System Notification]\nFile Attachment: {self.current_fp}\nYou can use your tools to read or process this file."
+        self.current_q, self.current_a = self.dataset.get_sample()
         
         return self.worker.get_embedding(self.current_q), {}
     
@@ -80,7 +77,7 @@ class GeneralAgentEnv(gym.Env):
         """
         Decode tool index to list of tools (binary encoding).
         3 tools = 2^3 = 8 combinations
-        Bit 0: calculator, Bit 1: web_search, Bit 2: python
+        Bit 0: calculator, Bit 1: web_search, Bit 2: python, Bit 3: ocr_reader
         """
         tools = []
         if idx & 1: tools.append("calculator")
@@ -97,7 +94,7 @@ class GeneralAgentEnv(gym.Env):
             response = method(question, context, tools=tools, tokens=tokens)
         else:
             response = method(question, tools=tools, tokens=tokens)
-            
+        
         # Parse and execute tools if any
         if tools:
             tool_result = self.tools.parse_and_execute(response, tools)
@@ -164,7 +161,7 @@ class GeneralAgentEnv(gym.Env):
                 tools=reasoner_tools,
                 tokens=reasoner_tokens
             )
-            if reasoner_tools: 
+            if reasoner_tools:
                 tools_used_count += len(reasoner_tools)
 
             critique = self._execute_agent_step(

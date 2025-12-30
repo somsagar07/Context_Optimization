@@ -19,7 +19,9 @@ class MultiStepAgentEnv(gym.Env):
     Episode Structure (4 steps max):
         Step 0: Choose workflow depth [0, 1, 2] → action_space = 3
         Step 1: Choose reasoner config (tools + budget) → action_space = 24 (8 tools × 3 budgets)
+            NOTE: Edited to 16 budget for tools, so action_space = 48
         Step 2: Choose verifier config (if depth=2) → action_space = 24
+            NOTE: Edited to 16 budget for tools, so action_space = 48
         Step 3: Choose answerer budget → action_space = 3
         → Execute workflow → Final reward → Done
     
@@ -56,8 +58,9 @@ class MultiStepAgentEnv(gym.Env):
         self.dataset = get_dataset_loader(cfg.DATASET_NAME)
         
         # Action space: max across all stages (reasoner/verifier have 24 = 8×3)
+        # NOTE: Edited to 16 tools, so max is 48
         # We'll mask invalid actions per stage
-        self.action_space = spaces.Discrete(24)
+        self.action_space = spaces.Discrete(48)
         
         # Token budgets
         self.TOKEN_BUDGETS = {
@@ -73,7 +76,7 @@ class MultiStepAgentEnv(gym.Env):
         # - reasoner_chosen: 24 dims (one-hot of tools×budget)
         # - verifier_chosen: 24 dims (one-hot of tools×budget)
         hidden_size = self.worker.model.config.hidden_size
-        obs_size = hidden_size + 4 + 3 + 24 + 24  # Total observation
+        obs_size = hidden_size + 4 + 3 + 48 + 48  # Total observation
         
         self.observation_space = spaces.Box(
             low=-np.inf, high=np.inf,
@@ -125,13 +128,15 @@ class MultiStepAgentEnv(gym.Env):
             workflow_onehot[self.workflow_depth] = 1.0
         
         # Reasoner choice one-hot (24 = 8 tools × 3 budgets)
-        reasoner_onehot = np.zeros(24, dtype=np.float32)
+        # NOTE: Edited to 16 tools, so action space is 48
+        reasoner_onehot = np.zeros(48, dtype=np.float32)
         if self.reasoner_tools is not None and self.reasoner_budget is not None:
             idx = self._encode_config(self.reasoner_tools, self.reasoner_budget)
             reasoner_onehot[idx] = 1.0
         
         # Verifier choice one-hot (24)
-        verifier_onehot = np.zeros(24, dtype=np.float32)
+        # NOTE: Edited to 16 tools, so action space is 48
+        verifier_onehot = np.zeros(48, dtype=np.float32)
         if self.verifier_tools is not None and self.verifier_budget is not None:
             idx = self._encode_config(self.verifier_tools, self.verifier_budget)
             verifier_onehot[idx] = 1.0
@@ -148,7 +153,7 @@ class MultiStepAgentEnv(gym.Env):
         return obs
     
     def _encode_config(self, tools_idx: int, budget_idx: int) -> int:
-        """Encode tools (0-7) and budget (0-2) into single index (0-23)."""
+        """Encode tools (0-15) and budget (0-2) into single index (0-47)."""
         return tools_idx * 3 + budget_idx
     
     def _decode_config(self, action: int) -> tuple:
@@ -163,21 +168,23 @@ class MultiStepAgentEnv(gym.Env):
         if idx & 1: tools.append("calculator")
         if idx & 2: tools.append("web_search")
         if idx & 4: tools.append("python")
+        if idx & 8: tools.append("ocr_reader") # Added this tool
         return tools
     
     def _get_valid_actions(self) -> np.ndarray:
         """Return mask of valid actions for current stage."""
-        mask = np.zeros(24, dtype=np.float32)
+        mask = np.zeros(48, dtype=np.float32)
         
         if self.stage == self.STAGE_WORKFLOW:
             # Only 3 valid: [0, 1, 2] for workflow depth
             mask[:3] = 1.0
         elif self.stage == self.STAGE_REASONER:
-            # 24 valid: all combinations of tools (8) × budget (3)
-            mask[:24] = 1.0
+            # 48 valid: all combinations of tools (16) × budget (3)
+            # NOTE: Edited to 16 tools, so 48 combinations
+            mask[:48] = 1.0
         elif self.stage == self.STAGE_VERIFIER:
-            # 24 valid (only reached if depth == 2)
-            mask[:24] = 1.0
+            # 48 valid (only reached if depth == 2)
+            mask[:48] = 1.0
         elif self.stage == self.STAGE_ANSWERER:
             # Only 3 valid: [0, 1, 2] for answerer budget
             mask[:3] = 1.0

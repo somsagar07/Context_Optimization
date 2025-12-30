@@ -45,8 +45,13 @@ class GAIADataset(BaseDataset):
         if rel_path:
             full_path = os.path.join(self.data_dir, rel_path)
             # print(f"Loading GAIA sample from {full_path}.")
-            
-        return sample['Question'], sample['Final answer'], full_path
+        
+        sample_question = sample['Question']
+        sample_answer = sample['Final answer']
+        if full_path:
+            sample_question += f"\n\n[System Notification]\nFile Attachment: {full_path}\nYou can use your tools to read or process this file."
+        
+        return sample_question, sample_answer
     
     def evaluate_correctness(self, model_answer: str, ground_truth: str) -> float:
         
