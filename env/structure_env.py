@@ -27,8 +27,10 @@ class StructureEnv(gym.Env):
     Action Space: MultiDiscrete([3, 8, 3, 8, 3, 3])
         - workflow: 3 options (Direct=0, Reason+Ans=1, Reason+Verify+Ans=2)
         - reasoner_tools: 8 options (binary encoding of 3 tools)
+            - NOTE: Updated to 16 options for 4 tools
         - reasoner_budget: 3 options (Low=0, Mid=1, High=2)
         - verifier_tools: 8 options (binary encoding of 3 tools)
+            - NOTE: Updated to 16 options for 4 tools
         - verifier_budget: 3 options
         - answerer_budget: 3 options
     
@@ -54,7 +56,8 @@ class StructureEnv(gym.Env):
         self.dataset = get_dataset_loader(cfg.DATASET_NAME)
         
         # Structure dimensions: [workflow, r_tools, r_budget, v_tools, v_budget, a_budget]
-        self.structure_dims = np.array([3, 8, 3, 8, 3, 3])
+        # NOTE: Updated tools to 16 options for 4 tools
+        self.structure_dims = np.array([3, 16, 3, 16, 3, 3])
         
         # Action space: MultiDiscrete for interpretable structure decisions
         self.action_space = spaces.MultiDiscrete(self.structure_dims)
