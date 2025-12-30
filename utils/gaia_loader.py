@@ -49,6 +49,13 @@ class GAIADataset(BaseDataset):
         return sample['Question'], sample['Final answer'], full_path
     
     def evaluate_correctness(self, model_answer: str, ground_truth: str) -> float:
+        
+        match = re.search(r"Final Answer:\s*(.*)", model_answer, re.IGNORECASE | re.DOTALL)
+        if match:
+            model_answer = match.group(1).strip()
+        else:
+            model_answer = model_answer.strip()
+        
         def _normalize_number_str(number_str: str) -> float:
             # we replace these common units and commas to allow
             # conversion to float

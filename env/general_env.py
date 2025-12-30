@@ -27,12 +27,13 @@ class GeneralAgentEnv(gym.Env):
     All actions are selected at once, no temporal credit assignment.
     """
     
-    def __init__(self, cfg=None):
+    def __init__(self, cfg=None, is_eval=False):
         """
         Initialize the environment.
         
         Args:
             cfg: Configuration module. If None, imports default config.
+            is_eval: If True, loads evaluation dataset.
         """
         super(GeneralAgentEnv, self).__init__()
         
@@ -43,10 +44,10 @@ class GeneralAgentEnv(gym.Env):
         
         self.worker = LLMWorker()
         self.tools = ToolRegistry()
-        self.dataset = get_dataset_loader(cfg.DATASET_NAME)
+        self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
-        # Action Space
-        self.action_space = spaces.MultiDiscrete([3, 8, 3, 8, 3, 3])
+        # NOTE: Updated the action space to include 4 tools.
+        self.action_space = spaces.MultiDiscrete([3, 16, 3, 16, 3, 3])
         
         # Token budgets for each level (Low/Mid/High)
         self.TOKEN_BUDGETS = {
@@ -64,10 +65,15 @@ class GeneralAgentEnv(gym.Env):
 
         self.current_q = None
         self.current_a = None
+        self.current_fp = None # File path (if applicable)
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        self.current_q, self.current_a = self.dataset.get_sample()
+        self.current_q, self.current_a, self.current_fp = self.dataset.get_sample()
+        
+        if self.current_fp:
+            self.current_q += f"\n\n[System Notification]\nFile Attachment: {self.current_fp}\nYou can use your tools to read or process this file."
+        
         return self.worker.get_embedding(self.current_q), {}
     
     def _decode_tools(self, idx: int) -> list:
@@ -80,6 +86,7 @@ class GeneralAgentEnv(gym.Env):
         if idx & 1: tools.append("calculator")
         if idx & 2: tools.append("web_search")
         if idx & 4: tools.append("python")
+        if idx & 8: tools.append("ocr_reader") # Added this tool
         return tools
 
     def _execute_agent_step(self, method, question, context=None, tools=None, tokens=256):

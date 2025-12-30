@@ -3,8 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual environments
-env/
+# Virtual environments (use specific names to avoid ignoring source code folders)
 venv/
 .venv/
 
