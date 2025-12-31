@@ -23,6 +23,7 @@ import pdfplumber
 import PIL.Image
 import speech_recognition as sr
 import os
+os.environ["QT_QPA_PLATFORM"] = "offscreen" # For headless environments / server-side runs
 # -------------------------------
 
 class TimeoutError(Exception):
