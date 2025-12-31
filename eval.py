@@ -103,12 +103,12 @@ class StructurePolicy(nn.Module):
         return np.array(actions)
 
 
-def load_structure_policy(path, device="cpu"):
+def load_structure_policy(path, device="cpu", algorithm=None):
     checkpoint = torch.load(path, map_location=device, weights_only=False)
     obs_dim = checkpoint["obs_dim"]
     action_dims = checkpoint["action_dims"]
-    algo = checkpoint.get("algorithm", "PPO")
-    has_value = algo == "PPO"
+    algo = checkpoint.get("algorithm", "PPO" if algorithm is None else algorithm.upper())
+    has_value = algo == "PPO" 
     
     policy = StructurePolicy(obs_dim, action_dims, has_value).to(device)
     policy.load_state_dict(checkpoint["model_state_dict"])
@@ -118,11 +118,11 @@ def load_structure_policy(path, device="cpu"):
     return policy
 
 
-def load_prompt_policy(path, device="cpu"):
+def load_prompt_policy(path, device="cpu", algorithm=None):
     checkpoint = torch.load(path, map_location=device, weights_only=False)
     obs_dim = checkpoint["obs_dim"]
     action_dim = checkpoint["action_dim"]
-    algo = checkpoint.get("algorithm", "PPO")
+    algo = checkpoint.get("algorithm", "PPO" if algorithm is None else algorithm.upper())
     has_value = algo == "PPO"
     
     policy = PromptPolicy(obs_dim, action_dim, has_value).to(device)
@@ -140,8 +140,8 @@ def load_prompt_policy(path, device="cpu"):
 def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20, 
              deterministic=True, verbose=True):
     """Evaluate dual policy system."""
-    structure_env = StructureEnv(cfg)
-    prompt_env = PromptEnv(cfg)
+    structure_env = StructureEnv(cfg, is_eval=True)
+    prompt_env = PromptEnv(cfg, is_eval=True)
     
     results = {"correct": [], "workflows": [], "tokens": [], "rewards": [], "tools": []}
     
@@ -261,7 +261,8 @@ def parse_args():
     parser.add_argument("--stochastic", action="store_true")
     parser.add_argument("--random-only", action="store_true")
     parser.add_argument("--compare-random", action="store_true")
-    parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa"])
+    parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia"])
+    parser.add_argument("--algorithm", type=str, default=None, choices=["ppo", "grpo"])
     parser.add_argument("--quiet", action="store_true")
     return parser.parse_args()
 
@@ -292,8 +293,8 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"\nLoading models (device: {device})...")
     
-    structure_policy = load_structure_policy(args.structure_model, device)
-    prompt_policy = load_prompt_policy(args.prompt_model, device)
+    structure_policy = load_structure_policy(args.structure_model, device, algorithm=args.algorithm)
+    prompt_policy = load_prompt_policy(args.prompt_model, device, algorithm=args.algorithm)
     
     results = evaluate(
         structure_policy, prompt_policy, cfg,

@@ -38,7 +38,7 @@ class StructureEnv(gym.Env):
     The PromptEnv handles the actual LLM execution after prompt selection.
     """
     
-    def __init__(self, cfg=None):
+    def __init__(self, cfg=None, is_eval=False):
         """
         Args:
             cfg: Configuration module
@@ -53,7 +53,7 @@ class StructureEnv(gym.Env):
         
         # Initialize components
         self.worker = LLMWorker()
-        self.dataset = get_dataset_loader(cfg.DATASET_NAME)
+        self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
         # Structure dimensions: [workflow, r_tools, r_budget, v_tools, v_budget, a_budget]
         # NOTE: Updated tools to 16 options for 4 tools

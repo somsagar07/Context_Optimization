@@ -59,7 +59,7 @@ class PromptEnv(gym.Env):
         "answerer": {0: 64, 1: 128, 2: 256}
     }
     
-    def __init__(self, cfg=None):
+    def __init__(self, cfg=None, is_eval=False):
         super().__init__()
         
         # Store config
@@ -83,7 +83,7 @@ class PromptEnv(gym.Env):
         # Initialize components
         self.worker = LLMWorker()
         self.tools = ToolRegistry()
-        self.dataset = get_dataset_loader(cfg.DATASET_NAME)
+        self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
         # Observation space components
         hidden_size = self.worker.model.config.hidden_size
