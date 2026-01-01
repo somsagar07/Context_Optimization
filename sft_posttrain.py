@@ -5,6 +5,20 @@ Refines RL-trained models by training on high-quality correct episodes from RL l
 This helps the model internalize correct behaviors and can improve accuracy by 2-5%.
 
 Usage:
+    # PPO Workflow
+    python sft_posttrain.py \
+        --rl-log logs/training_log_ppo_gaia_1767177868.json \
+        --structure-model models/ppo_models/structure_policy_gaia_1767177868_final.pt \
+        --prompt-model models/ppo_models/prompt_policy_gaia_1767177868_final.pt \
+        --algorithm ppo --epochs 3
+
+    # GRPO Workflow
+    python sft_posttrain.py \
+        --rl-log logs/training_log_grpo_gaia_1767177421.json \
+        --structure-model models/grpo_models/structure_policy_gaia_1767177421_final.pt \
+        --prompt-model models/grpo_models/prompt_policy_gaia_1767177421_final.pt \
+        --algorithm grpo --epochs 3
+
     # After RL training
     python sft_posttrain.py --rl-log logs/training_log_grpo_gsm8k_1766872133.json --rl-model-dir models/grpo_models --epochs 3
     python eval.py --structure-model models/sft_posttrained/structure_policy_sft.pt --prompt-model models/sft_posttrained/prompt_policy_sft.pt
@@ -19,9 +33,11 @@ import torch.optim as optim
 import numpy as np
 from tqdm import tqdm
 from glob import glob
+import time
 
 from configs import load_config
 from algorithms.base import MultiDiscretePolicyGRPO, PolicyNetworkGRPO
+from algorithms.ppo import MultiDiscretePolicyPPO, PolicyNetworkPPO
 from env.structure_env import StructureEnv
 from env.prompt_env import PromptEnv
 
@@ -31,7 +47,8 @@ def encode_tools(tools_list):
     tool_mapping = {
         "calculator": 1,
         "web_search": 2,
-        "python": 4
+        "python": 4,
+        "ocr_reader": 8,
     }
     idx = 0
     for tool in tools_list:
@@ -128,7 +145,13 @@ def train_structure_policy_sft(structure_policy, episodes, structure_env, epochs
             obs_tensor = torch.FloatTensor(obs).unsqueeze(0).to(device)  # [1, obs_dim]
             
             # Forward pass
-            action_logits_list = structure_policy(obs_tensor)  # List of [1, action_dim]
+            policy_output = structure_policy(obs_tensor)
+            
+            # If PPO, output is (logits_list, value). If GRPO, output is logits_list.
+            if isinstance(policy_output, tuple):
+                action_logits_list = policy_output[0]
+            else:
+                action_logits_list = policy_output  # List of [1, action_dim]
             
             # Compute loss for each action dimension
             total_loss = 0.0
@@ -267,7 +290,13 @@ def train_prompt_policy_sft(prompt_policy, episodes, prompt_env, epochs=3, lr=1e
                 target = torch.LongTensor([prompt_idx]).to(device)
                 
                 # Forward pass
-                action_logits = prompt_policy(obs_tensor)
+                policy_output = prompt_policy(obs_tensor)
+                
+                # If PPO, output is (logits, value). If GRPO, output is logits.
+                if isinstance(policy_output, tuple):
+                    action_logits = policy_output[0]
+                else:
+                    action_logits = policy_output
                 
                 # Validate logits shape
                 if action_dim and action_logits.shape[1] != action_dim:
@@ -364,13 +393,18 @@ def main():
     parser = argparse.ArgumentParser(description="SFT Post-training from RL logs")
     parser.add_argument("--config", type=str, default="hierarchical", help="Config to use")
     parser.add_argument("--rl-log", type=str, required=True, help="Path to RL training log JSON")
-    parser.add_argument("--rl-model-dir", type=str, required=True, help="Directory with RL-trained models")
+    # parser.add_argument("--rl-model-dir", type=str, required=True, help="Directory with RL-trained models")
     parser.add_argument("--epochs", type=int, default=3, help="SFT training epochs")
     parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate for structure policy")
     parser.add_argument("--prompt-lr", type=float, default=1e-5, help="Learning rate for prompt policy (default: 1e-5, lower due to more training steps)")
     parser.add_argument("--min-reward", type=float, default=4.0, help="Minimum reward for filtering")
     parser.add_argument("--output-dir", type=str, default="models/sft_posttrained", help="Output directory")
     parser.add_argument("--device", type=str, default=None, help="Device (cuda/cpu)")
+    parser.add_argument("--algorithm", type=str, default="grpo", choices=["ppo", "grpo"], help="Model architecture to use (matches your saved checkpoint)")
+    
+    parser.add_argument("--prompt_model_path", type=str, required=True, help="Path to the prompt policy checkpoint (e.g., models/ppo_models/prompt_policy_...pt)")
+    parser.add_argument("--structure_model_path", type=str, required=True, help="Path to the structure policy checkpoint (e.g., models/ppo_models/structure_policy_...pt)")
+    parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia"], help="Dataset name (overrides config)")
     
     args = parser.parse_args()
     
@@ -384,6 +418,10 @@ def main():
     # Load config
     cfg = load_config(args.config)
     
+    if args.dataset:
+        cfg.DATASET_NAME = args.dataset
+        print(f"Overriding config dataset with: {cfg.DATASET_NAME}")
+    
     # Load correct episodes from log
     all_episodes = load_correct_episodes_from_log(args.rl_log, min_reward=args.min_reward)
     
@@ -392,33 +430,36 @@ def main():
         return
     
     # Find RL-trained models (look for _final.pt files)
-    struct_pattern = os.path.join(args.rl_model_dir, "*structure*_final.pt")
-    prompt_pattern = os.path.join(args.rl_model_dir, "*prompt*_final.pt")
+    # struct_pattern = os.path.join(args.rl_model_dir, "*structure*_final.pt")
+    # prompt_pattern = os.path.join(args.rl_model_dir, "*prompt*_final.pt")
     
-    struct_files = glob(struct_pattern)
-    prompt_files = glob(prompt_pattern)
+    # struct_files = glob(struct_pattern)
+    # prompt_files = glob(prompt_pattern)
     
-    if not struct_files:
-        # Try without _final suffix
-        struct_pattern = os.path.join(args.rl_model_dir, "*structure*.pt")
-        struct_files = sorted(glob(struct_pattern), key=os.path.getmtime, reverse=True)
-        if struct_files:
-            struct_files = [struct_files[0]]  # Use most recent
+    # if not struct_files:
+    #     # Try without _final suffix
+    #     struct_pattern = os.path.join(args.rl_model_dir, "*structure*.pt")
+    #     struct_files = sorted(glob(struct_pattern), key=os.path.getmtime, reverse=True)
+    #     if struct_files:
+    #         struct_files = [struct_files[0]]  # Use most recent
     
-    if not prompt_files:
-        prompt_pattern = os.path.join(args.rl_model_dir, "*prompt*.pt")
-        prompt_files = sorted(glob(prompt_pattern), key=os.path.getmtime, reverse=True)
-        if prompt_files:
-            prompt_files = [prompt_files[0]]
+    # if not prompt_files:
+    #     prompt_pattern = os.path.join(args.rl_model_dir, "*prompt*.pt")
+    #     prompt_files = sorted(glob(prompt_pattern), key=os.path.getmtime, reverse=True)
+    #     if prompt_files:
+    #         prompt_files = [prompt_files[0]]
     
-    if not struct_files or not prompt_files:
-        raise FileNotFoundError(
-            f"RL models not found in {args.rl_model_dir}\n"
-            f"  Looking for: {struct_pattern} and {prompt_pattern}"
-        )
+    # if not struct_files or not prompt_files:
+    #     raise FileNotFoundError(
+    #         f"RL models not found in {args.rl_model_dir}\n"
+    #         f"  Looking for: {struct_pattern} and {prompt_pattern}"
+    #     )
     
-    struct_path = struct_files[0]
-    prompt_path = prompt_files[0]
+    # struct_path = struct_files[0]
+    # prompt_path = prompt_files[0]
+    
+    struct_path = args.structure_model_path
+    prompt_path = args.prompt_model_path
     
     print(f"\nLoading RL-trained models...")
     print(f"  Structure: {struct_path}")
@@ -428,16 +469,30 @@ def main():
     struct_checkpoint = torch.load(struct_path, map_location=device, weights_only=False)
     prompt_checkpoint = torch.load(prompt_path, map_location=device, weights_only=False)
     
-    # Initialize policies with same architecture
-    structure_policy = MultiDiscretePolicyGRPO(
-        obs_dim=struct_checkpoint["obs_dim"],
-        action_dims=struct_checkpoint["action_dims"]
-    ).to(device)
+    algorithm = args.algorithm.lower()
     
-    prompt_policy = PolicyNetworkGRPO(
-        obs_dim=prompt_checkpoint["obs_dim"],
-        action_dim=prompt_checkpoint["action_dim"]
-    ).to(device)
+    if algorithm == "ppo":
+        # Initialize policies with same architecture
+        structure_policy = MultiDiscretePolicyPPO(
+            obs_dim=struct_checkpoint["obs_dim"],
+            action_dims=struct_checkpoint["action_dims"]
+        ).to(device)
+        
+        prompt_policy = PolicyNetworkPPO(
+            obs_dim=prompt_checkpoint["obs_dim"],
+            action_dim=prompt_checkpoint["action_dim"]
+        ).to(device)
+    else:
+        # Initialize policies with same architecture
+        structure_policy = MultiDiscretePolicyGRPO(
+            obs_dim=struct_checkpoint["obs_dim"],
+            action_dims=struct_checkpoint["action_dims"]
+        ).to(device)
+        
+        prompt_policy = PolicyNetworkGRPO(
+            obs_dim=prompt_checkpoint["obs_dim"],
+            action_dim=prompt_checkpoint["action_dim"]
+        ).to(device)
     
     # Load RL weights
     structure_policy.load_state_dict(struct_checkpoint["model_state_dict"])
@@ -463,22 +518,23 @@ def main():
     )
     
     # Save models (in same format as RL models for compatibility)
+    timestamp = int(time.time())
     os.makedirs(args.output_dir, exist_ok=True)
-    struct_save_path = os.path.join(args.output_dir, "structure_policy_sft.pt")
-    prompt_save_path = os.path.join(args.output_dir, "prompt_policy_sft.pt")
+    struct_save_path = os.path.join(args.output_dir, f"structure_policy_sft_{timestamp}.pt")
+    prompt_save_path = os.path.join(args.output_dir, f"prompt_policy_sft_{timestamp}.pt")
     
     torch.save({
         "model_state_dict": structure_policy.state_dict(),
         "action_dims": struct_checkpoint["action_dims"],
         "obs_dim": struct_checkpoint["obs_dim"],
-        "algorithm": "GRPO_SFT",
+        "algorithm": f"{algorithm.upper()}_SFT",
     }, struct_save_path)
     
     torch.save({
         "model_state_dict": prompt_policy.state_dict(),
         "action_dim": prompt_checkpoint["action_dim"],
         "obs_dim": prompt_checkpoint["obs_dim"],
-        "algorithm": "GRPO_SFT",
+        "algorithm": f"{algorithm.upper()}_SFT",
     }, prompt_save_path)
     
     print(f"\n{'='*60}")
@@ -493,4 +549,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

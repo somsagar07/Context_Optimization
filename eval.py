@@ -108,7 +108,7 @@ def load_structure_policy(path, device="cpu", algorithm=None):
     obs_dim = checkpoint["obs_dim"]
     action_dims = checkpoint["action_dims"]
     algo = checkpoint.get("algorithm", "PPO" if algorithm is None else algorithm.upper())
-    has_value = algo == "PPO" 
+    has_value = "PPO" in algo 
     
     policy = StructurePolicy(obs_dim, action_dims, has_value).to(device)
     policy.load_state_dict(checkpoint["model_state_dict"])
@@ -123,7 +123,7 @@ def load_prompt_policy(path, device="cpu", algorithm=None):
     obs_dim = checkpoint["obs_dim"]
     action_dim = checkpoint["action_dim"]
     algo = checkpoint.get("algorithm", "PPO" if algorithm is None else algorithm.upper())
-    has_value = algo == "PPO"
+    has_value = "PPO" in algo
     
     policy = PromptPolicy(obs_dim, action_dim, has_value).to(device)
     policy.load_state_dict(checkpoint["model_state_dict"])
