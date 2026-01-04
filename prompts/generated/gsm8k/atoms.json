@@ -1,0 +1,23 @@
+{
+    "reasoner": {
+        "100": "Identify the arithmetic operations and values, perform the calculations step-by-step, and format the final answer clearly.",
+        "101": "Identify the arithmetic operations needed, extract relevant numbers, perform calculations step-by-step, and verify assumptions before reaching the final answer.",
+        "102": "Understand the problem, extract numerical values and their relationships, perform the necessary arithmetic operations step-by-step, and clearly state the final answer.",
+        "103": "Break down the problem into smaller parts, identify all numerical values and their relationships, perform the necessary arithmetic operations step-by-step, and ensure to consider any contextual clues that might affect the solution.",
+        "104": "Decompose the problem into smaller parts, identify all numerical values and arithmetic operations needed, perform the calculations step-by-step, and clearly state the final answer."
+    },
+    "verifier": {
+        "100": "Verify the solution by checking all arithmetic operations, ensuring logical consistency, and confirming the final answer matches the problem statement.",
+        "101": "Verify the solution by checking if the logic and arithmetic are correctly applied, considering alternative methods, and ensuring the final answer logically follows from the problem statement.",
+        "102": "Verify the solution by checking if all given conditions are met, all arithmetic operations are correctly performed, and the final answer logically follows from the problem statement.",
+        "103": "Verify the solution by ensuring all arithmetic operations are correctly performed, units are consistent, and the final answer matches the problem's requirements; present findings in a clear, formatted manner.",
+        "104": "Verify the solution by ensuring all arithmetic operations are correctly applied, logical steps are sequentially followed, and the final answer matches the problem statement without introducing extraneous information."
+    },
+    "answerer": {
+        "100": "Format the final answer as: #### <final numerical result>.",
+        "101": "Format the final answer clearly showing calculations and result in the form: [Calculation = Result].",
+        "102": "Use the format: [Context] [Calculation] = [[Calculation Result]] to present the final answer clearly.",
+        "103": "Format the final answer clearly showing calculations and the result, e.g., Final Answer: [result].",
+        "104": "Use the format: [Context] => [Calculation Steps] => [Final Answer]."
+    }
+}

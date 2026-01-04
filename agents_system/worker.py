@@ -8,7 +8,11 @@ import config
 class LLMWorker:
     """LLM-based worker that handles reasoning, verification, and answering."""
     
-    def __init__(self):
+    def __init__(self, model_name: str = None):
+        # Update the name if provided
+        if model_name is not None:
+            config.LLM_MODEL_NAME = model_name
+        
         print(f"Loading Worker Model: {config.LLM_MODEL_NAME} on {config.DEVICE}...")
         
         # Load tokenizer

@@ -12,10 +12,13 @@ Usage:
     python benchmark_sft.py --episodes 100 --dataset gsm8k
     python benchmark_sft.py --episodes 50 --cpu  # Use CPU if GPU memory is limited
 """
+
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
 import argparse
 import gc
 import heapq
-import os
 import sys
 import time
 from collections import defaultdict
@@ -153,7 +156,7 @@ def load_hierarchical_models(structure_path: str, prompt_path: str, device="cpu"
     struct_obs_dim = struct_checkpoint["obs_dim"]
     struct_action_dims = struct_checkpoint["action_dims"]
     struct_algo = struct_checkpoint.get("algorithm", "PPO")
-    struct_has_value = struct_algo == "PPO"
+    struct_has_value = "PPO" in struct_algo
     
     structure_policy = MultiDiscretePolicy(struct_obs_dim, struct_action_dims, has_value=struct_has_value).to(device)
     structure_policy.load_state_dict(struct_checkpoint["model_state_dict"])
@@ -164,7 +167,7 @@ def load_hierarchical_models(structure_path: str, prompt_path: str, device="cpu"
     prompt_obs_dim = prompt_checkpoint["obs_dim"]
     prompt_action_dim = prompt_checkpoint["action_dim"]
     prompt_algo = prompt_checkpoint.get("algorithm", "PPO")
-    prompt_has_value = prompt_algo == "PPO"
+    prompt_has_value = "PPO" in prompt_algo
     
     prompt_policy = PolicyNetwork(prompt_obs_dim, prompt_action_dim, has_value=prompt_has_value).to(device)
     prompt_policy.load_state_dict(prompt_checkpoint["model_state_dict"])
@@ -183,6 +186,7 @@ def decode_tools(idx: int) -> list:
     if idx & 1: tools.append("calculator")
     if idx & 2: tools.append("web_search")
     if idx & 4: tools.append("python")
+    if idx & 8: tools.append("ocr_reader")
     return tools if tools else ["none"]
 
 
@@ -368,7 +372,7 @@ def generate_grid_search_configs(max_configs=50):
     
     # Key dimensions to search
     workflows = [0, 1, 2]  # Direct, Reason+Ans, Reason+Verify+Ans
-    tool_sets = [0, 1, 3, 7]  # None, Calc, Calc+Web, All
+    tool_sets = [0, 1, 3, 7, 15]  # For all tools
     budgets = [0, 1, 2]  # Low, Mid, High
     
     # Grid search: workflow × tool_sets × budgets
@@ -400,12 +404,12 @@ def generate_greedy_configs():
     # Heuristic: More complex = better, but also more expensive
     
     # High priority: Full workflows with tools
-    for tools in [7, 1, 3, 0]:  # All, Calc, Calc+Web, None
+    for tools in [15, 7, 1, 3, 0]:  # All, Calc, Calc+Web, None
         for budget in [1, 2, 0]:  # Mid, High, Low
             configs.append([2, tools, budget, tools, budget, budget])  # Full workflow
     
     # Medium priority: Reason+Ans with tools
-    for tools in [7, 1, 3, 0]:
+    for tools in [15, 7, 1, 3, 0]:
         for budget in [1, 2, 0]:
             configs.append([1, tools, budget, 0, 0, budget])
     
@@ -426,9 +430,9 @@ def generate_evolutionary_population(pop_size=20):
     for _ in range(pop_size):
         config = [
             random.randint(0, 2),  # workflow
-            random.randint(0, 7),  # reasoner_tools
+            random.randint(0, 15),  # reasoner_tools
             random.randint(0, 2),  # reasoner_budget
-            random.randint(0, 7),  # verifier_tools
+            random.randint(0, 15),  # verifier_tools
             random.randint(0, 2),  # verifier_budget
             random.randint(0, 2),  # answerer_budget
         ]
@@ -447,7 +451,7 @@ def mutate_config(config, mutation_rate=0.3):
             if i == 0:  # workflow
                 new_config[i] = random.randint(0, 2)
             elif i in [1, 3]:  # tools
-                new_config[i] = random.randint(0, 7)
+                new_config[i] = random.randint(0, 15)
             else:  # budgets
                 new_config[i] = random.randint(0, 2)
     
@@ -581,9 +585,9 @@ def run_best_first_search(structure_env, prompt_env, num_episodes=50):
     
     # Start with some promising configs
     initial_configs = [
-        [2, 7, 2, 7, 2, 2],  # Full, all tools, high
+        [2, 15, 2, 15, 2, 2],  # Full, all tools, high
         [2, 1, 2, 1, 2, 2],  # Full, calc, high
-        [1, 7, 2, 0, 0, 2],  # Reason, all tools, high
+        [1, 15, 2, 0, 0, 2],  # Reason, all tools, high
         [1, 1, 2, 0, 0, 2],  # Reason, calc, high
     ]
     
@@ -645,7 +649,7 @@ def generate_neighbors(config):
                     neighbors.append(neighbor)
         elif i in [1, 3]:  # tools
             # Try adding/removing one tool (bitwise XOR)
-            for tool_bit in [1, 2, 4]:
+            for tool_bit in [1, 2, 4, 8]:
                 neighbor = config.copy()
                 neighbor[i] = int(config[i]) ^ tool_bit  # Toggle bit
                 neighbors.append(neighbor)
@@ -1134,7 +1138,7 @@ def parse_args():
     )
     parser.add_argument(
         "--dataset", type=str, default=None,
-        choices=["gsm8k", "hotpotqa"],
+        choices=["gsm8k", "hotpotqa", "gaia"],
         help="Override dataset"
     )
     parser.add_argument(
