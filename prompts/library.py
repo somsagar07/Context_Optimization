@@ -37,18 +37,51 @@ ANSWERER_ATOMS = {
     4: "Briefly explain how you got the answer.",
 }
 
+# Router: For classifying questions (Simple vs Complex, Math vs Retrieval)
+ROUTER_ATOMS = {
+    0: None,
+    1: "Classify this problem based on the tools required to solve it.",
+    2: "Determine if this is a single-step or multi-step reasoning problem.",
+    3: "Assess if this question requires external knowledge or pure logic.",
+    4: "Identify the domain of the question (e.g., Arithmetic, History, Coding).",
+}
+
+# Orchestrator: For breaking down complex tasks
+ORCHESTRATOR_ATOMS = {
+    0: None,
+    1: "Break this task into independent sub-tasks that can be solved in parallel.",
+    2: "Identify the logical dependencies between steps.",
+    3: "Create a step-by-step plan assigning specific tools to each step.",
+    4: "Extract the core variables and identify missing information.",
+}
+
+# Aggregator: For synthesizing multiple results (Voting/Workers)
+AGGREGATOR_ATOMS = {
+    0: None,
+    1: "Compare the provided solutions and identify the most consistent answer.",
+    2: "Resolve conflicts between the different results by checking assumptions.",
+    3: "Synthesize the partial results into a coherent final response.",
+    4: "If results disagree, analyze which derivation method was more robust.",
+}
+
 
 # Combined reference
 PROMPT_ATOMS = {
     "reasoner": REASONER_ATOMS,
     "verifier": VERIFIER_ATOMS,
     "answerer": ANSWERER_ATOMS,
+    "router": ROUTER_ATOMS,
+    "orchestrator": ORCHESTRATOR_ATOMS,
+    "aggregator": AGGREGATOR_ATOMS,
 }
 
 NUM_ATOMS = {
     "reasoner": len(REASONER_ATOMS),
     "verifier": len(VERIFIER_ATOMS),
     "answerer": len(ANSWERER_ATOMS),
+    "router": len(ROUTER_ATOMS),
+    "orchestrator": len(ORCHESTRATOR_ATOMS),
+    "aggregator": len(AGGREGATOR_ATOMS),
 }
 
 # REASONER_DONE = 0
@@ -126,6 +159,12 @@ def _load_from_file(file_path: str):
             merge_atoms(VERIFIER_ATOMS, data["verifier"])
         if "answerer" in data:
             merge_atoms(ANSWERER_ATOMS, data["answerer"])
+        if "router" in data:
+            merge_atoms(ROUTER_ATOMS, data["router"])
+        if "orchestrator" in data:
+            merge_atoms(ORCHESTRATOR_ATOMS, data["orchestrator"])
+        if "aggregator" in data:
+            merge_atoms(AGGREGATOR_ATOMS, data["aggregator"])
 
         # Update the counts
         refresh_counts()
@@ -139,9 +178,7 @@ def _load_from_file(file_path: str):
 def refresh_counts():
     """Updates the NUM_ATOMS global based on current dictionaries."""
     global NUM_ATOMS
-    NUM_ATOMS["reasoner"] = len(REASONER_ATOMS)
-    NUM_ATOMS["verifier"] = len(VERIFIER_ATOMS)
-    NUM_ATOMS["answerer"] = len(ANSWERER_ATOMS)
+    NUM_ATOMS = {k: len(v) for k, v in PROMPT_ATOMS.items()}
 
 
 def build_prompt_suffix(agent_type: str, selected_indices: list) -> str:

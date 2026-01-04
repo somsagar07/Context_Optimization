@@ -93,7 +93,10 @@ class AtomGenerator:
         role_goals = {
             "reasoner": "guide the step-by-step thinking process",
             "verifier": "critique and find errors in reasoning",
-            "answerer": "format the final output concisely"
+            "answerer": "format the final output concisely",
+            "router": "analyze the question complexity and select the right approach/agent",
+            "orchestrator": "decompose the problem into sub-tasks or parallel threads",
+            "aggregator": "resolve conflicts between multiple different answers or sub-task results",
         }
         goal = role_goals.get(role, "solve the task")
 
@@ -124,5 +127,8 @@ class AtomGenerator:
         return {
             "reasoner": self.generate_atoms_for_role(dataset_name, "reasoner"),
             "verifier": self.generate_atoms_for_role(dataset_name, "verifier"),
-            "answerer": self.generate_atoms_for_role(dataset_name, "answerer")
+            "answerer": self.generate_atoms_for_role(dataset_name, "answerer"),
+            "router": self.generate_atoms_for_role(dataset_name, "router"),
+            "orchestrator": self.generate_atoms_for_role(dataset_name, "orchestrator"),
+            "aggregator": self.generate_atoms_for_role(dataset_name, "aggregator"),
         }

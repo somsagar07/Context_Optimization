@@ -23,6 +23,7 @@ class ParallelVotingWorkflow(BaseWorkflow):
         """Execute parallel voting workflow."""
         prompt_suffixes = prompt_suffixes or {}
         answerer_suffix = prompt_suffixes.get("answerer", None)
+        aggregator_suffix = prompt_suffixes.get("aggregator", None)
         
         exec_info = {
             "steps": 0,
@@ -63,7 +64,7 @@ class ParallelVotingWorkflow(BaseWorkflow):
             context=f"Multiple attempts:\n{votes_text}\nProvide the most consistent answer.",
             tools=[],  # Answerer just synthesizes - votes already did computation
             tokens=answerer_tokens,
-            prompt_suffix=answerer_suffix
+            prompt_suffix=aggregator_suffix
         )
         exec_info["steps"] += 1
         exec_info["total_tokens"] += answerer_tokens

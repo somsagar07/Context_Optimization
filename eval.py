@@ -35,6 +35,7 @@ def decode_tools(idx):
     if idx & 1: tools.append("calculator")
     if idx & 2: tools.append("web_search")
     if idx & 4: tools.append("python")
+    if idx & 8: tools.append("ocr_reader")
     return tools if tools else ["none"]
 
 
