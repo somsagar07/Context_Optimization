@@ -168,12 +168,56 @@ class MultiDiscretePolicyPPO(nn.Module):
         features = self.network(x)
         return [head(features) for head in self.action_heads], self.value_head(features)
     
-    def get_action(self, obs, deterministic=False):
+    def get_action(self, obs, deterministic=False, action_mask=None, use_two_stage_masking=False, structure_env=None):
+        """
+        Get action from policy.
+        
+        Args:
+            obs: Observation
+            deterministic: If True, use argmax instead of sampling
+            action_mask: Pre-computed action mask (list of boolean arrays)
+            use_two_stage_masking: If True, do two-stage selection (workflow first, then mask others)
+            structure_env: StructureEnv instance (needed for two-stage masking)
+        """
         obs = self._to_tensor(obs)
         action_logits_list, value = self.forward(obs)
         
         actions, log_probs = [], []
-        for logits in action_logits_list:
+        
+        if use_two_stage_masking and structure_env is not None:
+            # Two-stage selection: workflow first, then mask other dimensions
+            # Stage 1: Select workflow (dimension 0)
+            workflow_logits = action_logits_list[0]
+            workflow_probs = torch.softmax(workflow_logits, dim=-1)
+            workflow_action = torch.argmax(workflow_probs, dim=-1) if deterministic else Categorical(workflow_probs).sample()
+            workflow_idx = workflow_action.item()
+            actions.append(workflow_idx)
+            log_probs.append(torch.log(workflow_probs.gather(1, workflow_action.unsqueeze(-1)) + 1e-8).item())
+            
+            # Stage 2: Get mask based on selected workflow and select other dimensions
+            workflow_mask = structure_env._get_action_mask(workflow_depth=workflow_idx)
+            
+            # Select remaining dimensions with masking
+            for i in range(1, len(action_logits_list)):
+                logits = action_logits_list[i]
+                # Apply mask for this dimension
+                if i < len(workflow_mask):
+                    mask = torch.tensor(workflow_mask[i], dtype=torch.bool, device=logits.device)
+                    logits = logits.masked_fill(~mask, float('-inf'))
+                
+                probs = torch.softmax(logits, dim=-1)
+                action = torch.argmax(probs, dim=-1) if deterministic else Categorical(probs).sample()
+                actions.append(action.item())
+                log_probs.append(torch.log(probs.gather(1, action.unsqueeze(-1)) + 1e-8).item())
+        else:
+            # Standard single-stage selection with optional pre-computed mask
+            for i, logits in enumerate(action_logits_list):
+                # Apply action mask if provided
+                if action_mask is not None and i < len(action_mask):
+                    mask = torch.tensor(action_mask[i], dtype=torch.bool, device=logits.device)
+                    # Set masked logits to -inf before softmax
+                    logits = logits.masked_fill(~mask, float('-inf'))
+                
             probs = torch.softmax(logits, dim=-1)
             action = torch.argmax(probs, dim=-1) if deterministic else Categorical(probs).sample()
             actions.append(action.item())
@@ -181,25 +225,40 @@ class MultiDiscretePolicyPPO(nn.Module):
         
         return np.array(actions), sum(log_probs), value.item()
     
-    def get_log_prob_and_value(self, obs, action):
+    def get_log_prob_and_value(self, obs, action, action_mask=None, use_two_stage_masking=False, structure_env=None):
         obs = self._to_tensor(obs)
         action = self._action_to_tensor(action)
         
         action_logits_list, value = self.forward(obs)
         
+        # If using two-stage masking, reconstruct mask from workflow in action
+        if use_two_stage_masking and structure_env is not None and action.shape[0] > 0:
+            workflow_idx = int(action[0, 0].item())  # action[0, 0] is workflow index (first dim of first action)
+            action_mask = structure_env._get_action_mask(workflow_depth=workflow_idx)
+        
         log_probs = []
         for i, logits in enumerate(action_logits_list):
+            # Apply action mask if provided
+            if action_mask is not None and i < len(action_mask):
+                mask = torch.tensor(action_mask[i], dtype=torch.bool, device=logits.device)
+                logits = logits.masked_fill(~mask, float('-inf'))
+            
             probs = torch.softmax(logits, dim=-1)
             log_probs.append(torch.log(probs.gather(1, action[:, i].unsqueeze(-1)) + 1e-8))
         
         return sum(log_probs).squeeze(), value.squeeze()
     
-    def get_entropy(self, obs):
+    def get_entropy(self, obs, action_mask=None):
         obs = self._to_tensor(obs)
         action_logits_list, _ = self.forward(obs)
         
         total_entropy = 0.0
-        for logits in action_logits_list:
+        for i, logits in enumerate(action_logits_list):
+            # Apply action mask if provided
+            if action_mask is not None and i < len(action_mask):
+                mask = torch.tensor(action_mask[i], dtype=torch.bool, device=logits.device)
+                logits = logits.masked_fill(~mask, float('-inf'))
+            
             probs = torch.softmax(logits, dim=-1)
             total_entropy = total_entropy + (-(probs * torch.log(probs + 1e-8)).sum(dim=-1))
         return total_entropy
@@ -238,12 +297,55 @@ class MultiDiscretePolicyGRPO(nn.Module):
         features = self.network(x)
         return [head(features) for head in self.action_heads]
     
-    def get_action(self, obs, deterministic=False):
+    def get_action(self, obs, deterministic=False, action_mask=None, use_two_stage_masking=False, structure_env=None):
+        """
+        Get action from policy.
+        
+        Args:
+            obs: Observation
+            deterministic: If True, use argmax instead of sampling
+            action_mask: Pre-computed action mask (list of boolean arrays)
+            use_two_stage_masking: If True, do two-stage selection (workflow first, then mask others)
+            structure_env: StructureEnv instance (needed for two-stage masking)
+        """
         obs = self._to_tensor(obs)
         action_logits_list = self.forward(obs)
         
         actions, log_probs = [], []
-        for logits in action_logits_list:
+        
+        if use_two_stage_masking and structure_env is not None:
+            # Two-stage selection: workflow first, then mask other dimensions
+            # Stage 1: Select workflow (dimension 0)
+            workflow_logits = action_logits_list[0]
+            workflow_probs = torch.softmax(workflow_logits, dim=-1)
+            workflow_action = torch.argmax(workflow_probs, dim=-1) if deterministic else Categorical(workflow_probs).sample()
+            workflow_idx = workflow_action.item()
+            actions.append(workflow_idx)
+            log_probs.append(torch.log(workflow_probs.gather(1, workflow_action.unsqueeze(-1)) + 1e-8).item())
+            
+            # Stage 2: Get mask based on selected workflow and select other dimensions
+            workflow_mask = structure_env._get_action_mask(workflow_depth=workflow_idx)
+            
+            # Select remaining dimensions with masking
+            for i in range(1, len(action_logits_list)):
+                logits = action_logits_list[i]
+                # Apply mask for this dimension
+                if i < len(workflow_mask):
+                    mask = torch.tensor(workflow_mask[i], dtype=torch.bool, device=logits.device)
+                    logits = logits.masked_fill(~mask, float('-inf'))
+                
+                probs = torch.softmax(logits, dim=-1)
+                action = torch.argmax(probs, dim=-1) if deterministic else Categorical(probs).sample()
+                actions.append(action.item())
+                log_probs.append(torch.log(probs.gather(1, action.unsqueeze(-1)) + 1e-8).item())
+        else:
+            # Standard single-stage selection with optional pre-computed mask
+            for i, logits in enumerate(action_logits_list):
+                # Apply action mask if provided
+                if action_mask is not None and i < len(action_mask):
+                    mask = torch.tensor(action_mask[i], dtype=torch.bool, device=logits.device)
+                    logits = logits.masked_fill(~mask, float('-inf'))
+                
             probs = torch.softmax(logits, dim=-1)
             action = torch.argmax(probs, dim=-1) if deterministic else Categorical(probs).sample()
             actions.append(action.item())
@@ -251,25 +353,40 @@ class MultiDiscretePolicyGRPO(nn.Module):
         
         return np.array(actions), sum(log_probs), 0.0  # No value
     
-    def get_log_prob(self, obs, action):
+    def get_log_prob(self, obs, action, action_mask=None, use_two_stage_masking=False, structure_env=None):
         obs = self._to_tensor(obs)
         action = self._action_to_tensor(action)
+        
+        # If using two-stage masking, reconstruct mask from workflow in action
+        if use_two_stage_masking and structure_env is not None and action.shape[0] > 0:
+            workflow_idx = int(action[0, 0].item())  # action[0, 0] is workflow index (first dim of first action)
+            action_mask = structure_env._get_action_mask(workflow_depth=workflow_idx)
         
         action_logits_list = self.forward(obs)
         
         log_probs = []
         for i, logits in enumerate(action_logits_list):
+            # Apply action mask if provided
+            if action_mask is not None and i < len(action_mask):
+                mask = torch.tensor(action_mask[i], dtype=torch.bool, device=logits.device)
+                logits = logits.masked_fill(~mask, float('-inf'))
+            
             probs = torch.softmax(logits, dim=-1)
             log_probs.append(torch.log(probs.gather(1, action[:, i].unsqueeze(-1)) + 1e-8))
         
         return sum(log_probs).squeeze()
     
-    def get_entropy(self, obs):
+    def get_entropy(self, obs, action_mask=None):
         obs = self._to_tensor(obs)
         action_logits_list = self.forward(obs)
         
         total_entropy = 0.0
-        for logits in action_logits_list:
+        for i, logits in enumerate(action_logits_list):
+            # Apply action mask if provided
+            if action_mask is not None and i < len(action_mask):
+                mask = torch.tensor(action_mask[i], dtype=torch.bool, device=logits.device)
+                logits = logits.masked_fill(~mask, float('-inf'))
+            
             probs = torch.softmax(logits, dim=-1)
             total_entropy = total_entropy + (-(probs * torch.log(probs + 1e-8)).sum(dim=-1))
         return total_entropy
@@ -302,9 +419,10 @@ class BaseTrainer(ABC):
     
     algorithm: Algorithm = None
     
-    def __init__(self, cfg, device="cuda" if torch.cuda.is_available() else "cpu"):
+    def __init__(self, cfg, device="cuda" if torch.cuda.is_available() else "cpu", use_action_masking=False):
         self.cfg = cfg
         self.device = device
+        self.use_action_masking = use_action_masking
         
         # Create environments
         self.structure_env = StructureEnv(cfg)
@@ -417,6 +535,7 @@ class BaseTrainer(ABC):
         if idx & 1: tools.append("calculator")
         if idx & 2: tools.append("web_search")
         if idx & 4: tools.append("python")
+        if idx & 8: tools.append("ocr_reader")
         return tools
     
     def run_episode(self, deterministic=False):
@@ -424,18 +543,26 @@ class BaseTrainer(ABC):
         # Reset and get question
         struct_obs, struct_info = self.structure_env.reset()
         question, answer = struct_info["question"], struct_info["answer"]
+        action_mask = struct_info.get("action_mask", None)
         
         # Structure policy decision
-        struct_action, struct_log_prob, struct_value = self.structure_policy.get_action(
-            struct_obs, deterministic=deterministic
-        )
+        # Use two-stage masking if enabled: select workflow first, then mask other dimensions
+        if self.use_action_masking:
+            struct_action, struct_log_prob, struct_value = self.structure_policy.get_action(
+                struct_obs, deterministic=deterministic,
+                use_two_stage_masking=True, structure_env=self.structure_env
+            )
+        else:
+            struct_action, struct_log_prob, struct_value = self.structure_policy.get_action(
+                struct_obs, deterministic=deterministic, action_mask=action_mask
+            )
         
         # Parse structure
         workflow_depth = int(struct_action[0])
-        reasoner_tools_idx = int(struct_action[1])
-        reasoner_budget_idx = int(struct_action[2])
-        verifier_tools_idx = int(struct_action[3])
-        verifier_budget_idx = int(struct_action[4])
+        agent1_tools_idx = int(struct_action[1])
+        agent1_budget_idx = int(struct_action[2])
+        agent2_tools_idx = int(struct_action[3])
+        agent2_budget_idx = int(struct_action[4])
         answerer_budget_idx = int(struct_action[5])
         
         # Set up prompt env
@@ -443,15 +570,17 @@ class BaseTrainer(ABC):
         self.prompt_env.current_a = answer
         self.prompt_env.question_embedding = self.structure_env.question_embedding.copy()
         self.prompt_env.workflow_depth = workflow_depth
-        self.prompt_env.reasoner_tools_idx = reasoner_tools_idx
-        self.prompt_env.reasoner_budget_idx = reasoner_budget_idx
-        self.prompt_env.verifier_tools_idx = verifier_tools_idx
-        self.prompt_env.verifier_budget_idx = verifier_budget_idx
+        self.prompt_env.agent1_tools_idx = agent1_tools_idx
+        self.prompt_env.agent1_budget_idx = agent1_budget_idx
+        self.prompt_env.agent2_tools_idx = agent2_tools_idx
+        self.prompt_env.agent2_budget_idx = agent2_budget_idx
         self.prompt_env.answerer_budget_idx = answerer_budget_idx
         
-        if workflow_depth == 0:
+        # Direct (0) and Parallel-Voting (5) don't need reasoner prompts
+        if workflow_depth == 0 or workflow_depth == 5:
             self.prompt_env.prompt_stage = self.prompt_env.PROMPT_STAGE_ANSWERER
         else:
+            # All other workflows start with reasoner
             self.prompt_env.prompt_stage = self.prompt_env.PROMPT_STAGE_REASONER
         
         self.prompt_env.prompt_step = 0
@@ -499,18 +628,22 @@ class BaseTrainer(ABC):
             "episode": self.episode_count,
             "correct": correct,
             "reward": final_reward,
-            "workflow": ["Direct", "Reason+Ans", "Reason+Verify+Ans"][workflow_depth],
+            "workflow": [
+                "Direct", "Reason+Ans", "Reason+Verify+Ans",
+                "Routing", "Parallel-Sectioning", "Parallel-Voting",
+                "Orchestrator-Workers", "Evaluator-Optimizer", "Autonomous-Agent"
+            ][workflow_depth],
             "num_prompt_steps": len(prompt_actions),
             "steps_taken": info.get("steps_taken", 0),
             "tools_used": tools_used,
             "total_tokens": info.get("total_tokens", 0),
-            "reasoner_tools": self._decode_tools(reasoner_tools_idx),
-            "verifier_tools": self._decode_tools(verifier_tools_idx),
+            "agent1_tools": self._decode_tools(agent1_tools_idx),
+            "agent2_tools": self._decode_tools(agent2_tools_idx),
             "reasoner_prompts": info.get("reasoner_prompts", []),
             "verifier_prompts": info.get("verifier_prompts", []),
             "answerer_prompts": info.get("answerer_prompts", []),
-            "reasoner_budget": ["Low", "Mid", "High"][reasoner_budget_idx] if workflow_depth >= 1 else "N/A",
-            "verifier_budget": ["Low", "Mid", "High"][verifier_budget_idx] if workflow_depth == 2 else "N/A",
+            "reasoner_budget": ["Low", "Mid", "High"][agent1_budget_idx] if workflow_depth in [1, 2, 3, 4, 6, 7, 8] else "N/A",
+            "verifier_budget": ["Low", "Mid", "High"][agent2_budget_idx] if workflow_depth in [2, 7] else "N/A",
             "answerer_budget": ["Low", "Mid", "High"][answerer_budget_idx],
             "question": info.get("question", ""),
             "final_answer": info.get("final_answer", ""),
@@ -522,6 +655,7 @@ class BaseTrainer(ABC):
             "struct_action": struct_action,
             "struct_log_prob": struct_log_prob,
             "struct_value": struct_value,
+            "struct_action_mask": action_mask,  # Store action mask for policy updates
             "prompt_obs_list": prompt_obs_list,
             "prompt_actions": prompt_actions,
             "prompt_log_probs": prompt_log_probs,
@@ -578,7 +712,10 @@ class BaseTrainer(ABC):
             pbar.update(1)
             
             if (ep + 1) % log_every == 0:
-                print(f"\n[{ep+1}/{num_episodes}] Acc: {acc:.1f}% | Reward: {avg_rew:.3f} | Tools: {tools:.2f}")
+                # Show tool selection stats
+                recent_episodes = self.episode_logs[-log_every:] if len(self.episode_logs) >= log_every else self.episode_logs
+                tools_selected = sum(1 for e in recent_episodes if e.get("agent1_tools") or e.get("agent2_tools"))
+                print(f"\n[{ep+1}/{num_episodes}] Acc: {acc:.1f}% | Reward: {avg_rew:.3f} | Tools Used: {tools:.2f} | Tools Selected: {tools_selected}/{len(recent_episodes)}")
             
             if (ep + 1) % save_every == 0:
                 self.save_models(f"_ep{ep+1}")
@@ -615,7 +752,11 @@ class BaseTrainer(ABC):
                 "avg_tools_used": float(np.mean([e["tools_used"] for e in self.episode_logs])),
                 "workflow_distribution": {
                     w: sum(1 for e in self.episode_logs if e["workflow"] == w)
-                    for w in ["Direct", "Reason+Ans", "Reason+Verify+Ans"]
+                    for w in [
+                        "Direct", "Reason+Ans", "Reason+Verify+Ans",
+                        "Routing", "Parallel-Sectioning", "Parallel-Voting",
+                        "Orchestrator-Workers", "Evaluator-Optimizer", "Autonomous-Agent"
+                    ]
                 },
                 "episodes": self.episode_logs
             }

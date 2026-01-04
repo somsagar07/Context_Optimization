@@ -22,7 +22,11 @@ from env.prompt_env import PromptEnv
 
 
 # Human-readable mappings
-WORKFLOW_NAMES = ["Direct", "Reason+Ans", "Reason+Verify+Ans"]
+WORKFLOW_NAMES = [
+    "Direct", "Reason+Ans", "Reason+Verify+Ans",
+    "Routing", "Parallel-Sectioning", "Parallel-Voting",
+    "Orchestrator-Workers", "Evaluator-Optimizer", "Autonomous-Agent"
+]
 BUDGET_NAMES = ["Low", "Mid", "High"]
 
 

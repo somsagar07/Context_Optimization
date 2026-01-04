@@ -5,6 +5,7 @@ import sys
 sys.path.append('..')
 
 from agents_system import LLMWorker
+from agents_system.workflows import get_workflow
 from tools import ToolRegistry
 from utils import get_dataset_loader
 
@@ -17,7 +18,7 @@ class MultiStepAgentEnv(gym.Env):
     the agent makes SEQUENTIAL decisions, enabling proper credit assignment.
     
     Episode Structure (4 steps max):
-        Step 0: Choose workflow depth [0, 1, 2] → action_space = 3
+        Step 0: Choose workflow depth [0, 1, 2, ..., 8] → action_space = 9
         Step 1: Choose reasoner config (tools + budget) → action_space = 24 (8 tools × 3 budgets)
             NOTE: Edited to 16 budget for tools, so action_space = 48
         Step 2: Choose verifier config (if depth=2) → action_space = 24
@@ -72,11 +73,11 @@ class MultiStepAgentEnv(gym.Env):
         # Observation: question embedding + stage encoding + partial decisions
         # - question_embedding: hidden_size (e.g., 1536 for Qwen2.5-1.5B)
         # - stage_onehot: 4 dims (which decision stage we're in)
-        # - workflow_chosen: 3 dims (one-hot of depth)
+        # - workflow_chosen: 9 dims (one-hot of depth)
         # - reasoner_chosen: 24 dims (one-hot of tools×budget)
         # - verifier_chosen: 24 dims (one-hot of tools×budget)
         hidden_size = self.worker.model.config.hidden_size
-        obs_size = hidden_size + 4 + 3 + 48 + 48  # Total observation
+        obs_size = hidden_size + 4 + 9 + 48 + 48  # Total observation (updated workflow to 9)
         
         self.observation_space = spaces.Box(
             low=-np.inf, high=np.inf,
@@ -92,10 +93,10 @@ class MultiStepAgentEnv(gym.Env):
         
         # Accumulated decisions
         self.workflow_depth = None
-        self.reasoner_tools = None
-        self.reasoner_budget = None
-        self.verifier_tools = None
-        self.verifier_budget = None
+        self.agent1_tools = None
+        self.agent1_budget = None
+        self.agent2_tools = None
+        self.agent2_budget = None
         self.answerer_budget = None
         
     def reset(self, seed=None, options=None):
@@ -108,10 +109,10 @@ class MultiStepAgentEnv(gym.Env):
         # Reset stage and decisions
         self.stage = self.STAGE_WORKFLOW
         self.workflow_depth = None
-        self.reasoner_tools = None
-        self.reasoner_budget = None
-        self.verifier_tools = None
-        self.verifier_budget = None
+        self.agent1_tools = None
+        self.agent1_budget = None
+        self.agent2_tools = None
+        self.agent2_budget = None
         self.answerer_budget = None
         
         return self._get_observation(), {}
@@ -123,22 +124,22 @@ class MultiStepAgentEnv(gym.Env):
         stage_onehot[min(self.stage, 3)] = 1.0
         
         # Workflow choice one-hot (3 options)
-        workflow_onehot = np.zeros(3, dtype=np.float32)
+        workflow_onehot = np.zeros(9, dtype=np.float32)
         if self.workflow_depth is not None:
             workflow_onehot[self.workflow_depth] = 1.0
         
         # Reasoner choice one-hot (24 = 8 tools × 3 budgets)
         # NOTE: Edited to 16 tools, so action space is 48
         reasoner_onehot = np.zeros(48, dtype=np.float32)
-        if self.reasoner_tools is not None and self.reasoner_budget is not None:
-            idx = self._encode_config(self.reasoner_tools, self.reasoner_budget)
+        if self.agent1_tools is not None and self.agent1_budget is not None:
+            idx = self._encode_config(self.agent1_tools, self.agent1_budget)
             reasoner_onehot[idx] = 1.0
         
         # Verifier choice one-hot (24)
         # NOTE: Edited to 16 tools, so action space is 48
         verifier_onehot = np.zeros(48, dtype=np.float32)
-        if self.verifier_tools is not None and self.verifier_budget is not None:
-            idx = self._encode_config(self.verifier_tools, self.verifier_budget)
+        if self.agent2_tools is not None and self.agent2_budget is not None:
+            idx = self._encode_config(self.agent2_tools, self.agent2_budget)
             verifier_onehot[idx] = 1.0
         
         # Concatenate all
@@ -162,6 +163,14 @@ class MultiStepAgentEnv(gym.Env):
         budget_idx = action % 3
         return tools_idx, budget_idx
     
+    def _get_workflow(self, workflow_depth: int):
+        """Get or create workflow instance for the given depth."""
+        if workflow_depth not in self._workflow_instances:
+            self._workflow_instances[workflow_depth] = get_workflow(
+                workflow_depth, self.worker, self.tools
+            )
+        return self._workflow_instances[workflow_depth]
+    
     def _decode_tools(self, idx: int) -> list:
         """Decode tool index to list of tool names."""
         tools = []
@@ -176,8 +185,8 @@ class MultiStepAgentEnv(gym.Env):
         mask = np.zeros(48, dtype=np.float32)
         
         if self.stage == self.STAGE_WORKFLOW:
-            # Only 3 valid: [0, 1, 2] for workflow depth
-            mask[:3] = 1.0
+            # 9 valid workflows: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+            mask[:9] = 1.0
         elif self.stage == self.STAGE_REASONER:
             # 48 valid: all combinations of tools (16) × budget (3)
             # NOTE: Edited to 16 tools, so 48 combinations
@@ -203,11 +212,12 @@ class MultiStepAgentEnv(gym.Env):
         
         if self.stage == self.STAGE_WORKFLOW:
             # Choose workflow depth
-            self.workflow_depth = min(action, 2)
+            self.workflow_depth = min(action, 8)
             
             # Small shaping reward: prefer simpler workflows for efficiency
             # (will be outweighed by correctness if complex is needed)
-            efficiency_bonus = (2 - self.workflow_depth) * 0.02
+            # Normalize: Direct=0 gets max bonus, most complex gets 0
+            efficiency_bonus = max(0, (8 - self.workflow_depth) * 0.01)
             reward = efficiency_bonus
             
             # Next stage depends on depth
@@ -221,15 +231,15 @@ class MultiStepAgentEnv(gym.Env):
         elif self.stage == self.STAGE_REASONER:
             # Choose reasoner tools + budget
             tools_idx, budget_idx = self._decode_config(min(action, 23))
-            self.reasoner_tools = tools_idx
-            self.reasoner_budget = budget_idx
+            self.agent1_tools = tools_idx
+            self.agent1_budget = budget_idx
             
             # Small shaping: prefer lower budgets (efficiency)
             efficiency_bonus = (2 - budget_idx) * 0.01
             reward = efficiency_bonus
             
-            # Next stage
-            if self.workflow_depth == 2:
+            # Next stage: workflows 2 and 7 need verifier
+            if self.workflow_depth in [2, 7]:
                 self.stage = self.STAGE_VERIFIER
             else:
                 self.stage = self.STAGE_ANSWERER
@@ -237,8 +247,8 @@ class MultiStepAgentEnv(gym.Env):
         elif self.stage == self.STAGE_VERIFIER:
             # Choose verifier tools + budget
             tools_idx, budget_idx = self._decode_config(min(action, 23))
-            self.verifier_tools = tools_idx
-            self.verifier_budget = budget_idx
+            self.agent2_tools = tools_idx
+            self.agent2_budget = budget_idx
             
             efficiency_bonus = (2 - budget_idx) * 0.01
             reward = efficiency_bonus
@@ -271,13 +281,17 @@ class MultiStepAgentEnv(gym.Env):
             info = {
                 "query": self.current_q,
                 "correct": correctness == 1.0,
-                "workflow": ["Direct", "Reason+Ans", "Reason+Verify+Ans"][self.workflow_depth],
+                "workflow": [
+                    "Direct", "Reason+Ans", "Reason+Verify+Ans",
+                    "Routing", "Parallel-Sectioning", "Parallel-Voting",
+                    "Orchestrator-Workers", "Evaluator-Optimizer", "Autonomous-Agent"
+                ][self.workflow_depth] if self.workflow_depth is not None and self.workflow_depth < 9 else "Unknown",
                 "steps_taken": execution_info["steps"],
                 "tools_used": execution_info["tools_count"],
-                "reasoner_tools": execution_info.get("reasoner_tools", []),
-                "verifier_tools": execution_info.get("verifier_tools", []),
-                "reasoner_budget": ["Low", "Mid", "High"][self.reasoner_budget] if self.reasoner_budget is not None else "N/A",
-                "verifier_budget": ["Low", "Mid", "High"][self.verifier_budget] if self.verifier_budget is not None else "N/A",
+                "agent1_tools": execution_info.get("agent1_tools", []),
+                "agent2_tools": execution_info.get("agent2_tools", []),
+                "agent1_budget": ["Low", "Mid", "High"][self.agent1_budget] if self.agent1_budget is not None else "N/A",
+                "agent2_budget": ["Low", "Mid", "High"][self.agent2_budget] if self.agent2_budget is not None else "N/A",
                 "answerer_budget": ["Low", "Mid", "High"][self.answerer_budget],
                 "total_tokens": execution_info["total_tokens"],
                 "episode_length": self._get_episode_length(),
@@ -289,96 +303,45 @@ class MultiStepAgentEnv(gym.Env):
     
     def _get_episode_length(self) -> int:
         """Get number of decision steps for this episode."""
-        if self.workflow_depth == 0:
-            return 2  # workflow + answerer
-        elif self.workflow_depth == 1:
-            return 3  # workflow + reasoner + answerer
-        else:
+        if self.workflow_depth == 0 or self.workflow_depth == 5:
+            return 2  # workflow + answerer (Direct or Parallel-Voting)
+        elif self.workflow_depth in [2, 7]:
             return 4  # workflow + reasoner + verifier + answerer
+        else:
+            return 3  # workflow + reasoner + answerer (all other workflows)
     
     def _execute_workflow(self) -> tuple:
         """Execute the configured workflow and return (final_text, info)."""
+        # Get workflow instance and execute
+        workflow = self._get_workflow(self.workflow_depth)
+        
         # Get token counts
+        agent1_tokens = self.TOKEN_BUDGETS["reasoner"][self.agent1_budget] if self.agent1_budget is not None else 256
+        agent2_tokens = self.TOKEN_BUDGETS["verifier"][self.agent2_budget] if self.agent2_budget is not None else 128
         answerer_tokens = self.TOKEN_BUDGETS["answerer"][self.answerer_budget]
         
-        execution_info = {
-            "steps": 0,
-            "tools_count": 0,
-            "total_tokens": 0,
-            "reasoner_tools": [],
-            "verifier_tools": [],
-        }
+        # Decode tools
+        agent1_tools = self._decode_tools(self.agent1_tools) if self.agent1_tools is not None else []
+        agent2_tools = self._decode_tools(self.agent2_tools) if self.agent2_tools is not None else []
         
-        if self.workflow_depth == 0:
-            # Direct Answer
-            final_text = self._execute_agent_step(
-                self.worker.answer_direct,
-                self.current_q,
-                tokens=answerer_tokens
-            )
-            execution_info["steps"] = 1
-            execution_info["total_tokens"] = answerer_tokens
-            
-        elif self.workflow_depth == 1:
-            # Reason -> Answer
-            reasoner_tokens = self.TOKEN_BUDGETS["reasoner"][self.reasoner_budget]
-            reasoner_tools = self._decode_tools(self.reasoner_tools)
-            execution_info["reasoner_tools"] = reasoner_tools
-            
-            reasoning = self._execute_agent_step(
-                self.worker.reason,
-                self.current_q,
-                tools=reasoner_tools,
-                tokens=reasoner_tokens
-            )
-            execution_info["tools_count"] += len(reasoner_tools)
-            
-            final_text = self._execute_agent_step(
-                self.worker.answer_with_context,
-                self.current_q,
-                context=reasoning,
-                tokens=answerer_tokens
-            )
-            execution_info["steps"] = 2
-            execution_info["total_tokens"] = reasoner_tokens + answerer_tokens
-            
-        else:  # workflow_depth == 2
-            # Reason -> Verify -> Answer
-            reasoner_tokens = self.TOKEN_BUDGETS["reasoner"][self.reasoner_budget]
-            verifier_tokens = self.TOKEN_BUDGETS["verifier"][self.verifier_budget]
-            reasoner_tools = self._decode_tools(self.reasoner_tools)
-            verifier_tools = self._decode_tools(self.verifier_tools)
-            execution_info["reasoner_tools"] = reasoner_tools
-            execution_info["verifier_tools"] = verifier_tools
-            
-            reasoning = self._execute_agent_step(
-                self.worker.reason,
-                self.current_q,
-                tools=reasoner_tools,
-                tokens=reasoner_tokens
-            )
-            execution_info["tools_count"] += len(reasoner_tools)
-            
-            critique = self._execute_agent_step(
-                self.worker.verify,
-                self.current_q,
-                context=reasoning,
-                tools=verifier_tools,
-                tokens=verifier_tokens
-            )
-            execution_info["tools_count"] += len(verifier_tools)
-            
-            context = f"Reasoning: {reasoning}\nReview: {critique}"
-            final_text = self._execute_agent_step(
-                self.worker.answer_with_context,
-                self.current_q,
-                context=context,
-                tokens=answerer_tokens
-            )
-            execution_info["steps"] = 3
-            execution_info["total_tokens"] = reasoner_tokens + verifier_tokens + answerer_tokens
+        # Execute workflow
+        final_text, exec_info = workflow.execute(
+            self.current_q,
+            agent1_tools,
+            self.agent1_budget if self.agent1_budget is not None else 1,
+            agent2_tools,
+            self.agent2_budget if self.agent2_budget is not None else 1,
+            self.answerer_budget,
+            agent1_tokens,
+            agent2_tokens,
+            answerer_tokens
+        )
         
-        return final_text, execution_info
+        # Add tool lists to execution info
+        exec_info["agent1_tools"] = agent1_tools
+        exec_info["agent2_tools"] = agent2_tools
+        
+        return final_text, exec_info
     
     def _execute_agent_step(self, method, question, context=None, tools=None, tokens=256):
         """Execute a single agent step with optional tool execution."""

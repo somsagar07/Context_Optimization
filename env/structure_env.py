@@ -24,14 +24,15 @@ class StructureEnv(gym.Env):
     """
     High-level policy environment for structure decisions.
     
-    Action Space: MultiDiscrete([3, 8, 3, 8, 3, 3])
-        - workflow: 3 options (Direct=0, Reason+Ans=1, Reason+Verify+Ans=2)
-        - reasoner_tools: 8 options (binary encoding of 3 tools)
-            - NOTE: Updated to 16 options for 4 tools
-        - reasoner_budget: 3 options (Low=0, Mid=1, High=2)
-        - verifier_tools: 8 options (binary encoding of 3 tools)
-            - NOTE: Updated to 16 options for 4 tools
-        - verifier_budget: 3 options
+    Action Space: MultiDiscrete([9, 16, 3, 16, 3, 3])
+        - workflow: 9 options
+            0=Direct, 1=Reason+Ans, 2=Reason+Verify+Ans,
+            3=Routing, 4=Parallel-Sectioning, 5=Parallel-Voting,
+            6=Orchestrator-Workers, 7=Evaluator-Optimizer, 8=Autonomous-Agent
+        - agent1_tools: 16 options (binary encoding of 4 tools)
+        - agent1_budget: 3 options (Low=0, Mid=1, High=2)
+        - agent2_tools: 16 options (binary encoding of 4 tools)
+        - agent2_budget: 3 options
         - answerer_budget: 3 options
     
     This env does NOT execute the workflow - it only selects the structure.
@@ -55,9 +56,9 @@ class StructureEnv(gym.Env):
         self.worker = LLMWorker()
         self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
-        # Structure dimensions: [workflow, r_tools, r_budget, v_tools, v_budget, a_budget]
-        # NOTE: Updated tools to 16 options for 4 tools
-        self.structure_dims = np.array([3, 16, 3, 16, 3, 3])
+        # Structure dimensions: [workflow, agent1_tools, agent1_budget, agent2_tools, agent2_budget, answerer_budget]
+        # NOTE: Updated to 9 workflows (3 original + 6 from Anthropic patterns)
+        self.structure_dims = np.array([9, 16, 3, 16, 3, 3])
         
         # Action space: MultiDiscrete for interpretable structure decisions
         self.action_space = spaces.MultiDiscrete(self.structure_dims)
@@ -87,6 +88,7 @@ class StructureEnv(gym.Env):
         info = {
             "question": self.current_q,
             "answer": self.current_a,
+            "action_mask": self._get_action_mask(),
         }
         
         return self._get_observation(), info
@@ -116,6 +118,47 @@ class StructureEnv(gym.Env):
         
         return np.concatenate([self.question_embedding, stats]).astype(np.float32)
     
+    def _get_action_mask(self, workflow_depth=None):
+        """
+        Compute action mask for MultiDiscrete action space.
+        Returns a list of boolean arrays, one per action dimension.
+        True = valid action, False = invalid (masked).
+        
+        Args:
+            workflow_depth: If provided, masks based on workflow requirements.
+                           If None, returns all-valid mask (for initial selection).
+        """
+        # All workflows are valid
+        workflow_mask = np.ones(9, dtype=bool)
+        
+        # All tool combinations are valid (16 options)
+        agent1_tools_mask = np.ones(16, dtype=bool)
+        agent2_tools_mask = np.ones(16, dtype=bool)
+        
+        # All budgets are valid (3 options)
+        agent1_budget_mask = np.ones(3, dtype=bool)
+        agent2_budget_mask = np.ones(3, dtype=bool)
+        answerer_budget_mask = np.ones(3, dtype=bool)
+        
+        # Workflow-dependent masking: Mask agent2 for workflows that don't use it
+        # Workflows 0, 1, 5 don't use agent2 (verifier/workers/aspect2)
+        if workflow_depth is not None and workflow_depth in [0, 1, 5]:
+            # These workflows don't use agent2, so mask agent2_tools and agent2_budget
+            # Keep at least one valid action (index 0) to avoid all-masked dimension
+            agent2_tools_mask = np.zeros(16, dtype=bool)
+            agent2_tools_mask[0] = True  # Keep "no tools" as valid (will be ignored anyway)
+            agent2_budget_mask = np.zeros(3, dtype=bool)
+            agent2_budget_mask[0] = True  # Keep "Low" as valid (will be ignored anyway)
+        
+        return [
+            workflow_mask,
+            agent1_tools_mask,
+            agent1_budget_mask,
+            agent2_tools_mask,
+            agent2_budget_mask,
+            answerer_budget_mask
+        ]
+    
     def step(self, action):
         """
         Process structure decision. Does NOT execute LLM.
@@ -125,10 +168,10 @@ class StructureEnv(gym.Env):
         """
         # Parse MultiDiscrete action
         workflow_depth = int(action[0])
-        reasoner_tools_idx = int(action[1])
-        reasoner_budget_idx = int(action[2])
-        verifier_tools_idx = int(action[3])
-        verifier_budget_idx = int(action[4])
+        agent1_tools_idx = int(action[1])
+        agent1_budget_idx = int(action[2])
+        agent2_tools_idx = int(action[3])
+        agent2_budget_idx = int(action[4])
         answerer_budget_idx = int(action[5])
         
         # Store structure info for handoff to PromptEnv
@@ -138,15 +181,20 @@ class StructureEnv(gym.Env):
             "embedding": self.question_embedding,
             "structure": {
                 "workflow_depth": workflow_depth,
-                "reasoner_tools_idx": reasoner_tools_idx,
-                "reasoner_budget_idx": reasoner_budget_idx,
-                "verifier_tools_idx": verifier_tools_idx,
-                "verifier_budget_idx": verifier_budget_idx,
+                "agent1_tools_idx": agent1_tools_idx,
+                "agent1_budget_idx": agent1_budget_idx,
+                "agent2_tools_idx": agent2_tools_idx,
+                "agent2_budget_idx": agent2_budget_idx,
                 "answerer_budget_idx": answerer_budget_idx,
             },
-            "workflow": ["Direct", "Reason+Ans", "Reason+Verify+Ans"][workflow_depth],
+            "workflow": [
+                "Direct", "Reason+Ans", "Reason+Verify+Ans",
+                "Routing", "Parallel-Sectioning", "Parallel-Voting",
+                "Orchestrator-Workers", "Evaluator-Optimizer", "Autonomous-Agent"
+            ][workflow_depth],
         }
         
         # No reward here - will get real reward after PromptEnv executes
         # This terminates the structure selection (one-step env)
+        info["action_mask"] = self._get_action_mask()
         return self._get_observation(), 0.0, True, False, info

@@ -5,7 +5,7 @@ Uses TWO separate policy networks:
 1. STRUCTURE POLICY (High-Level Manager):
    - Single-step, MultiDiscrete action space
    - Selects: workflow, tools, budgets
-   - Action: MultiDiscrete([3, 8, 3, 8, 3, 3])
+   - Action: MultiDiscrete([9, 16, 3, 16, 3, 3])  # Updated to 9 workflows, 16 tool options
 
 2. PROMPT POLICY (Low-Level Worker):
    - Multi-step, Discrete action space

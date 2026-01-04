@@ -57,6 +57,10 @@ def parse_args():
     parser.add_argument("--reward-scale", type=float, default=1.0, help="Scale correctness reward")
     parser.add_argument("--tool-bonus", type=float, default=0.0, help="Bonus per tool (+ or -)")
     
+    # Action masking
+    parser.add_argument("--mask", action="store_true", default=False,
+                       help="Enable action masking to reduce invalid action space (masks agent2 for workflows 0,1,5)")
+    
     # Logging
     parser.add_argument("--log-every", type=int, default=50, help="Log frequency")
     parser.add_argument("--save-every", type=int, default=2000, help="Checkpoint frequency")
@@ -83,9 +87,9 @@ def main():
     
     # Create trainer
     if args.algorithm == "ppo":
-        trainer = PPOTrainer(cfg)
+        trainer = PPOTrainer(cfg, use_action_masking=args.mask)
     else:
-        trainer = GRPOTrainer(cfg)
+        trainer = GRPOTrainer(cfg, use_action_masking=args.mask)
     
     # Load pretrained models if provided (e.g., from SFT)
     if args.pretrain_structure or args.pretrain_prompt:

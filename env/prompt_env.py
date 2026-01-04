@@ -18,6 +18,7 @@ import sys
 sys.path.append('..')
 
 from agents_system import LLMWorker
+from agents_system.workflows import get_workflow
 from tools import ToolRegistry
 from utils import get_dataset_loader
 from prompts.library import (
@@ -110,10 +111,10 @@ class PromptEnv(gym.Env):
         
         # Structure decisions (from high-level policy)
         self.workflow_depth = 0
-        self.reasoner_tools_idx = 0
-        self.reasoner_budget_idx = 0
-        self.verifier_tools_idx = 0
-        self.verifier_budget_idx = 0
+        self.agent1_tools_idx = 0
+        self.agent1_budget_idx = 0
+        self.agent2_tools_idx = 0
+        self.agent2_budget_idx = 0
         self.answerer_budget_idx = 0
         
         # Prompt selection state
@@ -144,10 +145,10 @@ class PromptEnv(gym.Env):
         self.question_embedding = embedding
         
         self.workflow_depth = structure["workflow_depth"]
-        self.reasoner_tools_idx = structure["reasoner_tools_idx"]
-        self.reasoner_budget_idx = structure["reasoner_budget_idx"]
-        self.verifier_tools_idx = structure["verifier_tools_idx"]
-        self.verifier_budget_idx = structure["verifier_budget_idx"]
+        self.agent1_tools_idx = structure["agent1_tools_idx"]
+        self.agent1_budget_idx = structure["agent1_budget_idx"]
+        self.agent2_tools_idx = structure["agent2_tools_idx"]
+        self.agent2_budget_idx = structure["agent2_budget_idx"]
         self.answerer_budget_idx = structure["answerer_budget_idx"]
         
         self._structure_set = True
@@ -167,18 +168,19 @@ class PromptEnv(gym.Env):
             self.question_embedding = self.worker.get_embedding(self.current_q)
             # Default structure
             self.workflow_depth = 0
-            self.reasoner_tools_idx = 0
-            self.reasoner_budget_idx = 1
-            self.verifier_tools_idx = 0
-            self.verifier_budget_idx = 1
+            self.agent1_tools_idx = 0
+            self.agent1_budget_idx = 1
+            self.agent2_tools_idx = 0
+            self.agent2_budget_idx = 1
             self.answerer_budget_idx = 1
         
         # Reset prompt selection
-        if self.workflow_depth == 0:
-            # Direct: only answerer prompts
+        # Direct (0) and Parallel-Voting (5) don't need reasoner prompts
+        if self.workflow_depth == 0 or self.workflow_depth == 5:
+            # Direct or Parallel-Voting: only answerer prompts
             self.prompt_stage = self.PROMPT_STAGE_ANSWERER
         else:
-            # Start with reasoner
+            # All other workflows start with reasoner
             self.prompt_stage = self.PROMPT_STAGE_REASONER
             
         self.prompt_step = 0
@@ -193,11 +195,11 @@ class PromptEnv(gym.Env):
         """Build observation vector."""
         # Structure decisions (normalized)
         structure_vec = np.array([
-            self.workflow_depth / 2.0,
-            self.reasoner_tools_idx / 7.0,
-            self.reasoner_budget_idx / 2.0,
-            self.verifier_tools_idx / 7.0,
-            self.verifier_budget_idx / 2.0,
+            self.workflow_depth / 8.0,  # Normalize for 9 workflows (0-8)
+            self.agent1_tools_idx / 15.0,  # Normalize for 16 tool options (0-15)
+            self.agent1_budget_idx / 2.0,
+            self.agent2_tools_idx / 15.0,  # Normalize for 16 tool options (0-15)
+            self.agent2_budget_idx / 2.0,
             self.answerer_budget_idx / 2.0,
         ], dtype=np.float32)
         
@@ -282,12 +284,10 @@ class PromptEnv(gym.Env):
         if self._all_prompts_done():
             final_text, exec_info = self._execute_workflow()
             
-            # Calculate final reward
-            # Base correctness reward
+            # Calculate correctness (reward will be added in base.py to avoid double-counting)
             correctness = self.dataset.evaluate_correctness(final_text, self.current_a)
-            reward += correctness * 5.0
             
-            # Check the dataset and apply reward/penalties
+            # Dataset-specific bonuses (keep these as they're unique to prompt selection)
             if self.dataset.name in ["gaia"]:
                 # Reward for valid code execution (encourages syntax correctness and tool use)
                 if exec_info["valid_code_count"] > 0:
@@ -301,20 +301,19 @@ class PromptEnv(gym.Env):
                 if "Final Answer:" in final_text:
                     reward += 0.1
             
-            # Cost penalties
-            reward -= exec_info["steps"] * self.cfg.COST_PER_STEP
-            reward -= exec_info["tools_count"] * self.cfg.COST_TOOL_USAGE
-            
-            # Token penalty
-            max_tokens = 1024 + 512 + 256
-            token_penalty = (exec_info["total_tokens"] / max_tokens) * self.cfg.COST_TOKEN_BUDGET
-            reward -= token_penalty
+            # NOTE: Correctness reward and penalties (steps, tools, tokens) are applied
+            # in base.py to avoid double-counting. Only intermediate step rewards and
+            # dataset-specific bonuses are added here.
             
             terminated = True
             info = {
                 "question": self.current_q,
                 "correct": correctness == 1.0,
-                "workflow": ["Direct", "Reason+Ans", "Reason+Verify+Ans"][self.workflow_depth],
+                "workflow": [
+                    "Direct", "Reason+Ans", "Reason+Verify+Ans",
+                    "Routing", "Parallel-Sectioning", "Parallel-Voting",
+                    "Orchestrator-Workers", "Evaluator-Optimizer", "Autonomous-Agent"
+                ][self.workflow_depth],
                 "steps_taken": exec_info["steps"],
                 "tools_used": exec_info["tools_count"],
                 "reasoner_prompts": self.selected_prompts["reasoner"],
@@ -322,8 +321,8 @@ class PromptEnv(gym.Env):
                 "answerer_prompts": self.selected_prompts["answerer"],
                 "total_tokens": exec_info["total_tokens"],
                 # Budget info
-                "reasoner_budget": ["Low", "Mid", "High"][self.reasoner_budget_idx] if self.workflow_depth >= 1 else "N/A",
-                "verifier_budget": ["Low", "Mid", "High"][self.verifier_budget_idx] if self.workflow_depth == 2 else "N/A",
+                "reasoner_budget": ["Low", "Mid", "High"][self.agent1_budget_idx] if self.workflow_depth in [1, 2, 3, 4, 6, 7, 8] else "N/A",
+                "verifier_budget": ["Low", "Mid", "High"][self.agent2_budget_idx] if self.workflow_depth in [2, 7] else "N/A",
                 "answerer_budget": ["Low", "Mid", "High"][self.answerer_budget_idx],
                 "final_answer": final_text,
                 "ground_truth": self.current_a,
@@ -336,7 +335,8 @@ class PromptEnv(gym.Env):
         self.prompt_step = 0
         
         if self.prompt_stage == self.PROMPT_STAGE_REASONER:
-            if self.workflow_depth == 2:
+            # Workflows 2 and 7 need verifier stage
+            if self.workflow_depth in [2, 7]:
                 self.prompt_stage = self.PROMPT_STAGE_VERIFIER
             else:
                 self.prompt_stage = self.PROMPT_STAGE_ANSWERER
@@ -421,13 +421,13 @@ class PromptEnv(gym.Env):
         answerer_suffix = build_prompt_suffix("answerer", self.selected_prompts["answerer"])
         
         # Get token counts
-        reasoner_tokens = self.TOKEN_BUDGETS["reasoner"][self.reasoner_budget_idx]
-        verifier_tokens = self.TOKEN_BUDGETS["verifier"][self.verifier_budget_idx]
+        agent1_tokens = self.TOKEN_BUDGETS["reasoner"][self.agent1_budget_idx]
+        agent2_tokens = self.TOKEN_BUDGETS["verifier"][self.agent2_budget_idx]
         answerer_tokens = self.TOKEN_BUDGETS["answerer"][self.answerer_budget_idx]
         
         # Get tools
-        reasoner_tools = self._decode_tools(self.reasoner_tools_idx)
-        verifier_tools = self._decode_tools(self.verifier_tools_idx)
+        agent1_tools = self._decode_tools(self.agent1_tools_idx)
+        agent2_tools = self._decode_tools(self.agent2_tools_idx)
         
         exec_info = {
             "steps": 0,
@@ -443,14 +443,21 @@ class PromptEnv(gym.Env):
             if stats["valid_code"]: exec_info["valid_code_count"] += 1
             if stats["file_access"]: exec_info["file_access_count"] += 1
         
+        # Direct (0) workflow
         if self.workflow_depth == 0:
-            # Direct Answer
+            # Direct Answer (can use agent1_tools)
+            answerer_tools = agent1_tools if agent1_tools else []
             final_text = self.worker.answer_direct(
                 self.current_q,
-                tools=[],
+                tools=answerer_tools,
                 tokens=answerer_tokens,
                 prompt_suffix=answerer_suffix
             )
+            # Process tool calls if tools were used
+            if answerer_tools:
+                final_text, stats = self._process_tool_calls(final_text, answerer_tools)
+                exec_info["tools_count"] += stats.get("tool_calls", 0)
+                merge_stats(stats)
             exec_info["steps"] = 1
             exec_info["total_tokens"] = answerer_tokens
             
@@ -458,20 +465,17 @@ class PromptEnv(gym.Env):
             # Reason -> Answer
             reasoning = self.worker.reason(
                 self.current_q,
-                tools=reasoner_tools,
-                tokens=reasoner_tokens,
+                tools=agent1_tools,
+                tokens=agent1_tokens,
                 prompt_suffix=reasoner_suffix
             )
-            exec_info["tools_count"] += len(reasoner_tools)
-            
             # Execute tools if any
-            if reasoner_tools:
-                # tool_result = self.tools.parse_and_execute(reasoning, reasoner_tools)
-                # if tool_result:
-                #     reasoning += f"\nTool Output: {tool_result}"
-                reasoning, stats = self._process_tool_calls(reasoning, reasoner_tools)
+            if agent1_tools:
+                reasoning, stats = self._process_tool_calls(reasoning, agent1_tools)
+                exec_info["tools_count"] += stats.get("tool_calls", 0)
                 merge_stats(stats)
             
+            # Answerer just synthesizes - no tools needed (reasoner already did computation)
             final_text = self.worker.answer_with_context(
                 self.current_q,
                 context=reasoning,
@@ -480,50 +484,344 @@ class PromptEnv(gym.Env):
                 prompt_suffix=answerer_suffix
             )
             exec_info["steps"] = 2
-            exec_info["total_tokens"] = reasoner_tokens + answerer_tokens
+            exec_info["total_tokens"] = agent1_tokens + answerer_tokens
             
-        else:  # workflow_depth == 2
-            # Reason -> Verify -> Answer
+        elif self.workflow_depth in [2, 7]:
+            # Reason -> Verify -> Answer (workflow 2) or Evaluator-Optimizer (workflow 7)
             reasoning = self.worker.reason(
                 self.current_q,
-                tools=reasoner_tools,
-                tokens=reasoner_tokens,
+                tools=agent1_tools,
+                tokens=agent1_tokens,
                 prompt_suffix=reasoner_suffix
             )
-            exec_info["tools_count"] += len(reasoner_tools)
             
-            if reasoner_tools:
-                # tool_result = self.tools.parse_and_execute(reasoning, reasoner_tools)
-                # if tool_result:
-                #     reasoning += f"\nTool Output: {tool_result}"
-                reasoning, stats = self._process_tool_calls(reasoning, reasoner_tools)
+            if agent1_tools:
+                reasoning, stats = self._process_tool_calls(reasoning, agent1_tools)
+                exec_info["tools_count"] += stats.get("tool_calls", 0)
                 merge_stats(stats)
             
             critique = self.worker.verify(
                 self.current_q,
                 reasoning=reasoning,
-                tools=verifier_tools,
-                tokens=verifier_tokens,
+                tools=agent2_tools,
+                tokens=agent2_tokens,
                 prompt_suffix=verifier_suffix
             )
-            exec_info["tools_count"] += len(verifier_tools)
             
-            if verifier_tools:
-                # tool_result = self.tools.parse_and_execute(critique, verifier_tools)
-                # if tool_result:
-                #     critique += f"\nTool Output: {tool_result}"
-                critique, stats = self._process_tool_calls(critique, verifier_tools)
+            if agent2_tools:
+                critique, stats = self._process_tool_calls(critique, agent2_tools)
+                exec_info["tools_count"] += stats.get("tool_calls", 0)
                 merge_stats(stats)
             
             context = f"Reasoning: {reasoning}\nReview: {critique}"
+            # Answerer just synthesizes - no tools needed (reasoner/verifier already did computation)
             final_text = self.worker.answer_with_context(
                 self.current_q,
                 context=context,
+                tools=[],
                 tokens=answerer_tokens,
                 prompt_suffix=answerer_suffix
             )
             exec_info["steps"] = 3
-            exec_info["total_tokens"] = reasoner_tokens + verifier_tokens + answerer_tokens
+            exec_info["total_tokens"] = agent1_tokens + agent2_tokens + answerer_tokens
+            
+        elif self.workflow_depth == 3:
+            # Routing: Classify → Route to one of two reasoners → Answer
+            classification_prompt = (
+                f"Classify this question into one category: [simple, complex, multi-step]. "
+                f"Respond with ONLY the category name. Question: {self.current_q}"
+            )
+            classification = self.worker.reason(
+                classification_prompt,
+                tools=agent1_tools,
+                tokens=agent1_tokens // 3,
+                prompt_suffix=reasoner_suffix
+            )
+            if agent1_tools:
+                classification, stats = self._process_tool_calls(classification, agent1_tools)
+                merge_stats(stats)
+            exec_info["steps"] += 1
+            exec_info["total_tokens"] += agent1_tokens // 3
+            
+            # Route to one of two reasoners based on classification
+            classification_lower = classification.lower()
+            if "multi-step" in classification_lower or "multi step" in classification_lower:
+                # Route to Reasoner2 (agent2)
+                reasoning_tools = agent2_tools if agent2_tools else agent1_tools
+                reasoning_tokens = agent2_tokens if agent2_tools else agent1_tokens // 2
+                reasoner_name = "Reasoner2 (agent2)"
+            else:
+                # Route to Reasoner1 (agent1)
+                reasoning_tools = agent1_tools
+                reasoning_tokens = agent1_tokens // 2
+                reasoner_name = "Reasoner1 (agent1)"
+            
+            reasoning = self.worker.reason(
+                self.current_q,
+                tools=reasoning_tools,
+                tokens=reasoning_tokens,
+                prompt_suffix=reasoner_suffix
+            )
+            if reasoning_tools:
+                reasoning, stats = self._process_tool_calls(reasoning, reasoning_tools)
+                exec_info["tools_count"] += stats.get("tool_calls", 0)
+                merge_stats(stats)
+            exec_info["steps"] += 1
+            exec_info["total_tokens"] += reasoning_tokens
+            
+            # Answerer just synthesizes - no tools needed
+            final_text = self.worker.answer_with_context(
+                self.current_q,
+                context=f"Classification: {classification}\nRouted to: {reasoner_name}\nReasoning: {reasoning}",
+                tools=[],
+                tokens=answerer_tokens,
+                prompt_suffix=answerer_suffix
+            )
+            exec_info["steps"] += 1
+            exec_info["total_tokens"] += answerer_tokens
+            
+        elif self.workflow_depth == 4:
+            # Parallel-Sectioning: Aspect1 breaks down → Worker1 (agent2) + Worker2 (agent1) → Combine
+            # Step 1: Aspect1 breaks down into subtasks
+            breakdown_prompt = (
+                f"Break down this question into 2 independent subtasks that can be solved in parallel. "
+                f"Question: {self.current_q}"
+            )
+            breakdown = self.worker.reason(
+                breakdown_prompt,
+                tools=agent1_tools,
+                tokens=agent1_tokens // 3,
+                prompt_suffix=reasoner_suffix
+            )
+            if agent1_tools:
+                breakdown, stats = self._process_tool_calls(breakdown, agent1_tools)
+                merge_stats(stats)
+            exec_info["steps"] += 1
+            exec_info["total_tokens"] += agent1_tokens // 3
+            
+            # Step 2: Process subtasks in parallel (Worker1 uses agent2, Worker2 reuses agent1)
+            tokens_per_worker = agent1_tokens // 3
+            
+            # Worker1: Uses agent2_tools
+            worker1_tools = agent2_tools if agent2_tools else agent1_tools
+            worker1_prompt = f"Subtask 1: {breakdown}\nOriginal question: {self.current_q}\nSolve this subtask."
+            result1 = self.worker.reason(
+                worker1_prompt,
+                tools=worker1_tools,
+                tokens=tokens_per_worker,
+                prompt_suffix=reasoner_suffix
+            )
+            if worker1_tools:
+                result1, stats = self._process_tool_calls(result1, worker1_tools)
+                exec_info["tools_count"] += stats.get("tool_calls", 0)
+                merge_stats(stats)
+            exec_info["steps"] += 1
+            exec_info["total_tokens"] += tokens_per_worker
+            
+            # Worker2: Reuses agent1_tools (same agent, different subtask)
+            worker2_prompt = f"Subtask 2: {breakdown}\nOriginal question: {self.current_q}\nSolve this subtask."
+            result2 = self.worker.reason(
+                worker2_prompt,
+                tools=agent1_tools,
+                tokens=tokens_per_worker,
+                prompt_suffix=reasoner_suffix
+            )
+            if agent1_tools:
+                result2, stats = self._process_tool_calls(result2, agent1_tools)
+                exec_info["tools_count"] += stats.get("tool_calls", 0)
+                merge_stats(stats)
+            exec_info["steps"] += 1
+            exec_info["total_tokens"] += tokens_per_worker
+            
+            # Step 3: Answerer synthesizes
+            combined_context = f"Task breakdown: {breakdown}\nWorker 1 result: {result1}\nWorker 2 result: {result2}"
+            final_text = self.worker.answer_with_context(
+                self.current_q,
+                context=combined_context,
+                tools=[],
+                tokens=answerer_tokens,
+                prompt_suffix=answerer_suffix
+            )
+            exec_info["steps"] += 1
+            exec_info["total_tokens"] += answerer_tokens
+            
+        elif self.workflow_depth == 5:
+            # Parallel-Voting: Run same task multiple times and aggregate
+            num_votes = 3
+            votes = []
+            # Use agent1_tools if available (for calculations/verification)
+            vote_tools = agent1_tools if agent1_tools else []
+            for i in range(num_votes):
+                vote = self.worker.answer_direct(
+                    self.current_q,
+                    tools=vote_tools,
+                    tokens=answerer_tokens // num_votes,
+                    prompt_suffix=answerer_suffix
+                )
+                # Process tool calls if tools were used
+                if vote_tools:
+                    vote, stats = self._process_tool_calls(vote, vote_tools)
+                    exec_info["tools_count"] += stats.get("tool_calls", 0)
+                    merge_stats(stats)
+                votes.append(vote)
+            
+            # Answerer just synthesizes - no tools needed (votes already did computation)
+            votes_text = "\n".join([f"Vote {i+1}: {v}" for i, v in enumerate(votes)])
+            final_text = self.worker.answer_with_context(
+                self.current_q,
+                context=f"Multiple attempts:\n{votes_text}\nProvide the most consistent answer.",
+                tools=[],
+                tokens=answerer_tokens,
+                prompt_suffix=answerer_suffix
+            )
+            exec_info["steps"] = num_votes + 2
+            exec_info["total_tokens"] = answerer_tokens * 2
+            
+        elif self.workflow_depth == 6:
+            # Orchestrator-Workers: Central LLM breaks down and delegates
+            breakdown = self.worker.reason(
+                f"Break down this task into subtasks. Task: {self.current_q}",
+                tools=agent1_tools,
+                tokens=agent1_tokens // 3,
+                prompt_suffix=reasoner_suffix
+            )
+            if agent1_tools:
+                breakdown, stats = self._process_tool_calls(breakdown, agent1_tools)
+                merge_stats(stats)
+            
+            # Use agent2_tools for workers
+            worker_tools = agent2_tools if agent2_tools else agent1_tools
+            worker1_result = self.worker.reason(
+                f"Subtask 1: {breakdown}\nOriginal question: {self.current_q}",
+                tools=worker_tools,
+                tokens=agent1_tokens // 3,
+                prompt_suffix=reasoner_suffix
+            )
+            if worker_tools:
+                worker1_result, stats = self._process_tool_calls(worker1_result, worker_tools)
+                exec_info["tools_count"] += stats.get("tool_calls", 0)
+                merge_stats(stats)
+            
+            worker2_result = self.worker.reason(
+                f"Subtask 2: {breakdown}\nOriginal question: {self.current_q}",
+                tools=worker_tools,
+                tokens=agent1_tokens // 3,
+                prompt_suffix=reasoner_suffix
+            )
+            if worker_tools:
+                worker2_result, stats = self._process_tool_calls(worker2_result, worker_tools)
+                exec_info["tools_count"] += stats.get("tool_calls", 0)
+                merge_stats(stats)
+            
+            # Answerer just synthesizes - no tools needed (workers already did computation)
+            synthesis_context = f"Task breakdown: {breakdown}\nWorker 1: {worker1_result}\nWorker 2: {worker2_result}"
+            final_text = self.worker.answer_with_context(
+                self.current_q,
+                context=synthesis_context,
+                tools=[],
+                tokens=answerer_tokens,
+                prompt_suffix=answerer_suffix
+            )
+            exec_info["steps"] = 4
+            exec_info["total_tokens"] = agent1_tokens + answerer_tokens
+            
+        elif self.workflow_depth == 7:
+            # Evaluator-Optimizer: Generate → Evaluate → Refine loop
+            max_iterations = 3
+            current_answer = None
+            
+            for iteration in range(max_iterations):
+                if iteration == 0:
+                    current_answer = self.worker.reason(
+                        self.current_q,
+                        tools=agent1_tools,
+                        tokens=agent1_tokens // max_iterations,
+                        prompt_suffix=reasoner_suffix
+                    )
+                    if agent1_tools:
+                        current_answer, stats = self._process_tool_calls(current_answer, agent1_tools)
+                        merge_stats(stats)
+                else:
+                    current_answer = self.worker.reason(
+                        f"Question: {self.current_q}\nPrevious attempt: {current_answer}\nImprove this answer.",
+                        tools=agent1_tools,
+                        tokens=agent1_tokens // max_iterations,
+                        prompt_suffix=reasoner_suffix
+                    )
+                    if agent1_tools:
+                        current_answer, stats = self._process_tool_calls(current_answer, agent1_tools)
+                        merge_stats(stats)
+                
+                evaluation = self.worker.verify(
+                    self.current_q,
+                    reasoning=current_answer,
+                    tools=agent2_tools,
+                    tokens=agent2_tokens // max_iterations,
+                    prompt_suffix=verifier_suffix
+                )
+                if agent2_tools:
+                    evaluation, stats = self._process_tool_calls(evaluation, agent2_tools)
+                    merge_stats(stats)
+                
+                if "correct" in evaluation.lower() and iteration > 0:
+                    break
+            
+            # Answerer just synthesizes - no tools needed (generator/evaluator already did computation)
+            final_text = self.worker.answer_with_context(
+                self.current_q,
+                context=f"Refined reasoning: {current_answer}",
+                tools=[],
+                tokens=answerer_tokens,
+                prompt_suffix=answerer_suffix
+            )
+            exec_info["steps"] = max_iterations * 2 + 1
+            exec_info["total_tokens"] = agent1_tokens + agent2_tokens + answerer_tokens
+            
+        elif self.workflow_depth == 8:
+            # Autonomous Agent: LLM uses tools autonomously in a loop
+            max_iterations = 5
+            context_history = []
+            
+            for iteration in range(max_iterations):
+                # Use agent1_tools for first iteration, agent2_tools for later iterations
+                iteration_tools = agent1_tools if iteration == 0 else (agent2_tools if agent2_tools else agent1_tools)
+                
+                if iteration == 0:
+                    reasoning = self.worker.reason(
+                        self.current_q,
+                        tools=iteration_tools,
+                        tokens=agent1_tokens // max_iterations,
+                        prompt_suffix=reasoner_suffix
+                    )
+                else:
+                    reasoning = self.worker.reason(
+                        f"Question: {self.current_q}\nPrevious context: {context_history[-1]}\nContinue reasoning.",
+                        tools=iteration_tools,
+                        tokens=agent1_tokens // max_iterations,
+                        prompt_suffix=reasoner_suffix
+                    )
+                
+                if iteration_tools:
+                    reasoning, stats = self._process_tool_calls(reasoning, iteration_tools)
+                    exec_info["tools_count"] += stats.get("tool_calls", 0)
+                    merge_stats(stats)
+                
+                context_history.append(reasoning)
+                
+                if iteration >= 2:
+                    break
+            
+            # Answerer just synthesizes - no tools needed (previous iterations already did computation)
+            combined_context = "\n".join([f"Step {i+1}: {ctx}" for i, ctx in enumerate(context_history)])
+            final_text = self.worker.answer_with_context(
+                self.current_q,
+                context=combined_context,
+                tools=[],
+                tokens=answerer_tokens,
+                prompt_suffix=answerer_suffix
+            )
+            exec_info["steps"] = len(context_history) + 1
+            exec_info["total_tokens"] = agent1_tokens + answerer_tokens
         
         return final_text, exec_info
 

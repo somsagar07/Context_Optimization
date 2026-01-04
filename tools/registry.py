@@ -2,6 +2,7 @@ import re
 from .calculator import calculator
 from .web_search import web_search
 from .python_executor import python_executor
+from .ocr_reader import ocr_reader
 
 class ToolRegistry:
     """Central registry for all available tools."""
@@ -10,7 +11,8 @@ class ToolRegistry:
         self.available_tools = {
             "calculator": calculator,
             "web_search": web_search,
-            "python": python_executor
+            "python": python_executor,
+            "ocr_reader": ocr_reader
         }
     
     def execute(self, tool_name: str, query: str) -> str:

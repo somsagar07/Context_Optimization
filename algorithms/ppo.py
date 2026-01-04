@@ -21,12 +21,16 @@ class PPOTrainer(BaseTrainer):
     
     algorithm = Algorithm.PPO
     
-    def __init__(self, cfg, device="cuda" if torch.cuda.is_available() else "cpu"):
-        super().__init__(cfg, device)
+    def __init__(self, cfg, device="cuda" if torch.cuda.is_available() else "cpu", use_action_masking=False):
+        super().__init__(cfg, device, use_action_masking=use_action_masking)
         
         print(f"Initializing PPO (with value heads)...")
         print(f"  Structure: obs={self.struct_obs_dim}, actions={self.struct_action_dims}")
         print(f"  Prompt: obs={self.prompt_obs_dim}, actions={self.prompt_action_dim}")
+        if self.use_action_masking:
+            print(f"  ✓ Action masking ENABLED (two-stage selection: workflow first, then mask)")
+        else:
+            print(f"  Action masking DISABLED (standard selection)")
         
         self.structure_policy = MultiDiscretePolicyPPO(
             self.struct_obs_dim, self.struct_action_dims
@@ -62,10 +66,18 @@ class PPOTrainer(BaseTrainer):
         if len(struct_advantages) > 1:
             struct_advantages = (struct_advantages - struct_advantages.mean()) / (struct_advantages.std() + 1e-8)
         
+        # Get action masks from episodes
+        struct_action_masks = [ep.get("struct_action_mask", None) for ep in episodes]
+        
         for _ in range(epochs):
             log_probs_new, values_new = [], []
             for i in range(len(struct_obs)):
-                lp, v = self.structure_policy.get_log_prob_and_value(struct_obs[i], struct_actions[i])
+                lp, v = self.structure_policy.get_log_prob_and_value(
+                    struct_obs[i], struct_actions[i], 
+                    action_mask=struct_action_masks[i],
+                    use_two_stage_masking=self.use_action_masking,
+                    structure_env=self.structure_env if self.use_action_masking else None
+                )
                 log_probs_new.append(lp)
                 values_new.append(v)
             
@@ -78,7 +90,9 @@ class PPOTrainer(BaseTrainer):
             
             policy_loss = -torch.min(surr1, surr2).mean()
             value_loss = nn.MSELoss()(values_new, struct_returns)
-            entropy = self.structure_policy.get_entropy(struct_obs_tensor).mean()
+            # Compute entropy with masks (use first mask as representative, or None if all None)
+            struct_mask = struct_action_masks[0] if struct_action_masks[0] is not None else None
+            entropy = self.structure_policy.get_entropy(struct_obs_tensor, action_mask=struct_mask).mean()
             
             loss = policy_loss + value_coef * value_loss - struct_ent_coef * entropy
             

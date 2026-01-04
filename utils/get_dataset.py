@@ -5,10 +5,14 @@ from .gaia_loader import GAIADataset
 def get_dataset_loader(name: str, is_eval: bool = False):
     """Factory function to get the right dataset loader."""
     if name == "gsm8k":
-        return GSM8kDataset(split=is_eval)
+        split = "test" if is_eval else "train"
+        return GSM8kDataset(split=split)
     elif name == "hotpotqa":
-        return HotPotQADataset(split=is_eval)
+        split = "validation" if is_eval else "train"
+        return HotPotQADataset(split=split)
     elif name == "gaia":
-        return GAIADataset(rl_split=is_eval)
+        # GAIADataset uses rl_split parameter (string, not boolean)
+        rl_split = "validation" if is_eval else "train"
+        return GAIADataset(rl_split=rl_split)
     else:
         raise ValueError(f"Unknown dataset: {name}")

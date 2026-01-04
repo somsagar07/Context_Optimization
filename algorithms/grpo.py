@@ -24,12 +24,16 @@ class GRPOTrainer(BaseTrainer):
     
     algorithm = Algorithm.GRPO
     
-    def __init__(self, cfg, device="cuda" if torch.cuda.is_available() else "cpu"):
-        super().__init__(cfg, device)
+    def __init__(self, cfg, device="cuda" if torch.cuda.is_available() else "cpu", use_action_masking=False):
+        super().__init__(cfg, device, use_action_masking=use_action_masking)
         
         print(f"Initializing GRPO (critic-free)...")
         print(f"  Structure: obs={self.struct_obs_dim}, actions={self.struct_action_dims}")
         print(f"  Prompt: obs={self.prompt_obs_dim}, actions={self.prompt_action_dim}")
+        if self.use_action_masking:
+            print(f"  ✓ Action masking ENABLED (two-stage selection: workflow first, then mask)")
+        else:
+            print(f"  Action masking DISABLED (standard selection)")
         
         self.structure_policy = MultiDiscretePolicyGRPO(
             self.struct_obs_dim, self.struct_action_dims
@@ -98,9 +102,17 @@ class GRPOTrainer(BaseTrainer):
         # GRPO: Group-relative advantages (NO value function)
         struct_advantages = self._compute_group_advantages(struct_rewards)
         
+        # Get action masks from episodes
+        struct_action_masks = [ep.get("struct_action_mask", None) for ep in episodes]
+        
         for _ in range(epochs):
             log_probs_new = torch.stack([
-                self.structure_policy.get_log_prob(struct_obs[i], struct_actions[i])
+                self.structure_policy.get_log_prob(
+                    struct_obs[i], struct_actions[i],
+                    action_mask=struct_action_masks[i],
+                    use_two_stage_masking=self.use_action_masking,
+                    structure_env=self.structure_env if self.use_action_masking else None
+                )
                 for i in range(len(struct_obs))
             ])
             
@@ -109,14 +121,21 @@ class GRPOTrainer(BaseTrainer):
             surr2 = torch.clamp(ratio, 1 - clip_epsilon, 1 + clip_epsilon) * struct_advantages
             
             policy_loss = -torch.min(surr1, surr2).mean()
-            entropy = self.structure_policy.get_entropy(struct_obs_tensor).mean()
+            # Compute entropy with masks
+            struct_mask = struct_action_masks[0] if struct_action_masks[0] is not None else None
+            entropy = self.structure_policy.get_entropy(struct_obs_tensor, action_mask=struct_mask).mean()
             
             # Optional KL regularization
             kl_loss = 0.0
             if kl_coef > 0 and self.structure_ref is not None:
                 with torch.no_grad():
                     ref_log_probs = torch.stack([
-                        self.structure_ref.get_log_prob(struct_obs[i], struct_actions[i])
+                        self.structure_ref.get_log_prob(
+                            struct_obs[i], struct_actions[i],
+                            action_mask=struct_action_masks[i],
+                            use_two_stage_masking=self.use_action_masking,
+                            structure_env=self.structure_env if self.use_action_masking else None
+                        )
                         for i in range(len(struct_obs))
                     ])
                 kl_loss = (log_probs_new - ref_log_probs).mean()
