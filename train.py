@@ -17,6 +17,8 @@ import os
 
 from configs import load_config
 from algorithms import Algorithm, PPOTrainer, GRPOTrainer
+from agents_system.worker import LLMWorker
+from prompts import library
 
 
 def parse_args():
@@ -81,6 +83,34 @@ def main():
     cfg = load_config(args.config)
     if args.dataset:
         cfg.DATASET_NAME = args.dataset
+        
+    # Update Prompt Atoms based on dataset
+    print(f"Checking prompt atoms for dataset: {cfg.DATASET_NAME}...")
+    atoms_path = library._get_atoms_path(cfg.DATASET_NAME)
+    
+    # 1. Check if atoms exist (Fast path)
+    if os.path.exists(atoms_path):
+        print(f"  Found existing atoms at {atoms_path}. Loading...")
+        library.load_or_create_atoms(cfg.DATASET_NAME, worker=None)
+    
+    else:
+        print(f"  Atoms not found. Initializing temporary worker to generate them...")
+        
+        # Create temp worker
+        import gc
+        import torch
+        
+        # Loading bigger model for better atom generation
+        temp_worker = LLMWorker(model_name="Qwen/Qwen2.5-7B-Instruct") 
+        library.load_or_create_atoms(cfg.DATASET_NAME, worker=temp_worker)
+        
+        # CRITICAL: Free memory immediately
+        print("  Generation complete. Freeing memory for training...")
+        del temp_worker
+        gc.collect()
+        torch.cuda.empty_cache()
+        
+    print(f"  Active Atoms: {library.NUM_ATOMS}")
     
     # Create model directory
     os.makedirs(f"models/{args.algorithm}_models", exist_ok=True)

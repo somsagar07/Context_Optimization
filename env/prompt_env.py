@@ -23,7 +23,6 @@ from tools import ToolRegistry
 from utils import get_dataset_loader
 from prompts.library import (
     PROMPT_ATOMS, NUM_ATOMS, build_prompt_suffix,
-    NUM_REASONER_ATOMS, NUM_VERIFIER_ATOMS, NUM_ANSWERER_ATOMS
 )
 import re
 
@@ -73,10 +72,10 @@ class PromptEnv(gym.Env):
         self.MAX_PROMPTS_PER_AGENT = getattr(cfg, 'MAX_PROMPTS_PER_AGENT', 3)
         
         # Number of prompt atoms per agent
-        self.num_reasoner_atoms = NUM_REASONER_ATOMS
-        self.num_verifier_atoms = NUM_VERIFIER_ATOMS
-        self.num_answerer_atoms = NUM_ANSWERER_ATOMS
-        self.max_prompt_atoms = max(NUM_REASONER_ATOMS, NUM_VERIFIER_ATOMS, NUM_ANSWERER_ATOMS)
+        self.num_reasoner_atoms = NUM_ATOMS["reasoner"]
+        self.num_verifier_atoms = NUM_ATOMS["verifier"]
+        self.num_answerer_atoms = NUM_ATOMS["answerer"]
+        self.max_prompt_atoms = max(self.num_reasoner_atoms, self.num_verifier_atoms, self.num_answerer_atoms)
         
         # Action space: Discrete for prompt selection
         self.action_space = spaces.Discrete(self.max_prompt_atoms)
@@ -93,9 +92,9 @@ class PromptEnv(gym.Env):
             6 +                                 # Structure decisions (normalized)
             3 +                                 # Prompt stage one-hot
             self.MAX_PROMPTS_PER_AGENT +        # Prompt step one-hot
-            NUM_REASONER_ATOMS +                # Reasoner prompts mask
-            NUM_VERIFIER_ATOMS +                # Verifier prompts mask
-            NUM_ANSWERER_ATOMS                  # Answerer prompts mask
+            self.num_reasoner_atoms +                # Reasoner prompts mask
+            self.num_verifier_atoms +                # Verifier prompts mask
+            self.num_answerer_atoms                  # Answerer prompts mask
         )
         
         self.observation_space = spaces.Box(
@@ -213,19 +212,19 @@ class PromptEnv(gym.Env):
             step_onehot[self.prompt_step] = 1.0
         
         # Selected prompts masks
-        reasoner_mask = np.zeros(NUM_REASONER_ATOMS, dtype=np.float32)
+        reasoner_mask = np.zeros(self.num_reasoner_atoms, dtype=np.float32)
         for idx in self.selected_prompts["reasoner"]:
-            if idx < NUM_REASONER_ATOMS:
+            if idx < self.num_reasoner_atoms:
                 reasoner_mask[idx] = 1.0
         
-        verifier_mask = np.zeros(NUM_VERIFIER_ATOMS, dtype=np.float32)
+        verifier_mask = np.zeros(self.num_verifier_atoms, dtype=np.float32)
         for idx in self.selected_prompts["verifier"]:
-            if idx < NUM_VERIFIER_ATOMS:
+            if idx < self.num_verifier_atoms:
                 verifier_mask[idx] = 1.0
         
-        answerer_mask = np.zeros(NUM_ANSWERER_ATOMS, dtype=np.float32)
+        answerer_mask = np.zeros(self.num_answerer_atoms, dtype=np.float32)
         for idx in self.selected_prompts["answerer"]:
-            if idx < NUM_ANSWERER_ATOMS:
+            if idx < self.num_answerer_atoms:
                 answerer_mask[idx] = 1.0
         
         # Concatenate all
@@ -251,13 +250,13 @@ class PromptEnv(gym.Env):
         # Determine current agent and num atoms
         if self.prompt_stage == self.PROMPT_STAGE_REASONER:
             agent = "reasoner"
-            num_atoms = NUM_REASONER_ATOMS
+            num_atoms = self.num_reasoner_atoms
         elif self.prompt_stage == self.PROMPT_STAGE_VERIFIER:
             agent = "verifier"
-            num_atoms = NUM_VERIFIER_ATOMS
+            num_atoms = self.num_verifier_atoms
         else:
             agent = "answerer"
-            num_atoms = NUM_ANSWERER_ATOMS
+            num_atoms = self.num_answerer_atoms
         
         # Clamp action to valid range
         action = min(action, num_atoms - 1)

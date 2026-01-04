@@ -1,23 +1,44 @@
 {
     "reasoner": {
         "100": "Identify the arithmetic operations and values, perform the calculations step-by-step, and format the final answer clearly.",
-        "101": "Identify the arithmetic operations needed, extract relevant numbers, perform calculations step-by-step, and verify assumptions before reaching the final answer.",
-        "102": "Understand the problem, extract numerical values and their relationships, perform the necessary arithmetic operations step-by-step, and clearly state the final answer.",
-        "103": "Break down the problem into smaller parts, identify all numerical values and their relationships, perform the necessary arithmetic operations step-by-step, and ensure to consider any contextual clues that might affect the solution.",
-        "104": "Decompose the problem into smaller parts, identify all numerical values and arithmetic operations needed, perform the calculations step-by-step, and clearly state the final answer."
+        "101": "Break down the problem into smaller parts, identify all numerical values and their relationships, perform the necessary arithmetic operations step-by-step, and ensure to consider any contextual clues that might affect the solution.",
+        "102": "Decompose the problem into smaller parts, identify all numerical values and arithmetic operations needed, perform the calculations step-by-step, and clearly state the final answer.",
+        "103": "Identify the arithmetic operations needed, extract relevant numerical values, perform the calculations step-by-step, and clearly state the final answer.",
+        "104": "Understand the problem, extract numerical values and their relationships, perform the necessary arithmetic operations step-by-step, and clearly state the final answer."
     },
     "verifier": {
         "100": "Verify the solution by checking all arithmetic operations, ensuring logical consistency, and confirming the final answer matches the problem statement.",
         "101": "Verify the solution by checking if the logic and arithmetic are correctly applied, considering alternative methods, and ensuring the final answer logically follows from the problem statement.",
         "102": "Verify the solution by checking if all given conditions are met, all arithmetic operations are correctly performed, and the final answer logically follows from the problem statement.",
-        "103": "Verify the solution by ensuring all arithmetic operations are correctly performed, units are consistent, and the final answer matches the problem's requirements; present findings in a clear, formatted manner.",
-        "104": "Verify the solution by ensuring all arithmetic operations are correctly applied, logical steps are sequentially followed, and the final answer matches the problem statement without introducing extraneous information."
+        "103": "Verify the solution by ensuring all arithmetic operations are correctly applied, logical steps are sequentially followed, and the final answer matches the problem statement without introducing extraneous information.",
+        "104": "Verify the solution by ensuring all arithmetic operations are correctly performed, units are consistent, and the final answer matches the problem's requirements; present findings in a clear, formatted manner."
     },
     "answerer": {
-        "100": "Format the final answer as: #### <final numerical result>.",
-        "101": "Format the final answer clearly showing calculations and result in the form: [Calculation = Result].",
-        "102": "Use the format: [Context] [Calculation] = [[Calculation Result]] to present the final answer clearly.",
-        "103": "Format the final answer clearly showing calculations and the result, e.g., Final Answer: [result].",
-        "104": "Use the format: [Context] => [Calculation Steps] => [Final Answer]."
+        "100": "Use the format: [Context] => [Calculation Steps] => [Final Answer].",
+        "101": "Format the final answer clearly showing calculations and the result, e.g., Final Answer: [result].",
+        "102": "Format the final answer as: #### <final numerical result>.",
+        "103": "Use the format: [Context] [Calculation] = [[Calculation Result]] to present the final answer clearly.",
+        "104": "Format the final answer as: #### <calculated_result>."
+    },
+    "router": {
+        "100": "Analyze the input to determine if it requires simple arithmetic operations, conversions, or more complex logical reasoning, and route it to the appropriate agent for solving.",
+        "101": "Analyze the input problem to determine if it requires basic arithmetic operations, unit conversions, percentage calculations, or more complex logical reasoning, and route it to the appropriate agent for solving.",
+        "102": "Analyze the input to decompose the problem into its arithmetic components, identify the type of operations needed (addition, subtraction, multiplication, division), and determine if any logical steps are required before performing calculations. Select the appropriate agent based on the complexity and nature of the problem.",
+        "103": "Analyze the input to determine the required arithmetic operations and logical steps, then select the appropriate agent to handle the complexity and perform the calculations accordingly.",
+        "104": "Analyze the input to determine if it requires simple arithmetic, conversion between units, handling fractions, or multiple steps of reasoning, and route to the appropriate agent for processing."
+    },
+    "orchestrator": {
+        "100": "Decompose the problem into identifying the question, extracting numerical values, determining the arithmetic operations needed, performing the calculations step-by-step, and presenting the final answer.",
+        "101": "Decompose the problem into identifying the total amount or value by first extracting all numerical values and their relationships, then performing the necessary arithmetic operations in sequence.",
+        "102": "Decompose the problem into identifying the total amount or value by breaking down given operations and relationships, then calculate step-by-step using appropriate arithmetic operations.",
+        "103": "Decompose the problem into identifying the arithmetic operation needed, extracting relevant numerical values, and performing the calculation step-by-step while verifying assumptions and presenting the final answer.",
+        "104": "Decompose the problem into identifying the question, extracting numerical values, determining the arithmetic operations needed, performing the calculations step-by-step, and presenting the final answer in the format #### <final_answer>."
+    },
+    "aggregator": {
+        "100": "When aggregating multiple answers or sub-task results, select the final answer that logically resolves all parts of the problem without contradiction.",
+        "101": "When aggregating multiple answers or sub-task results, prioritize the most accurate and contextually relevant information, resolving any contradictions through logical consistency and mathematical accuracy.",
+        "102": "When aggregating multiple answers or sub-task results, choose the most accurate and contextually appropriate solution, resolving any contradictions by re-evaluating the steps and ensuring all parts of the problem are correctly addressed.",
+        "103": "When aggregating results from multiple sub-tasks, verify consistency by cross-checking intermediate results and recalculating if discrepancies arise.",
+        "104": "When aggregating multiple answers or sub-task results, consider the overall context and logic of the problem to determine the most coherent and accurate final answer, even if it differs from individual steps."
     }
 }
