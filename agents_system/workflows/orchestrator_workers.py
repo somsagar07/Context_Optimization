@@ -22,7 +22,7 @@ class OrchestratorWorkersWorkflow(BaseWorkflow):
     ) -> Tuple[str, Dict]:
         """Execute orchestrator-workers workflow."""
         prompt_suffixes = prompt_suffixes or {}
-        orchestrator_suffix = prompt_suffixes.get("orchestrator", None)
+        # orchestrator_suffix = prompt_suffixes.get("orchestrator", None)
         reasoner_suffix = prompt_suffixes.get("reasoner", None)
         answerer_suffix = prompt_suffixes.get("answerer", None)
         
@@ -40,7 +40,7 @@ class OrchestratorWorkersWorkflow(BaseWorkflow):
             breakdown_prompt,
             tools=agent1_tools,
             tokens=agent1_tokens // (num_workers + 1),
-            prompt_suffix=orchestrator_suffix
+            prompt_suffix= reasoner_suffix # orchestrator_suffix
         )
         if agent1_tools:
             breakdown, stats = self._process_tool_calls(breakdown, agent1_tools)

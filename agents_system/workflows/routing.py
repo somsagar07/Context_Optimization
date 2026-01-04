@@ -22,7 +22,7 @@ class RoutingWorkflow(BaseWorkflow):
         """Execute routing workflow."""
         prompt_suffixes = prompt_suffixes or {}
         reasoner_suffix = prompt_suffixes.get("reasoner", None)
-        router_suffix = prompt_suffixes.get("router", None)
+        # router_suffix = prompt_suffixes.get("router", None)
         answerer_suffix = prompt_suffixes.get("answerer", None)
         
         exec_info = {
@@ -42,7 +42,7 @@ class RoutingWorkflow(BaseWorkflow):
             classification_prompt,
             tools=agent1_tools,
             tokens=agent1_tokens // 3,
-            prompt_suffix=router_suffix
+            prompt_suffix=reasoner_suffix #router_suffix
         )
         if agent1_tools:
             classification, stats = self._process_tool_calls(classification, agent1_tools)

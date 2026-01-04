@@ -21,10 +21,10 @@ class ParallelSectioningWorkflow(BaseWorkflow):
     ) -> Tuple[str, Dict]:
         """Execute parallel sectioning workflow."""
         prompt_suffixes = prompt_suffixes or {}
-        orchestrator_suffix = prompt_suffixes.get("orchestrator", None)
+        # orchestrator_suffix = prompt_suffixes.get("orchestrator", None)
         reasoner_suffix = prompt_suffixes.get("reasoner", None)
         answerer_suffix = prompt_suffixes.get("answerer", None)
-        aggregator_suffix = prompt_suffixes.get("aggregator", None)
+        # aggregator_suffix = prompt_suffixes.get("aggregator", None)
         
         exec_info = {
             "steps": 0,
@@ -43,7 +43,7 @@ class ParallelSectioningWorkflow(BaseWorkflow):
             breakdown_prompt,
             tools=agent1_tools,
             tokens=agent1_tokens // 3,
-            prompt_suffix=orchestrator_suffix
+            prompt_suffix=reasoner_suffix #orchestrator_suffix
         )
         if agent1_tools:
             breakdown, stats = self._process_tool_calls(breakdown, agent1_tools)
@@ -97,7 +97,7 @@ class ParallelSectioningWorkflow(BaseWorkflow):
             context=combined_context,
             tools=[],  # Answerer just synthesizes - previous agents already did computation
             tokens=answerer_tokens,
-            prompt_suffix=aggregator_suffix
+            prompt_suffix= answerer_suffix # aggregator_suffix
         )
         exec_info["steps"] += 1
         exec_info["total_tokens"] += answerer_tokens
