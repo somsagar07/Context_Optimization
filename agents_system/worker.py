@@ -164,8 +164,9 @@ class LLMWorker:
             tools_text = "\n".join([TOOL_DESCRIPTIONS[t] for t in active_tools if t in TOOL_DESCRIPTIONS])
             sys_prompt += (
                 f"\n\nYou have access to these tools:\n{tools_text}\n\n"
-                "To use a tool, write EXACTLY: TOOL: <tool_name> || QUERY: <your_query>\n"
-                "Use tools to calculate, verify, or look up information when helpful."
+                "IMPORTANT: To use a tool, you MUST write EXACTLY this format: TOOL: <tool_name> || QUERY: <your_query>\n"
+                "When you need to calculate, verify, or look up information, USE THE TOOLS. Do not try to solve everything yourself.\n"
+                "For mathematical problems, use the calculator or python tool. For data lookups, use web_search."
             )
         
         # TODO: Check if we need this as it was not in zip file.
@@ -429,8 +430,9 @@ class OpenRouterWorker:
             tools_text = "\n".join([TOOL_DESCRIPTIONS[t] for t in active_tools if t in TOOL_DESCRIPTIONS])
             sys_prompt += (
                 f"\n\nYou have access to these tools:\n{tools_text}\n\n"
-                "To use a tool, write EXACTLY: TOOL: <tool_name> || QUERY: <your_query>\n"
-                "Use tools to calculate, verify, or look up information when helpful."
+                "IMPORTANT: To use a tool, you MUST write EXACTLY this format: TOOL: <tool_name> || QUERY: <your_query>\n"
+                "When you need to calculate, verify, or look up information, USE THE TOOLS. Do not try to solve everything yourself.\n"
+                "For mathematical problems, use the calculator or python tool. For data lookups, use web_search."
             )
         else:
             sys_prompt += " Answer using your own knowledge only."
