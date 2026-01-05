@@ -115,7 +115,7 @@ def main():
         del temp_worker
         gc.collect()
         torch.cuda.empty_cache()
-        
+    
     print(f"  Active Atoms: {library.NUM_ATOMS}")
     
     # Create model directory

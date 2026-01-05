@@ -124,11 +124,43 @@ class AtomGenerator:
         return atoms
 
     def generate_all_atoms(self, dataset_name: str) -> Dict[str, Dict[int, str]]:
+        # return {
+        #     "reasoner": self.generate_atoms_for_role(dataset_name, "reasoner"),
+        #     "verifier": self.generate_atoms_for_role(dataset_name, "verifier"),
+        #     "answerer": self.generate_atoms_for_role(dataset_name, "answerer"),
+        #     "router": self.generate_atoms_for_role(dataset_name, "router"),
+        #     "orchestrator": self.generate_atoms_for_role(dataset_name, "orchestrator"),
+        #     "aggregator": self.generate_atoms_for_role(dataset_name, "aggregator"),
+        # }
+        
+        reasoner = {}
+        current_idx = 100
+        
+        concepts = [("reasoner", 3), ("router", 2), ("orchestrator", 2)]
+        for concept, count in concepts:
+            atoms = self.generate_atoms_for_role(dataset_name, concept, count)
+            for _, text in atoms.items():
+                reasoner[current_idx] = text
+                current_idx += 1
+        
+        verifier = {}
+        current_idx = 100
+        atoms = self.generate_atoms_for_role(dataset_name, "verifier", 5)
+        for _, text in atoms.items():
+            verifier[current_idx] = text
+            current_idx += 1
+        
+        answerer = {}
+        current_idx = 100
+        concepts = [("answerer", 3), ("aggregator", 2)]
+        for concept, count in concepts:
+            atoms = self.generate_atoms_for_role(dataset_name, concept, count)
+            for _, text in atoms.items():
+                answerer[current_idx] = text
+                current_idx += 1
+        
         return {
-            "reasoner": self.generate_atoms_for_role(dataset_name, "reasoner"),
-            "verifier": self.generate_atoms_for_role(dataset_name, "verifier"),
-            "answerer": self.generate_atoms_for_role(dataset_name, "answerer"),
-            "router": self.generate_atoms_for_role(dataset_name, "router"),
-            "orchestrator": self.generate_atoms_for_role(dataset_name, "orchestrator"),
-            "aggregator": self.generate_atoms_for_role(dataset_name, "aggregator"),
+            "reasoner": reasoner,
+            "verifier": verifier,
+            "answerer": answerer,
         }

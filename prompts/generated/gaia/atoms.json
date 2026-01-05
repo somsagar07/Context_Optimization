@@ -1,0 +1,25 @@
+{
+    "reasoner": {
+        "100": "Reasoner, start by identifying key entities and relationships in the query, then use Python to filter the 'gaia' dataset accordingly, verify the extracted information against the query requirements, and provide the precise answer.",
+        "101": "Read the dataset, identify key elements in the query, filter the dataset accordingly, retrieve the exact information requested, and format the answer precisely as specified in the target output.",
+        "102": "Decompose the query into named entities and relationships, then systematically filter the 'gaia' dataset to extract the required information, applying logical reasoning to resolve any ambiguities and ensure the final answer precisely matches the query's requirements.",
+        "103": "Analyze the query complexity by identifying key entities and relationships, then select the appropriate agent or approach for data extraction and verification from the gaia dataset.",
+        "104": "Analyze the query complexity by identifying key entities and relationships, then select the appropriate agent or approach for data extraction and verification.",
+        "105": "Decompose the problem into identifying key entities (e.g., names, dates, titles) and then filter the 'gaia' dataset accordingly to extract the required information, splitting complex queries into sequential or parallel sub-tasks for efficient processing.",
+        "106": "Decompose the problem by identifying key entities and relationships in the query, then use Python to filter and extract relevant information from the 'gaia' dataset."
+    },
+    "verifier": {
+        "100": "Verify each step of the reasoning process ensuring logical consistency and accuracy in data extraction and interpretation.",
+        "101": "Verify answers ensure strict adherence to the query by checking for accurate extraction of named entities, correct date matching, proper title formatting, and precise data retrieval without adding or removing information not present in the dataset.",
+        "102": "Verify that the reasoning aligns with the dataset content and logical steps, ensuring all named entities, dates, and specific terms are correctly cross-referenced and that the final answer precisely matches the query requirements without introducing extraneous information.",
+        "103": "Verify the logical flow and factual accuracy of the model's response by cross-referencing with the dataset and checking for any assumptions or misinterpretations.",
+        "104": "Verify the accuracy of the answer by cross-referencing it with the relevant parts of the dataset and ensure logical consistency with the query."
+    },
+    "answerer": {
+        "100": "Final Answer: Use Python to read the gaia dataset, extract relevant information based on query details, and format the answer as specified in examples without additional commentary.",
+        "101": "Final Answer: Use python to read any provided files, extract relevant information from the query, filter the dataset accordingly, and format the answer as Final Answer: <your_answer>.",
+        "102": "Use the provided context and named entities to filter the gaia dataset, then format the final answer as specified in the target output example.",
+        "103": "When resolving conflicts between multiple answers, select the one that best matches the query's criteria, cross-referencing with the original data if necessary, and choose the most accurate and complete response.",
+        "104": "When resolving conflicts between multiple answers ensure the final output strictly follows the format: Final Answer: <most accurate and consistent result>."
+    }
+}

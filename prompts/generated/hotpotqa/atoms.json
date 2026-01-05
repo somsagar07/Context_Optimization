@@ -1,0 +1,25 @@
+{
+    "reasoner": {
+        "100": "Decompose the question into logical steps, extract relevant information from the passage, perform any required inference, and formulate the answer based on the analysis.",
+        "101": "Understand the question, extract key information from the passage, perform any necessary logical steps, and formulate the answer based on the analysis.",
+        "102": "Read the passage carefully, identify key elements of the question, extract relevant information, perform necessary logical steps, and formulate the answer in one sentence.",
+        "103": "Analyze the question for complexity, identifying if it requires simple fact extraction, multi-step inference, or specialized knowledge, then route to the appropriate agent for processing.",
+        "104": "Analyze question complexity by identifying number of steps required, presence of ambiguous language, and specificity needed; select appropriate agent for processing.",
+        "105": "Decompose the question into identifying key entities, extracting relevant contextual information from the passage, and performing any required logical steps to derive the answer, then formulate the response.",
+        "106": "Decompose the question into identifying key entities, extracting relevant contextual information from the passage, and performing any required logical steps to derive the answer, then parallelize these tasks for efficient processing."
+    },
+    "verifier": {
+        "100": "Verify that the answer logically follows from the passage by checking facts, dates, and relationships for accuracy and consistency.",
+        "101": "Verify the answer by considering alternative facts and reasoning paths not taken in the original solution.",
+        "102": "Verify that the answer logically follows from the passage, matches the required format, and is free of factual errors.",
+        "103": "Verify that the answer logically follows from the passage without introducing external knowledge.",
+        "104": "Verify that the answer logically follows from the passage by checking facts, dates, and names, and ensure all steps of reasoning are clearly supported."
+    },
+    "answerer": {
+        "100": "Format your answer by directly stating the solution without additional commentary.",
+        "101": "Format your answer as: [Question]. [Your Concise Answer].",
+        "102": "Format your answer as: [Question] [Answer]",
+        "103": "When aggregating conflicting answers, prioritize the most reliable source or the one that best fits the context and logic of the question.",
+        "104": "When aggregating multiple answers, cross-check each response against the original context and verify logical consistency to resolve conflicts."
+    }
+}
