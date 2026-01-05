@@ -1,6 +1,6 @@
 """Orchestrator-workers workflow: Central LLM breaks down and delegates."""
 from typing import Dict, List, Tuple, Optional
-from .base import BaseWorkflow
+from ..base import BaseWorkflow
 
 
 class OrchestratorWorkersWorkflow(BaseWorkflow):

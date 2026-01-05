@@ -1,10 +1,10 @@
-"""Evaluator-optimizer workflow: Generate → Evaluate → Refine loop."""
+"""OpenRouter Evaluator-optimizer workflow: Generate → Evaluate → Refine loop using API."""
 from typing import Dict, List, Tuple, Optional
-from .base import BaseWorkflow
+from ..base import BaseWorkflow
 
 
-class EvaluatorOptimizerWorkflow(BaseWorkflow):
-    """Workflow 7: Evaluator-Optimizer - generate → evaluate → refine loop."""
+class OpenRouterEvaluatorOptimizerWorkflow(BaseWorkflow):
+    """OpenRouter Workflow 7: Evaluator-Optimizer - generate → evaluate → refine loop using API."""
     
     def execute(
         self,
@@ -20,7 +20,7 @@ class EvaluatorOptimizerWorkflow(BaseWorkflow):
         prompt_suffixes: Optional[Dict[str, str]] = None,
         max_iterations: int = 3
     ) -> Tuple[str, Dict]:
-        """Execute evaluator-optimizer workflow."""
+        """Execute evaluator-optimizer workflow using OpenRouter API."""
         prompt_suffixes = prompt_suffixes or {}
         reasoner_suffix = prompt_suffixes.get("reasoner", None)
         verifier_suffix = prompt_suffixes.get("verifier", None)

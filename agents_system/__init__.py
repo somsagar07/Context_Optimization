@@ -1,4 +1,4 @@
-from .worker import LLMWorker
+from .worker import LLMWorker, OpenRouterWorker
 
-__all__ = ['LLMWorker']
+__all__ = ['LLMWorker', 'OpenRouterWorker']
 

@@ -63,6 +63,12 @@ def parse_args():
     parser.add_argument("--mask", action="store_true", default=False,
                        help="Enable action masking to reduce invalid action space (masks agent2 for workflows 0,1,5)")
     
+    # API configuration
+    parser.add_argument("--api", action="store_true", default=False,
+                       help="Use OpenRouter API instead of local HuggingFace models")
+    parser.add_argument("--api-model", type=str, default=None,
+                       help="OpenRouter model ID (e.g., 'openai/gpt-4o', 'anthropic/claude-3.5-sonnet'). Defaults to OPENROUTER_MODEL env var")
+    
     # Logging
     parser.add_argument("--log-every", type=int, default=50, help="Log frequency")
     parser.add_argument("--save-every", type=int, default=2000, help="Checkpoint frequency")
@@ -117,9 +123,9 @@ def main():
     
     # Create trainer
     if args.algorithm == "ppo":
-        trainer = PPOTrainer(cfg, use_action_masking=args.mask)
+        trainer = PPOTrainer(cfg, use_action_masking=args.mask, use_api=args.api, api_model=args.api_model)
     else:
-        trainer = GRPOTrainer(cfg, use_action_masking=args.mask)
+        trainer = GRPOTrainer(cfg, use_action_masking=args.mask, use_api=args.api, api_model=args.api_model)
     
     # Load pretrained models if provided (e.g., from SFT)
     if args.pretrain_structure or args.pretrain_prompt:

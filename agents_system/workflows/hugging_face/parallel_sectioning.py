@@ -1,6 +1,6 @@
 """Parallel sectioning workflow: Break task into independent parallel subtasks."""
 from typing import Dict, List, Tuple, Optional
-from .base import BaseWorkflow
+from ..base import BaseWorkflow
 
 
 class ParallelSectioningWorkflow(BaseWorkflow):

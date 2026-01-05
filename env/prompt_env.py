@@ -17,8 +17,8 @@ from gymnasium import spaces
 import sys
 sys.path.append('..')
 
-from agents_system import LLMWorker
-from agents_system.workflows import get_workflow
+from agents_system import LLMWorker, OpenRouterWorker
+from agents_system.workflows import get_workflow, get_openrouter_workflow
 from tools import ToolRegistry
 from utils import get_dataset_loader
 from prompts.library import (
@@ -59,7 +59,7 @@ class PromptEnv(gym.Env):
         "answerer": {0: 64, 1: 128, 2: 256}
     }
     
-    def __init__(self, cfg=None, is_eval=False):
+    def __init__(self, cfg=None, is_eval=False, use_api=False, api_model=None):
         super().__init__()
         
         # Store config
@@ -81,7 +81,12 @@ class PromptEnv(gym.Env):
         self.action_space = spaces.Discrete(self.max_prompt_atoms)
         
         # Initialize components
-        self.worker = LLMWorker()
+        if use_api:
+            self.worker = OpenRouterWorker(model_name=api_model)
+            self.get_workflow_func = get_openrouter_workflow
+        else:
+            self.worker = LLMWorker()
+            self.get_workflow_func = get_workflow
         self.tools = ToolRegistry()
         self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
@@ -428,21 +433,37 @@ class PromptEnv(gym.Env):
         agent1_tools = self._decode_tools(self.agent1_tools_idx)
         agent2_tools = self._decode_tools(self.agent2_tools_idx)
         
-        exec_info = {
-            "steps": 0,
-            "tools_count": 0,
-            "total_tokens": 0,
-            "valid_code_count": 0,
-            "file_access_count": 0,
+        # Get workflow instance using the appropriate function (HuggingFace or OpenRouter)
+        workflow = self.get_workflow_func(
+            self.workflow_depth, self.worker, self.tools
+        )
+        
+        # Special handling for workflow 2 (Reason+Verify+Ans)
+        if self.workflow_depth == 2:
+            if hasattr(workflow, 'use_verifier'):
+                workflow.use_verifier = True
+        
+        # Execute workflow with prompt suffixes
+        prompt_suffixes = {
+            "reasoner": reasoner_suffix,
+            "verifier": verifier_suffix,
+            "answerer": answerer_suffix
         }
         
-        # Helper to merge stats
-        def merge_stats(stats):
-            exec_info["tools_count"] += stats["tool_calls"]
-            if stats["valid_code"]: exec_info["valid_code_count"] += 1
-            if stats["file_access"]: exec_info["file_access_count"] += 1
+        final_text, exec_info = workflow.execute(
+            self.current_q,
+            agent1_tools,
+            self.agent1_budget_idx,
+            agent2_tools,
+            self.agent2_budget_idx,
+            self.answerer_budget_idx,
+            agent1_tokens,
+            agent2_tokens,
+            answerer_tokens,
+            prompt_suffixes=prompt_suffixes
+        )
         
-        # Direct (0) workflow
+        return final_text, exec_info
         if self.workflow_depth == 0:
             # Direct Answer (can use agent1_tools)
             answerer_tools = agent1_tools if agent1_tools else []

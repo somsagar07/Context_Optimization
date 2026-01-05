@@ -16,7 +16,7 @@ from gymnasium import spaces
 import sys
 sys.path.append('..')
 
-from agents_system import LLMWorker
+from agents_system import LLMWorker, OpenRouterWorker
 from utils import get_dataset_loader
 
 
@@ -39,10 +39,12 @@ class StructureEnv(gym.Env):
     The PromptEnv handles the actual LLM execution after prompt selection.
     """
     
-    def __init__(self, cfg=None, is_eval=False):
+    def __init__(self, cfg=None, is_eval=False, use_api=False, api_model=None):
         """
         Args:
             cfg: Configuration module
+            use_api: If True, use OpenRouterWorker instead of LLMWorker
+            api_model: OpenRouter model ID (e.g., 'openai/gpt-4o')
         """
         super().__init__()
         
@@ -53,7 +55,10 @@ class StructureEnv(gym.Env):
         self.cfg = cfg
         
         # Initialize components
-        self.worker = LLMWorker()
+        if use_api:
+            self.worker = OpenRouterWorker(model_name=api_model)
+        else:
+            self.worker = LLMWorker()
         self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
         # Structure dimensions: [workflow, agent1_tools, agent1_budget, agent2_tools, agent2_budget, answerer_budget]

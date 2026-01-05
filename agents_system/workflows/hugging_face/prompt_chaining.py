@@ -1,6 +1,6 @@
 """Prompt chaining workflows: Reason+Ans and Reason+Verify+Ans."""
 from typing import Dict, List, Tuple, Optional
-from .base import BaseWorkflow
+from ..base import BaseWorkflow
 
 
 class PromptChainingWorkflow(BaseWorkflow):

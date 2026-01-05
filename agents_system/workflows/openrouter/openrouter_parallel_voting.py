@@ -1,10 +1,10 @@
-"""Parallel voting workflow: Run same task multiple times and aggregate."""
+"""OpenRouter Parallel voting workflow: Run same task multiple times and aggregate using API."""
 from typing import Dict, List, Tuple, Optional
-from .base import BaseWorkflow
+from ..base import BaseWorkflow
 
 
-class ParallelVotingWorkflow(BaseWorkflow):
-    """Workflow 5: Parallel-Voting - run same task multiple times and aggregate."""
+class OpenRouterParallelVotingWorkflow(BaseWorkflow):
+    """OpenRouter Workflow 5: Parallel-Voting - run same task multiple times and aggregate using API."""
     
     def execute(
         self,
@@ -20,10 +20,9 @@ class ParallelVotingWorkflow(BaseWorkflow):
         prompt_suffixes: Optional[Dict[str, str]] = None,
         num_votes: int = 3
     ) -> Tuple[str, Dict]:
-        """Execute parallel voting workflow."""
+        """Execute parallel voting workflow using OpenRouter API."""
         prompt_suffixes = prompt_suffixes or {}
         answerer_suffix = prompt_suffixes.get("answerer", None)
-        # aggregator_suffix = prompt_suffixes.get("aggregator", None)
         
         exec_info = {
             "steps": 0,
@@ -64,7 +63,7 @@ class ParallelVotingWorkflow(BaseWorkflow):
             context=f"Multiple attempts:\n{votes_text}\nProvide the most consistent answer.",
             tools=[],  # Answerer just synthesizes - votes already did computation
             tokens=answerer_tokens,
-            prompt_suffix= answerer_suffix #aggregator_suffix
+            prompt_suffix=answerer_suffix
         )
         exec_info["steps"] += 1
         exec_info["total_tokens"] += answerer_tokens

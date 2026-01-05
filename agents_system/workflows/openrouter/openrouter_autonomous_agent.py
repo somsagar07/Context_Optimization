@@ -1,10 +1,10 @@
-"""Autonomous agent workflow: LLM uses tools autonomously in a loop."""
+"""OpenRouter Autonomous agent workflow: LLM uses tools autonomously in a loop using API."""
 from typing import Dict, List, Tuple, Optional
-from .base import BaseWorkflow
+from ..base import BaseWorkflow
 
 
-class AutonomousAgentWorkflow(BaseWorkflow):
-    """Workflow 8: Autonomous Agent - LLM uses tools autonomously in a loop."""
+class OpenRouterAutonomousAgentWorkflow(BaseWorkflow):
+    """OpenRouter Workflow 8: Autonomous Agent - LLM uses tools autonomously in a loop using API."""
     
     def execute(
         self,
@@ -20,7 +20,7 @@ class AutonomousAgentWorkflow(BaseWorkflow):
         prompt_suffixes: Optional[Dict[str, str]] = None,
         max_iterations: int = 5
     ) -> Tuple[str, Dict]:
-        """Execute autonomous agent workflow."""
+        """Execute autonomous agent workflow using OpenRouter API."""
         prompt_suffixes = prompt_suffixes or {}
         reasoner_suffix = prompt_suffixes.get("reasoner", None)
         answerer_suffix = prompt_suffixes.get("answerer", None)

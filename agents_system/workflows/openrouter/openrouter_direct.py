@@ -1,10 +1,10 @@
-"""Direct workflow: Single LLM call to answer directly."""
+"""OpenRouter Direct workflow: Single LLM call to answer directly using API."""
 from typing import Dict, List, Tuple, Optional
-from .base import BaseWorkflow
+from ..base import BaseWorkflow
 
 
-class DirectWorkflow(BaseWorkflow):
-    """Workflow 0: Direct answer without reasoning or verification."""
+class OpenRouterDirectWorkflow(BaseWorkflow):
+    """OpenRouter Workflow 0: Direct answer without reasoning or verification."""
     
     def execute(
         self,
@@ -19,7 +19,7 @@ class DirectWorkflow(BaseWorkflow):
         answerer_tokens: int,
         prompt_suffixes: Optional[Dict[str, str]] = None
     ) -> Tuple[str, Dict]:
-        """Execute direct answer workflow."""
+        """Execute direct answer workflow using OpenRouter API."""
         prompt_suffixes = prompt_suffixes or {}
         answerer_suffix = prompt_suffixes.get("answerer", None)
         

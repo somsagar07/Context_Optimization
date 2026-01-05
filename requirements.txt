@@ -20,6 +20,13 @@ pandas>=2.0.0
 tqdm>=4.65.0
 tensorboard>=2.14.0
 
+# Environment variables
+python-dotenv>=1.0.0
+
+# API support
+requests>=2.31.0
+sentence-transformers>=2.2.0
+
 # For Agent Tools
 sympy>=1.12
 ddgs>=6.0.0

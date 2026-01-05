@@ -1,10 +1,10 @@
-"""Routing workflow: Classify input and route to specialized handlers."""
+"""OpenRouter Routing workflow: Classify input and route to specialized handlers using API."""
 from typing import Dict, List, Tuple, Optional
-from .base import BaseWorkflow
+from ..base import BaseWorkflow
 
 
-class RoutingWorkflow(BaseWorkflow):
-    """Workflow 3: Routing - classify input and route to specialized handler."""
+class OpenRouterRoutingWorkflow(BaseWorkflow):
+    """OpenRouter Workflow 3: Routing - classify input and route to specialized handler using API."""
     
     def execute(
         self,
@@ -19,10 +19,9 @@ class RoutingWorkflow(BaseWorkflow):
         answerer_tokens: int,
         prompt_suffixes: Optional[Dict[str, str]] = None
     ) -> Tuple[str, Dict]:
-        """Execute routing workflow."""
+        """Execute routing workflow using OpenRouter API."""
         prompt_suffixes = prompt_suffixes or {}
         reasoner_suffix = prompt_suffixes.get("reasoner", None)
-        # router_suffix = prompt_suffixes.get("router", None)
         answerer_suffix = prompt_suffixes.get("answerer", None)
         
         exec_info = {
@@ -42,7 +41,7 @@ class RoutingWorkflow(BaseWorkflow):
             classification_prompt,
             tools=agent1_tools,
             tokens=agent1_tokens // 3,
-            prompt_suffix=reasoner_suffix #router_suffix
+            prompt_suffix=reasoner_suffix
         )
         if agent1_tools:
             classification, stats = self._process_tool_calls(classification, agent1_tools)
