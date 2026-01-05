@@ -1,8 +1,10 @@
-from .gsm8k_loader import GSM8kDataset
-from .hotpot_loader import HotPotQADataset
-from .gaia_loader import GAIADataset
-from .medqa_loader import MedQADataset
-from .aime25_loader import AIME25Dataset
+from .data_loader import (
+    GSM8kDataset,
+    HotPotQADataset,
+    GAIADataset,
+    MedQADataset,
+    AIME25Dataset
+)
 
 def get_dataset_loader(name: str, is_eval: bool = False):
     """Factory function to get the right dataset loader."""

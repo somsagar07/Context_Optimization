@@ -19,7 +19,7 @@ def test_dataset(name: str, num_samples: int = 3):
     Test a dataset loader.
     
     Args:
-        name: Dataset name (gsm8k, hotpotqa, gaia, medqa)
+        name: Dataset name (gsm8k, hotpotqa, gaia, medqa, aime25)
         num_samples: Number of samples to show
     """
     print("=" * 80)

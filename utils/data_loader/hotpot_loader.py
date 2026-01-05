@@ -24,3 +24,4 @@ class HotPotQADataset(BaseDataset):
         if truth in pred or pred in truth:
             return 1.0
         return 0.0
+

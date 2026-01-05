@@ -30,3 +30,4 @@ class GSM8kDataset(BaseDataset):
         if pred_num is None or truth_num is None:
             return 0.0
         return 1.0 if abs(pred_num - truth_num) < 1e-3 else 0.0
+

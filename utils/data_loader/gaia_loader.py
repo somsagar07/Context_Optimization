@@ -151,3 +151,4 @@ class GAIADataset(BaseDataset):
         else:
             # print(f"Evaluating {model_answer} as a string.")
             return 1.0 if _normalize_str(model_answer) == _normalize_str(ground_truth) else 0.0
+

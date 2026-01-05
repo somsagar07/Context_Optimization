@@ -12,3 +12,4 @@ class BaseDataset(abc.ABC):
     def evaluate_correctness(self, prediction: str, ground_truth: str) -> float:
         """Returns 1.0 for correct, 0.0 for incorrect."""
         pass
+
