@@ -4,7 +4,7 @@ Tests loading, sampling, and evaluation for each dataset.
 """
 import sys
 import os
-from utils.get_dataset import get_dataset_loader
+
 
 # Add parent directory to path for imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -12,7 +12,7 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 sys.path.insert(0, current_dir)
 
-
+from utils.get_dataset import get_dataset_loader
 
 def test_dataset(name: str, num_samples: int = 3):
     """
@@ -109,7 +109,7 @@ def test_dataset(name: str, num_samples: int = 3):
 
 
 def main():
-    datasets = ["gsm8k", "hotpotqa", "gaia", "medqa"]
+    datasets = ["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"]
     results = {}
     
     for dataset_name in datasets:

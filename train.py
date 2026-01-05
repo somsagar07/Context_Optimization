@@ -38,7 +38,7 @@ def parse_args():
     parser.add_argument("--config", type=str, default="hierarchical", help="Config to use")
     parser.add_argument("--episodes", type=int, default=20000, help="Number of episodes")
     parser.add_argument("--batch-size", type=int, default=32, help="Batch size")
-    parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa"])
+    parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"])
     
     # Algorithm hyperparameters
     parser.add_argument("--clip-epsilon", type=float, default=0.2, help="Clipping parameter")

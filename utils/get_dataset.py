@@ -2,6 +2,7 @@ from .gsm8k_loader import GSM8kDataset
 from .hotpot_loader import HotPotQADataset
 from .gaia_loader import GAIADataset
 from .medqa_loader import MedQADataset
+from .aime25_loader import AIME25Dataset
 
 def get_dataset_loader(name: str, is_eval: bool = False):
     """Factory function to get the right dataset loader."""
@@ -19,5 +20,9 @@ def get_dataset_loader(name: str, is_eval: bool = False):
         # openlifescienceai/medqa uses "dev" for validation split
         split = "dev" if is_eval else "train"
         return MedQADataset(split=split)
+    elif name == "aime25":
+        # AIME25 only has "test" split, we split it internally
+        split = "test" if is_eval else "train"
+        return AIME25Dataset(split=split)
     else:
-        raise ValueError(f"Unknown dataset: {name}. Available: gsm8k, hotpotqa, gaia, medqa")
+        raise ValueError(f"Unknown dataset: {name}. Available: gsm8k, hotpotqa, gaia, medqa, aime25")
