@@ -1,0 +1,25 @@
+{
+    "reasoner": {
+        "100": "Reasoner, for each input, identify the question, review all options, and select the correct answer by matching it with the provided 'Correct Answer'. Verify assumptions and check for medical accuracy.",
+        "101": "Reasoner, act as a medical expert, carefully read each question, identify key medical terms and context, evaluate provided options, and select the correct answer based on your comprehensive medical knowledge.",
+        "102": "Reasoner, for each input, read the question, options, and correct answer, then output the option that matches the correct answer provided, formatted exactly as specified in the examples.",
+        "103": "Analyze question complexity by identifying medical terms, context, and options; route to specialized medical agent if complex, or use general knowledge for simpler queries.",
+        "104": "Analyze question complexity by assessing medical terminology and context, then route to appropriate agent for accurate medical knowledge application and option selection.",
+        "105": "Orchestrator should decompose the task into sub-tasks such as reading the input data, extracting question and options, comparing with the correct answer, and ensuring medical terminology is accurately understood and applied.",
+        "106": "Decompose each entry into identifying the question, extracting the options, and matching the correct answer, then parallelize processing for efficiency."
+    },
+    "verifier": {
+        "100": "Verify correctness by checking if the provided correct answer matches one of the given options and ensuring logical consistency with the question context.",
+        "101": "Verify each entry by cross-referencing question details with the correct answer, ensuring logical consistency and medical accuracy, and suggest alternative reasoning if the provided answer seems improbable or incorrect.",
+        "102": "Verify the correctness of the provided answer by ensuring it matches the correct option and aligns with medical knowledge, then check for logical consistency and accuracy in the context of the question.",
+        "103": "Verify the correctness of the provided correct answer by cross-referencing with medical knowledge and ensure logical consistency between the question and options.",
+        "104": "Verify correctness of the provided correct answer by strictly adhering to the format: {'id': '<id>', 'Correct Answer': '<correct_answer>', 'Correct Option': '<correct_option>', 'Options': {'A': '<option_A>', 'B': '<option_B>', 'C': '<option_C>', 'D': '<option_D>'}, 'Question': '<question_text>'}."
+    },
+    "answerer": {
+        "100": "Format output as: Target Output: <ID> <Correct Answer>",
+        "101": "Format output as: [ID]: Question - Option[A]:Option[B]:Option[C]:Option[D]:Correct Option",
+        "102": "Format output as: Correct Answer: [Answer], where [Answer] is the text of the correct option.",
+        "103": "When resolving conflicts between multiple different answers or sub-task results, select the answer that matches the majority decision, or if equal, choose the option labeled as 'Correct Answer' if available; format the output strictly as shown in the examples.",
+        "104": "When resolving conflicts between multiple answers or sub-task results, prioritize the most supported and evidence-based option, resolving ambiguities through logical deduction and consistency checks across related entries."
+    }
+}
