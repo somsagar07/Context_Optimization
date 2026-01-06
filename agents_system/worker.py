@@ -5,7 +5,7 @@ import sys
 import os
 import requests
 sys.path.append('..')
-import config
+from configs.base import LLM_MODEL_NAME, DEVICE
 
 # Load environment variables from .env file
 try:
@@ -25,19 +25,19 @@ class LLMWorker:
     """LLM-based worker that handles reasoning, verification, and answering."""
     
     def __init__(self, model_name: str = None):
-        # Update the name if provided
-        if model_name is not None:
-            config.LLM_MODEL_NAME = model_name
+        # Use provided model_name or fall back to config default
+        self.model_name = model_name or LLM_MODEL_NAME
+        self.device = DEVICE
         
-        print(f"Loading Worker Model: {config.LLM_MODEL_NAME} on {config.DEVICE}...")
+        print(f"Loading Worker Model: {self.model_name} on {self.device}...")
         
         # Load tokenizer
         try:
-            self.tokenizer = AutoTokenizer.from_pretrained(config.LLM_MODEL_NAME)
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         except:
             print("Fallback: Using trust_remote_code=True for tokenizer")
             self.tokenizer = AutoTokenizer.from_pretrained(
-                config.LLM_MODEL_NAME, 
+                self.model_name, 
                 trust_remote_code=True
             )
              
@@ -51,22 +51,22 @@ class LLMWorker:
         # Load model
         try:
             self.model = AutoModelForCausalLM.from_pretrained(
-                config.LLM_MODEL_NAME,
+                self.model_name,
                 torch_dtype=dtype, 
                 attn_implementation="eager" 
             )
         except:
             print("Fallback: Using trust_remote_code=True for model")
             self.model = AutoModelForCausalLM.from_pretrained(
-                config.LLM_MODEL_NAME,
+                self.model_name,
                 torch_dtype=dtype, 
                 trust_remote_code=True,
                 attn_implementation="eager"
             )
         
         # Move to device
-        print(f"Moving model to {config.DEVICE}...")
-        self.model = self.model.to(config.DEVICE)
+        print(f"Moving model to {self.device}...")
+        self.model = self.model.to(self.device)
         self.model.eval()
         
         # Verify device
@@ -81,7 +81,7 @@ class LLMWorker:
                 return_tensors="pt", 
                 truncation=True, 
                 max_length=512
-            ).to(config.DEVICE)
+            ).to(self.device)
             
             with torch.no_grad():
                 outputs = self.model(inputs.input_ids, output_hidden_states=True)
@@ -93,7 +93,7 @@ class LLMWorker:
                 return embedding
                 
         except Exception as e:
-            print(f"Embedding failed on {config.DEVICE}: {e}. Falling back to CPU...")
+            print(f"Embedding failed on {self.device}: {e}. Falling back to CPU...")
             self.model.to("cpu")
             inputs = self.tokenizer(
                 text, 
@@ -183,7 +183,7 @@ class LLMWorker:
             tokenize=False, 
             add_generation_prompt=True
         )
-        inputs = self.tokenizer([text], return_tensors="pt").to(config.DEVICE)
+        inputs = self.tokenizer([text], return_tensors="pt").to(self.device)
         
         with torch.no_grad():
             try:
@@ -205,7 +205,7 @@ class LLMWorker:
                     pad_token_id=self.tokenizer.eos_token_id,
                     eos_token_id=self.tokenizer.eos_token_id
                 )
-                self.model.to(config.DEVICE)
+                self.model.to(self.device)
 
         return self.tokenizer.decode(
             gen_ids[0][len(inputs.input_ids[0]):], 

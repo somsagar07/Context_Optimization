@@ -173,7 +173,7 @@ def main():
     struct_path, prompt_path = trainer.save_models("_final")
     
     print(f"\nTo evaluate:")
-    print(f"  python eval.py --structure-model {struct_path} --prompt-model {prompt_path}")
+    print(f"  python scripts/eval_hrl.py --structure-model {struct_path} --prompt-model {prompt_path}")
 
 
 if __name__ == "__main__":

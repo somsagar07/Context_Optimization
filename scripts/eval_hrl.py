@@ -1,13 +1,17 @@
 """
 Unified Evaluation Script for Hierarchical RL
 
-Evaluates trained structure and prompt policies (works for both PPO and GRPO).
+Evaluates trained structure and prompt policies.
 
 Usage:
-    python eval.py --structure-model models/grpo_models/structure.pt --prompt-model models/grpo_models/prompt.pt
-    python eval.py --structure-model models/ppo_models/structure.pt --prompt-model models/ppo_models/prompt.pt --episodes 50
-    python eval.py --random-only --episodes 20  # Random baseline only
+    python scripts/eval_hrl.py --structure-model models/grpo_models/structure.pt --prompt-model models/grpo_models/prompt.pt
+    python scripts/eval_hrl.py --structure-model models/ppo_models/structure.pt --prompt-model models/ppo_models/prompt.pt --episodes 50
 """
+import sys
+import os
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import argparse
 import numpy as np
 from collections import defaultdict
@@ -38,11 +42,7 @@ def decode_tools(idx):
     if idx & 8: tools.append("ocr_reader")
     return tools if tools else ["none"]
 
-
-# =============================================================================
-# POLICY NETWORKS (for loading)
-# =============================================================================
-
+# POLICY NETWORKS 
 class PromptPolicy(nn.Module):
     """Load either PPO or GRPO prompt policy."""
     
@@ -108,11 +108,11 @@ class StructurePolicy(nn.Module):
         return np.array(actions)
 
 
-def load_structure_policy(path, device="cpu", algorithm=None):
+def load_structure_policy(path, device="cpu"):
     checkpoint = torch.load(path, map_location=device, weights_only=False)
     obs_dim = checkpoint["obs_dim"]
     action_dims = checkpoint["action_dims"]
-    algo = checkpoint.get("algorithm", "PPO" if algorithm is None else algorithm.upper())
+    algo = checkpoint.get("algorithm", "PPO")  # Default to PPO if missing
     has_value = "PPO" in algo 
     
     policy = StructurePolicy(obs_dim, action_dims, has_value).to(device)
@@ -123,11 +123,11 @@ def load_structure_policy(path, device="cpu", algorithm=None):
     return policy
 
 
-def load_prompt_policy(path, device="cpu", algorithm=None):
+def load_prompt_policy(path, device="cpu"):
     checkpoint = torch.load(path, map_location=device, weights_only=False)
     obs_dim = checkpoint["obs_dim"]
     action_dim = checkpoint["action_dim"]
-    algo = checkpoint.get("algorithm", "PPO" if algorithm is None else algorithm.upper())
+    algo = checkpoint.get("algorithm", "PPO")  # Default to PPO if missing
     has_value = "PPO" in algo
     
     policy = PromptPolicy(obs_dim, action_dim, has_value).to(device)
@@ -138,10 +138,8 @@ def load_prompt_policy(path, device="cpu", algorithm=None):
     return policy
 
 
-# =============================================================================
-# EVALUATION
-# =============================================================================
 
+# EVALUATION
 def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20, 
              deterministic=True, verbose=True):
     """Evaluate dual policy system."""
@@ -217,57 +215,14 @@ def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20,
     return {"accuracy": accuracy, "avg_reward": avg_reward, "avg_tools": avg_tools}
 
 
-def evaluate_random(cfg, num_episodes=20, verbose=False):
-    """Random baseline."""
-    structure_env = StructureEnv(cfg)
-    prompt_env = PromptEnv(cfg)
-    
-    correct_count = 0
-    total_reward = 0.0
-    
-    print(f"\nRandom Baseline ({num_episodes} episodes)...")
-    
-    for ep in range(num_episodes):
-        struct_obs, _ = structure_env.reset()
-        struct_action = structure_env.action_space.sample()
-        _, _, _, _, struct_info = structure_env.step(struct_action)
-        
-        prompt_env.set_structure(
-            question=struct_info["question"],
-            answer=struct_info["answer"],
-            embedding=struct_info["embedding"],
-            structure=struct_info["structure"]
-        )
-        
-        prompt_obs, _ = prompt_env.reset()
-        done = False
-        ep_reward = 0.0
-        
-        while not done:
-            action = prompt_env.action_space.sample()
-            prompt_obs, reward, done, _, info = prompt_env.step(action)
-            ep_reward += reward
-        
-        if info.get("correct"):
-            correct_count += 1
-        total_reward += ep_reward
-    
-    accuracy = correct_count / num_episodes * 100
-    print(f"  Random Accuracy: {accuracy:.1f}%")
-    return {"accuracy": accuracy, "avg_reward": total_reward / num_episodes}
-
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Evaluate hierarchical RL")
     parser.add_argument("--config", type=str, default="hierarchical")
-    parser.add_argument("--structure-model", type=str, default=None)
-    parser.add_argument("--prompt-model", type=str, default=None)
+    parser.add_argument("--structure-model", type=str, required=True)
+    parser.add_argument("--prompt-model", type=str, required=True)
     parser.add_argument("--episodes", type=int, default=20)
     parser.add_argument("--stochastic", action="store_true")
-    parser.add_argument("--random-only", action="store_true")
-    parser.add_argument("--compare-random", action="store_true")
-    parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia"])
-    parser.add_argument("--algorithm", type=str, default=None, choices=["ppo", "grpo"])
+    parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"])
     parser.add_argument("--quiet", action="store_true")
     return parser.parse_args()
 
@@ -283,14 +238,6 @@ def main():
     print("HIERARCHICAL RL EVALUATION")
     print("=" * 60)
     
-    if args.random_only:
-        evaluate_random(cfg, args.episodes)
-        return
-    
-    if not args.structure_model or not args.prompt_model:
-        print("Error: --structure-model and --prompt-model required")
-        return
-    
     print(f"  Structure: {args.structure_model}")
     print(f"  Prompt:    {args.prompt_model}")
     print("=" * 60)
@@ -298,8 +245,8 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"\nLoading models (device: {device})...")
     
-    structure_policy = load_structure_policy(args.structure_model, device, algorithm=args.algorithm)
-    prompt_policy = load_prompt_policy(args.prompt_model, device, algorithm=args.algorithm)
+    structure_policy = load_structure_policy(args.structure_model, device)
+    prompt_policy = load_prompt_policy(args.prompt_model, device)
     
     results = evaluate(
         structure_policy, prompt_policy, cfg,
@@ -307,10 +254,6 @@ def main():
         deterministic=not args.stochastic,
         verbose=not args.quiet
     )
-    
-    if args.compare_random:
-        random_results = evaluate_random(cfg, args.episodes)
-        print(f"\n  Improvement over random: {results['accuracy'] - random_results['accuracy']:+.1f}%")
 
 
 if __name__ == "__main__":

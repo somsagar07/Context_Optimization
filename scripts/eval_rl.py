@@ -3,13 +3,17 @@ Evaluation script for RL learned controller.
 Supports both single-step and multi-step environments.
 
 Usage:
-    python eval_rl.py --config multi_step                    # Use latest model
-    python eval_rl.py --config single_step --model path/to/model
-    python eval_rl.py --config multi_step --episodes 100
+    python scripts/eval_rl.py --config multi_step                    # Use latest model
+    python scripts/eval_rl.py --config single_step --model path/to/model
+    python scripts/eval_rl.py --config multi_step --episodes 100
 """
+import sys
+import os
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import argparse
 import glob
-import os
 import time
 
 import numpy as np
@@ -61,7 +65,7 @@ def parse_args():
         "--dataset",
         type=str,
         default=None,
-        choices=["gsm8k", "hotpotqa"],
+        choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"],
         help="Override dataset from config"
     )
     return parser.parse_args()

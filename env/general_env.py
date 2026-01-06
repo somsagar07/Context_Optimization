@@ -42,7 +42,8 @@ class GeneralAgentEnv(gym.Env):
         
         # Store config (import default if not provided)
         if cfg is None:
-            import config as cfg
+            from configs import load_config
+            cfg = load_config("single_step")  # Default to single_step for GeneralAgentEnv
         self.cfg = cfg
         
         self.worker = LLMWorker()

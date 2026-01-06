@@ -51,7 +51,8 @@ class MultiStepAgentEnv(gym.Env):
         
         # Store config (import default if not provided)
         if cfg is None:
-            import config as cfg
+            from configs import load_config
+            cfg = load_config("multi_step")  # Default to multi_step for backwards compatibility
         self.cfg = cfg
         
         self.worker = LLMWorker()

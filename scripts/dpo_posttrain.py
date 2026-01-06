@@ -10,11 +10,15 @@ log-prob of dispreferred (incorrect) actions, with KL penalty to reference model
 
 Usage:
     # After RL training
-    python dpo_posttrain.py --rl-log logs/training_log_grpo_gsm8k_1766872133.json --rl-model-dir models/grpo_models --epochs 3
-    python eval.py --structure-model models/dpo_posttrained/structure_policy_dpo.pt --prompt-model models/dpo_posttrained/prompt_policy_dpo.pt
+    python scripts/dpo_posttrain.py --rl-log logs/training_log_grpo_gsm8k_1766872133.json --rl-model-dir models/grpo_models --epochs 3
+    python scripts/eval_hrl.py --structure-model models/dpo_posttrained/structure_policy_dpo.pt --prompt-model models/dpo_posttrained/prompt_policy_dpo.pt
 """
-import argparse
+import sys
 import os
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import argparse
 import json
 import random
 import torch
@@ -746,7 +750,7 @@ def main():
     print(f"  Structure: {struct_save_path}")
     print(f"  Prompt: {prompt_save_path}")
     print(f"\nEvaluate with:")
-    print(f"  python eval.py --structure-model {struct_save_path} --prompt-model {prompt_save_path}")
+    print(f"  python scripts/eval_hrl.py --structure-model {struct_save_path} --prompt-model {prompt_save_path}")
 
 
 if __name__ == "__main__":

@@ -544,7 +544,7 @@ def main():
     print(f"  Structure: {struct_save_path}")
     print(f"  Prompt: {prompt_save_path}")
     print(f"\nEvaluate with:")
-    print(f"  python eval.py --structure-model {struct_save_path} --prompt-model {prompt_save_path}")
+    print(f"  python scripts/eval_hrl.py --structure-model {struct_save_path} --prompt-model {prompt_save_path}")
 
 
 if __name__ == "__main__":
