@@ -1,0 +1,94 @@
+{
+  "embedder": "jina-clip-v2",
+  "config": {
+    "type": "jina-clip-v2",
+    "dim": 1024,
+    "description": "Jina CLIP v2 - multilingual multimodal (supports 89 languages, 8192 tokens)"
+  },
+  "projection_mode": "native",
+  "use_projection": false,
+  "clustering": {
+    "embedder": "jina-clip-v2",
+    "n_samples": 1520,
+    "n_clusters": 10,
+    "silhouette_score": 0.036861274391412735,
+    "adjusted_rand_index": 0.3389906392966019,
+    "avg_intra_cluster_similarity": 0.3948339521884918,
+    "avg_inter_cluster_similarity": 0.4508459270000458,
+    "cluster_separation": -0.056011974811553955
+  },
+  "classification": {
+    "embedder": "jina-clip-v2",
+    "n_samples": 1520,
+    "dataset_classification": {
+      "cv_accuracy_mean": 0.993421052631579,
+      "cv_accuracy_std": 0.0029421947072365497,
+      "test_accuracy": 0.993421052631579,
+      "test_f1": 0.992357130449887
+    },
+    "tool_classification": {
+      "cv_accuracy_mean": 0.6625,
+      "cv_accuracy_std": 0.2013695318702682,
+      "test_accuracy": 0.7105263157894737,
+      "test_f1": 0.6836341419130186
+    },
+    "average_accuracy": 0.8519736842105263,
+    "average_f1": 0.8379956361814529
+  },
+  "complexity": {
+    "embedder": "jina-clip-v2",
+    "n_samples": 1520,
+    "regression": {
+      "train_mse": 0.009393308593553517,
+      "test_mse": 0.013349334562532587,
+      "train_r2": 0.8703412971947146,
+      "test_r2": 0.8221011585502229
+    },
+    "ranking": {
+      "spearman_train": 0.9265098894337026,
+      "spearman_test": 0.9058503068580108,
+      "pearson_test": 0.9075076735066969,
+      "ranking_accuracy_train": 0.8760098548841239,
+      "ranking_accuracy_test": 0.860495918012854
+    },
+    "complexity_score": 0.8639757327041169
+  },
+  "retrieval": {
+    "embedder": "jina-clip-v2",
+    "n_samples": 1520,
+    "n_queries_evaluated": 100,
+    "within_dataset": {
+      "recall_at_k_mean": 0.014982596772492349,
+      "recall_at_k_std": 0.03545743396874793,
+      "ndcg_at_k_mean": 0.9959337544319662,
+      "ndcg_at_k_std": 0.028417765908764842
+    },
+    "cross_dataset": {
+      "recall_at_k_mean": 7.652280379553107e-05,
+      "recall_at_k_std": 0.0007575371087091878,
+      "ndcg_at_k_mean": 0.005050505050505051,
+      "ndcg_at_k_std": 0.0499974491748064
+    },
+    "combined_retrieval_score": 0.25401084476468977
+  },
+  "decision_prediction": {
+    "embedder": "jina-clip-v2",
+    "n_samples": 1520,
+    "workflow_prediction": {
+      "accuracy": 0.7138157894736842,
+      "f1": 0.7045025604956558
+    },
+    "tool_prediction": {
+      "accuracy": 0.7138157894736842,
+      "f1": 0.668484650640142
+    },
+    "budget_prediction": {
+      "accuracy": 0.8848684210526315,
+      "f1": 0.8849951449919358
+    },
+    "combined_accuracy": 0.48355263157894735,
+    "average_accuracy": 0.7708333333333334,
+    "decision_score": 0.6990131578947368
+  },
+  "total_time_seconds": 241.62935209274292
+}

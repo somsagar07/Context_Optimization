@@ -1,0 +1,94 @@
+{
+  "embedder": "clip-large",
+  "config": {
+    "type": "clip-ViT-L/14",
+    "dim": 768,
+    "description": "CLIP large ViT-L/14"
+  },
+  "projection_mode": "native",
+  "use_projection": false,
+  "clustering": {
+    "embedder": "clip-large",
+    "n_samples": 1520,
+    "n_clusters": 10,
+    "silhouette_score": 0.025961939245462418,
+    "adjusted_rand_index": 0.3265621520949155,
+    "avg_intra_cluster_similarity": 0.582808792591095,
+    "avg_inter_cluster_similarity": 0.7345755696296692,
+    "cluster_separation": -0.15176677703857422
+  },
+  "classification": {
+    "embedder": "clip-large",
+    "n_samples": 1520,
+    "dataset_classification": {
+      "cv_accuracy_mean": 0.9855263157894738,
+      "cv_accuracy_std": 0.00446205919942454,
+      "test_accuracy": 0.9868421052631579,
+      "test_f1": 0.9839386963048229
+    },
+    "tool_classification": {
+      "cv_accuracy_mean": 0.650657894736842,
+      "cv_accuracy_std": 0.2121075486359824,
+      "test_accuracy": 0.6743421052631579,
+      "test_f1": 0.6406484221418827
+    },
+    "average_accuracy": 0.8305921052631579,
+    "average_f1": 0.8122935592233528
+  },
+  "complexity": {
+    "embedder": "clip-large",
+    "n_samples": 1520,
+    "regression": {
+      "train_mse": 0.010149383859646104,
+      "test_mse": 0.015645720225918675,
+      "train_r2": 0.8599049597478641,
+      "test_r2": 0.7914985583138888
+    },
+    "ranking": {
+      "spearman_train": 0.9218697759299346,
+      "spearman_test": 0.8819058266927378,
+      "pearson_test": 0.8899558031137418,
+      "ranking_accuracy_train": 0.8722601256226987,
+      "ranking_accuracy_test": 0.8413018933472295
+    },
+    "complexity_score": 0.8367021925033133
+  },
+  "retrieval": {
+    "embedder": "clip-large",
+    "n_samples": 1520,
+    "n_queries_evaluated": 100,
+    "within_dataset": {
+      "recall_at_k_mean": 0.014762155890728821,
+      "recall_at_k_std": 0.035516434431926425,
+      "ndcg_at_k_mean": 0.9740082469544142,
+      "ndcg_at_k_std": 0.14342505848263756
+    },
+    "cross_dataset": {
+      "recall_at_k_mean": 7.936507936507937e-05,
+      "recall_at_k_std": 0.0007896725691322382,
+      "ndcg_at_k_mean": 0.006309297535714575,
+      "ndcg_at_k_std": 0.06277671785003756
+    },
+    "combined_retrieval_score": 0.24878976636505568
+  },
+  "decision_prediction": {
+    "embedder": "clip-large",
+    "n_samples": 1520,
+    "workflow_prediction": {
+      "accuracy": 0.7203947368421053,
+      "f1": 0.703123326961824
+    },
+    "tool_prediction": {
+      "accuracy": 0.7138157894736842,
+      "f1": 0.6704293628808863
+    },
+    "budget_prediction": {
+      "accuracy": 0.881578947368421,
+      "f1": 0.8825734867591031
+    },
+    "combined_accuracy": 0.48026315789473684,
+    "average_accuracy": 0.7719298245614036,
+    "decision_score": 0.6990131578947368
+  },
+  "total_time_seconds": 39.884156703948975
+}

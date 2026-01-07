@@ -1,0 +1,11 @@
+{
+  "embedder": "e5-base",
+  "config": {
+    "type": "e5-intfloat/e5-base-v2",
+    "dim": 768,
+    "description": "E5 base model (modern embedding)"
+  },
+  "projection_mode": "native",
+  "use_projection": false,
+  "error": "Failed to load E5 intfloat/base-v2: intfloat/base-v2 is not a local folder and is not a valid model identifier listed on 'https://huggingface.co/models'\nIf this is a private repository, make sure to pass a token having permission to this repo either by logging in with `hf auth login` or by passing `token=<your_token>`"
+}

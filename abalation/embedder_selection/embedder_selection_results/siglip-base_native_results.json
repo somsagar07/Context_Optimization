@@ -1,0 +1,94 @@
+{
+  "embedder": "siglip-base",
+  "config": {
+    "type": "siglip-google/siglip-base-patch16-224",
+    "dim": 768,
+    "description": "SigLIP base patch16-224"
+  },
+  "projection_mode": "native",
+  "use_projection": false,
+  "clustering": {
+    "embedder": "siglip-base",
+    "n_samples": 1520,
+    "n_clusters": 10,
+    "silhouette_score": 0.0418841615319252,
+    "adjusted_rand_index": 0.32267051221398296,
+    "avg_intra_cluster_similarity": 0.6695160269737244,
+    "avg_inter_cluster_similarity": 0.6989299654960632,
+    "cluster_separation": -0.029413938522338867
+  },
+  "classification": {
+    "embedder": "siglip-base",
+    "n_samples": 1520,
+    "dataset_classification": {
+      "cv_accuracy_mean": 0.9618421052631578,
+      "cv_accuracy_std": 0.017480697704719012,
+      "test_accuracy": 0.9671052631578947,
+      "test_f1": 0.9668777433721557
+    },
+    "tool_classification": {
+      "cv_accuracy_mean": 0.6756578947368421,
+      "cv_accuracy_std": 0.20405981619921548,
+      "test_accuracy": 0.680921052631579,
+      "test_f1": 0.6432817086658122
+    },
+    "average_accuracy": 0.8240131578947368,
+    "average_f1": 0.8050797260189839
+  },
+  "complexity": {
+    "embedder": "siglip-base",
+    "n_samples": 1520,
+    "regression": {
+      "train_mse": 0.009924494200519713,
+      "test_mse": 0.01494548224909704,
+      "train_r2": 0.8630091802880753,
+      "test_r2": 0.8008302238161782
+    },
+    "ranking": {
+      "spearman_train": 0.9246889766234768,
+      "spearman_test": 0.8822814607953207,
+      "pearson_test": 0.8949156641450393,
+      "ranking_accuracy_train": 0.8760166233484947,
+      "ranking_accuracy_test": 0.84607868681605
+    },
+    "complexity_score": 0.8415558423057494
+  },
+  "retrieval": {
+    "embedder": "siglip-base",
+    "n_samples": 1520,
+    "n_queries_evaluated": 100,
+    "within_dataset": {
+      "recall_at_k_mean": 0.009298597194388776,
+      "recall_at_k_std": 0.0018040524945774586,
+      "ndcg_at_k_mean": 0.9697957545137643,
+      "ndcg_at_k_std": 0.12688180445229758
+    },
+    "cross_dataset": {
+      "recall_at_k_mean": 0.0008572471122235529,
+      "recall_at_k_std": 0.00242818283295159,
+      "ndcg_at_k_mean": 0.07723738705540947,
+      "ndcg_at_k_std": 0.19972541781849854
+    },
+    "combined_retrieval_score": 0.26429724646894653
+  },
+  "decision_prediction": {
+    "embedder": "siglip-base",
+    "n_samples": 1520,
+    "workflow_prediction": {
+      "accuracy": 0.756578947368421,
+      "f1": 0.7541748029347005
+    },
+    "tool_prediction": {
+      "accuracy": 0.6875,
+      "f1": 0.6434348901948654
+    },
+    "budget_prediction": {
+      "accuracy": 0.9013157894736842,
+      "f1": 0.9016595971551625
+    },
+    "combined_accuracy": 0.5296052631578947,
+    "average_accuracy": 0.7817982456140351,
+    "decision_score": 0.71875
+  },
+  "total_time_seconds": 35.473485708236694
+}

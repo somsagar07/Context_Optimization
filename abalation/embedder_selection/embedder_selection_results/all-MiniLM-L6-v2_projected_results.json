@@ -1,0 +1,94 @@
+{
+  "embedder": "all-MiniLM-L6-v2",
+  "config": {
+    "type": "sentence-all-MiniLM-L6-v2",
+    "dim": 384,
+    "description": "Fast, lightweight sentence-transformer"
+  },
+  "projection_mode": "projected",
+  "use_projection": true,
+  "clustering": {
+    "embedder": "all-MiniLM-L6-v2",
+    "n_samples": 1520,
+    "n_clusters": 10,
+    "silhouette_score": 0.03563016653060913,
+    "adjusted_rand_index": 0.3213113738721632,
+    "avg_intra_cluster_similarity": 0.28579357266426086,
+    "avg_inter_cluster_similarity": 0.18328846991062164,
+    "cluster_separation": 0.10250510275363922
+  },
+  "classification": {
+    "embedder": "all-MiniLM-L6-v2",
+    "n_samples": 1520,
+    "dataset_classification": {
+      "cv_accuracy_mean": 0.9875,
+      "cv_accuracy_std": 0.0038361525623982493,
+      "test_accuracy": 0.9736842105263158,
+      "test_f1": 0.9673135276664485
+    },
+    "tool_classification": {
+      "cv_accuracy_mean": 0.6335526315789475,
+      "cv_accuracy_std": 0.19994588949453743,
+      "test_accuracy": 0.6743421052631579,
+      "test_f1": 0.6505190605125041
+    },
+    "average_accuracy": 0.8240131578947368,
+    "average_f1": 0.8089162940894763
+  },
+  "complexity": {
+    "embedder": "all-MiniLM-L6-v2",
+    "n_samples": 1520,
+    "regression": {
+      "train_mse": 0.013777224391456165,
+      "test_mse": 0.017724512275429993,
+      "train_r2": 0.8098287706549449,
+      "test_r2": 0.7637957020036555
+    },
+    "ranking": {
+      "spearman_train": 0.892165084736385,
+      "spearman_test": 0.8754534815893391,
+      "pearson_test": 0.8739726243778306,
+      "ranking_accuracy_train": 0.8497549815897769,
+      "ranking_accuracy_test": 0.8445153725898906
+    },
+    "complexity_score": 0.8196245917964973
+  },
+  "retrieval": {
+    "embedder": "all-MiniLM-L6-v2",
+    "n_samples": 1520,
+    "n_queries_evaluated": 100,
+    "within_dataset": {
+      "recall_at_k_mean": 0.013990085434025941,
+      "recall_at_k_std": 0.02904782358244868,
+      "ndcg_at_k_mean": 0.9981074266502177,
+      "ndcg_at_k_std": 0.013248336399199033
+    },
+    "cross_dataset": {
+      "recall_at_k_mean": 4.3514207388712415e-05,
+      "recall_at_k_std": 0.0004285652409292941,
+      "ndcg_at_k_mean": 0.006367862449018754,
+      "ndcg_at_k_std": 0.06271617176178278
+    },
+    "combined_retrieval_score": 0.25462722218516276
+  },
+  "decision_prediction": {
+    "embedder": "all-MiniLM-L6-v2",
+    "n_samples": 1520,
+    "workflow_prediction": {
+      "accuracy": 0.6743421052631579,
+      "f1": 0.6262231599292611
+    },
+    "tool_prediction": {
+      "accuracy": 0.680921052631579,
+      "f1": 0.6408365026786079
+    },
+    "budget_prediction": {
+      "accuracy": 0.8782894736842105,
+      "f1": 0.8788774818054662
+    },
+    "combined_accuracy": 0.4473684210526316,
+    "average_accuracy": 0.7445175438596491,
+    "decision_score": 0.6702302631578947
+  },
+  "total_time_seconds": 34.49033308029175
+}

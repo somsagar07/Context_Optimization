@@ -57,7 +57,7 @@ def parse_args():
     
     # Reward tuning
     parser.add_argument("--reward-scale", type=float, default=1.0, help="Scale correctness reward")
-    parser.add_argument("--tool-bonus", type=float, default=0.0, help="Bonus per tool (+ or -)")
+    parser.add_argument("--tool-bonus", type=float, default=-0.05, help="Bonus per tool (+ or -)")
     
     # Action masking
     parser.add_argument("--mask", action="store_true", default=False,

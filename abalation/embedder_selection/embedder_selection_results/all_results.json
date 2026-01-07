@@ -1,0 +1,2092 @@
+[
+  {
+    "embedder": "jina-clip-v2",
+    "config": {
+      "type": "jina-clip-v2",
+      "dim": 1024,
+      "description": "Jina CLIP v2 - multilingual multimodal (supports 89 languages, 8192 tokens)"
+    },
+    "projection_mode": "projected",
+    "use_projection": true,
+    "clustering": {
+      "embedder": "jina-clip-v2",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.030869146808981895,
+      "adjusted_rand_index": 0.3931605395022563,
+      "avg_intra_cluster_similarity": 0.38075175881385803,
+      "avg_inter_cluster_similarity": 0.47388237714767456,
+      "cluster_separation": -0.09313061833381653
+    },
+    "classification": {
+      "embedder": "jina-clip-v2",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9894736842105262,
+        "cv_accuracy_std": 0.006709236202095775,
+        "test_accuracy": 0.9901315789473685,
+        "test_f1": 0.9872439719989629
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6546052631578947,
+        "cv_accuracy_std": 0.20278744859453016,
+        "test_accuracy": 0.7105263157894737,
+        "test_f1": 0.6810861158272024
+      },
+      "average_accuracy": 0.850328947368421,
+      "average_f1": 0.8341650439130825
+    },
+    "complexity": {
+      "embedder": "jina-clip-v2",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.010956657281995283,
+        "test_mse": 0.014629705656359545,
+        "train_r2": 0.8487619185384215,
+        "test_r2": 0.8050383953727311
+      },
+      "ranking": {
+        "spearman_train": 0.9137307880327499,
+        "spearman_test": 0.8960020582380419,
+        "pearson_test": 0.898419545095099,
+        "ranking_accuracy_train": 0.8658327918561837,
+        "ranking_accuracy_test": 0.852375369115859
+      },
+      "complexity_score": 0.8505202268053865
+    },
+    "retrieval": {
+      "embedder": "jina-clip-v2",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.009859719438877755,
+        "recall_at_k_std": 0.0007854075327561293,
+        "ndcg_at_k_mean": 0.9929323564936223,
+        "ndcg_at_k_std": 0.04725496700839462
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.00016484900141409836,
+        "recall_at_k_std": 0.001404753306424601,
+        "ndcg_at_k_mean": 0.016825239337480282,
+        "ndcg_at_k_std": 0.1173018251994135
+      },
+      "combined_retrieval_score": 0.2549455410678486
+    },
+    "decision_prediction": {
+      "embedder": "jina-clip-v2",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.694078947368421,
+        "f1": 0.6760102075836402
+      },
+      "tool_prediction": {
+        "accuracy": 0.7105263157894737,
+        "f1": 0.666937840899732
+      },
+      "budget_prediction": {
+        "accuracy": 0.875,
+        "f1": 0.875
+      },
+      "combined_accuracy": 0.47039473684210525,
+      "average_accuracy": 0.7598684210526315,
+      "decision_score": 0.6875
+    },
+    "total_time_seconds": 359.49737453460693
+  },
+  {
+    "embedder": "flava-full",
+    "config": {
+      "type": "flava-full",
+      "dim": 768,
+      "description": "FLAVA full model - unified vision-language model"
+    },
+    "projection_mode": "projected",
+    "use_projection": true,
+    "clustering": {
+      "embedder": "flava-full",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.04077187925577164,
+      "adjusted_rand_index": 0.33169273280097805,
+      "avg_intra_cluster_similarity": 0.9078670740127563,
+      "avg_inter_cluster_similarity": 0.8954356908798218,
+      "cluster_separation": 0.01243138313293457
+    },
+    "classification": {
+      "embedder": "flava-full",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9822368421052632,
+        "cv_accuracy_std": 0.003354618101047867,
+        "test_accuracy": 0.9901315789473685,
+        "test_f1": 0.9899363089018263
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6657894736842105,
+        "cv_accuracy_std": 0.21388763974964314,
+        "test_accuracy": 0.694078947368421,
+        "test_f1": 0.6566755612808244
+      },
+      "average_accuracy": 0.8421052631578947,
+      "average_f1": 0.8233059350913253
+    },
+    "complexity": {
+      "embedder": "flava-full",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.013552656955123728,
+        "test_mse": 0.015459587970250687,
+        "train_r2": 0.8129285434556761,
+        "test_r2": 0.7939790349612197
+      },
+      "ranking": {
+        "spearman_train": 0.8953203371753313,
+        "spearman_test": 0.8870707420941215,
+        "pearson_test": 0.8917193779001904,
+        "ranking_accuracy_train": 0.8513293264024259,
+        "ranking_accuracy_test": 0.8462958137919055
+      },
+      "complexity_score": 0.8405248885276706
+    },
+    "retrieval": {
+      "embedder": "flava-full",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.009879759519038075,
+        "recall_at_k_std": 0.000708807181716529,
+        "ndcg_at_k_mean": 0.9971204733007903,
+        "ndcg_at_k_std": 0.015513180804353982
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.0002061855670103093,
+        "recall_at_k_std": 0.0020201977260067457,
+        "ndcg_at_k_mean": 0.006504430449190284,
+        "ndcg_at_k_std": 0.06373014267175273
+      },
+      "combined_retrieval_score": 0.2534277122090073
+    },
+    "decision_prediction": {
+      "embedder": "flava-full",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.6644736842105263,
+        "f1": 0.5706496425203956
+      },
+      "tool_prediction": {
+        "accuracy": 0.6710526315789473,
+        "f1": 0.627540981680851
+      },
+      "budget_prediction": {
+        "accuracy": 0.8651315789473685,
+        "f1": 0.8666860165118679
+      },
+      "combined_accuracy": 0.3815789473684211,
+      "average_accuracy": 0.7335526315789473,
+      "decision_score": 0.6455592105263158
+    },
+    "total_time_seconds": 39.241454124450684
+  },
+  {
+    "embedder": "siglip-base",
+    "config": {
+      "type": "siglip-google/siglip-base-patch16-224",
+      "dim": 768,
+      "description": "SigLIP base patch16-224"
+    },
+    "projection_mode": "projected",
+    "use_projection": true,
+    "clustering": {
+      "embedder": "siglip-base",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.034736376255750656,
+      "adjusted_rand_index": 0.3806987952323815,
+      "avg_intra_cluster_similarity": 0.6830266118049622,
+      "avg_inter_cluster_similarity": 0.6771485209465027,
+      "cluster_separation": 0.005878090858459473
+    },
+    "classification": {
+      "embedder": "siglip-base",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9592105263157894,
+        "cv_accuracy_std": 0.015512929108620522,
+        "test_accuracy": 0.9572368421052632,
+        "test_f1": 0.9570061147064095
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6697368421052632,
+        "cv_accuracy_std": 0.2043353694623043,
+        "test_accuracy": 0.6644736842105263,
+        "test_f1": 0.6278571705201192
+      },
+      "average_accuracy": 0.8108552631578947,
+      "average_f1": 0.7924316426132644
+    },
+    "complexity": {
+      "embedder": "siglip-base",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.010730313397312282,
+        "test_mse": 0.015351468860548457,
+        "train_r2": 0.8518862121974256,
+        "test_r2": 0.7954198756461623
+      },
+      "ranking": {
+        "spearman_train": 0.9164596477772827,
+        "spearman_test": 0.8740641705010963,
+        "pearson_test": 0.8920775591110568,
+        "ranking_accuracy_train": 0.8688853692874161,
+        "ranking_accuracy_test": 0.8398037172138266
+      },
+      "complexity_score": 0.8347420230736293
+    },
+    "retrieval": {
+      "embedder": "siglip-base",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.009278557114228455,
+        "recall_at_k_std": 0.0018938670976082982,
+        "ndcg_at_k_mean": 0.9675620715196321,
+        "ndcg_at_k_std": 0.14730162966892194
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.0008278120181917074,
+        "recall_at_k_std": 0.002557671885673536,
+        "ndcg_at_k_mean": 0.06931767775850496,
+        "ndcg_at_k_std": 0.20845373053399427
+      },
+      "combined_retrieval_score": 0.26174652960263933
+    },
+    "decision_prediction": {
+      "embedder": "siglip-base",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.75,
+        "f1": 0.7454819999080519
+      },
+      "tool_prediction": {
+        "accuracy": 0.6907894736842105,
+        "f1": 0.6469090877153948
+      },
+      "budget_prediction": {
+        "accuracy": 0.881578947368421,
+        "f1": 0.8819889539786446
+      },
+      "combined_accuracy": 0.5131578947368421,
+      "average_accuracy": 0.774122807017544,
+      "decision_score": 0.7088815789473685
+    },
+    "total_time_seconds": 33.0124785900116
+  },
+  {
+    "embedder": "siglip-large",
+    "config": {
+      "type": "siglip-google/siglip-large-patch16-384",
+      "dim": 1024,
+      "description": "SigLIP large patch16-384"
+    },
+    "projection_mode": "projected",
+    "use_projection": true,
+    "clustering": {
+      "embedder": "siglip-large",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.07959713041782379,
+      "adjusted_rand_index": 0.3740523931173851,
+      "avg_intra_cluster_similarity": 0.6154512166976929,
+      "avg_inter_cluster_similarity": 0.599707305431366,
+      "cluster_separation": 0.015743911266326904
+    },
+    "classification": {
+      "embedder": "siglip-large",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9289473684210527,
+        "cv_accuracy_std": 0.012925580726571358,
+        "test_accuracy": 0.9046052631578947,
+        "test_f1": 0.9021239612986761
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6710526315789472,
+        "cv_accuracy_std": 0.21446762987902854,
+        "test_accuracy": 0.6677631578947368,
+        "test_f1": 0.6297158983630385
+      },
+      "average_accuracy": 0.7861842105263157,
+      "average_f1": 0.7659199298308573
+    },
+    "complexity": {
+      "embedder": "siglip-large",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.010798198448519852,
+        "test_mse": 0.016367604957863782,
+        "train_r2": 0.8509491741355136,
+        "test_r2": 0.781878419057378
+      },
+      "ranking": {
+        "spearman_train": 0.9135877064001696,
+        "spearman_test": 0.8756163633853877,
+        "pearson_test": 0.8843680558290974,
+        "ranking_accuracy_train": 0.8677239008013862,
+        "ranking_accuracy_test": 0.8405419489317353
+      },
+      "complexity_score": 0.8287473912213829
+    },
+    "retrieval": {
+      "embedder": "siglip-large",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.009018036072144287,
+        "recall_at_k_std": 0.0022761155694590277,
+        "ndcg_at_k_mean": 0.9485854128340787,
+        "ndcg_at_k_std": 0.18071286738614104
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.0019174409434133501,
+        "recall_at_k_std": 0.004692588491177355,
+        "ndcg_at_k_mean": 0.13148309224527602,
+        "ndcg_at_k_std": 0.2799071619635021
+      },
+      "combined_retrieval_score": 0.2727509955237281
+    },
+    "decision_prediction": {
+      "embedder": "siglip-large",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.7532894736842105,
+        "f1": 0.752130979265221
+      },
+      "tool_prediction": {
+        "accuracy": 0.6907894736842105,
+        "f1": 0.6469090877153948
+      },
+      "budget_prediction": {
+        "accuracy": 0.875,
+        "f1": 0.8758111298745973
+      },
+      "combined_accuracy": 0.5,
+      "average_accuracy": 0.7730263157894738,
+      "decision_score": 0.7047697368421053
+    },
+    "total_time_seconds": 57.586265563964844
+  },
+  {
+    "embedder": "clip-base",
+    "config": {
+      "type": "clip-ViT-B/32",
+      "dim": 512,
+      "description": "CLIP base ViT-B/32"
+    },
+    "projection_mode": "projected",
+    "use_projection": true,
+    "clustering": {
+      "embedder": "clip-base",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.03984901309013367,
+      "adjusted_rand_index": 0.32155027266875663,
+      "avg_intra_cluster_similarity": 0.7129456400871277,
+      "avg_inter_cluster_similarity": 0.8331188559532166,
+      "cluster_separation": -0.12017321586608887
+    },
+    "classification": {
+      "embedder": "clip-base",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9789473684210526,
+        "cv_accuracy_std": 0.003354618101047867,
+        "test_accuracy": 0.9802631578947368,
+        "test_f1": 0.9738132094943239
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6414473684210527,
+        "cv_accuracy_std": 0.22078225946434832,
+        "test_accuracy": 0.6776315789473685,
+        "test_f1": 0.6408523834839626
+      },
+      "average_accuracy": 0.8289473684210527,
+      "average_f1": 0.8073327964891432
+    },
+    "complexity": {
+      "embedder": "clip-base",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.011000384522209616,
+        "test_mse": 0.015070694542341967,
+        "train_r2": 0.8481583381080569,
+        "test_r2": 0.7991615921852008
+      },
+      "ranking": {
+        "spearman_train": 0.9145610433559004,
+        "spearman_test": 0.8872824242180272,
+        "pearson_test": 0.8946546164974649,
+        "ranking_accuracy_train": 0.8654320987654321,
+        "ranking_accuracy_test": 0.8448410630536738
+      },
+      "complexity_score": 0.843222008201614
+    },
+    "retrieval": {
+      "embedder": "clip-base",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.009919839679358715,
+        "recall_at_k_std": 0.0005206565553814259,
+        "ndcg_at_k_mean": 0.9975979452442,
+        "ndcg_at_k_std": 0.013759229253954947
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.00019256575898041263,
+        "recall_at_k_std": 0.001368956816163027,
+        "ndcg_at_k_mean": 0.016215935563604806,
+        "ndcg_at_k_std": 0.092834662860753
+      },
+      "combined_retrieval_score": 0.255981571561536
+    },
+    "decision_prediction": {
+      "embedder": "clip-base",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.7072368421052632,
+        "f1": 0.6492254234086804
+      },
+      "tool_prediction": {
+        "accuracy": 0.7105263157894737,
+        "f1": 0.6671507558790594
+      },
+      "budget_prediction": {
+        "accuracy": 0.8947368421052632,
+        "f1": 0.8942553752803061
+      },
+      "combined_accuracy": 0.4375,
+      "average_accuracy": 0.7708333333333334,
+      "decision_score": 0.6875
+    },
+    "total_time_seconds": 34.31695103645325
+  },
+  {
+    "embedder": "clip-large",
+    "config": {
+      "type": "clip-ViT-L/14",
+      "dim": 768,
+      "description": "CLIP large ViT-L/14"
+    },
+    "projection_mode": "projected",
+    "use_projection": true,
+    "clustering": {
+      "embedder": "clip-large",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.02808414027094841,
+      "adjusted_rand_index": 0.32728289876799216,
+      "avg_intra_cluster_similarity": 0.5455671548843384,
+      "avg_inter_cluster_similarity": 0.7027647495269775,
+      "cluster_separation": -0.15719759464263916
+    },
+    "classification": {
+      "embedder": "clip-large",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9822368421052632,
+        "cv_accuracy_std": 0.002631578947368407,
+        "test_accuracy": 0.9835526315789473,
+        "test_f1": 0.9770711518889865
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6453947368421054,
+        "cv_accuracy_std": 0.21902460998342937,
+        "test_accuracy": 0.6578947368421053,
+        "test_f1": 0.6237411095305833
+      },
+      "average_accuracy": 0.8207236842105263,
+      "average_f1": 0.800406130709785
+    },
+    "complexity": {
+      "embedder": "clip-large",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.011505923648601825,
+        "test_mse": 0.016490103214097624,
+        "train_r2": 0.8411802273931257,
+        "test_r2": 0.7802459558239834
+      },
+      "ranking": {
+        "spearman_train": 0.9096606470720309,
+        "spearman_test": 0.8776529209273117,
+        "pearson_test": 0.8836703423194461,
+        "ranking_accuracy_train": 0.860622427983539,
+        "ranking_accuracy_test": 0.8391740489838457
+      },
+      "complexity_score": 0.8289494383756475
+    },
+    "retrieval": {
+      "embedder": "clip-large",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.009679358717434867,
+        "recall_at_k_std": 0.0008528225583548382,
+        "ndcg_at_k_mean": 0.9901369089098395,
+        "ndcg_at_k_std": 0.04353139197950823
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.00034104279372901194,
+        "recall_at_k_std": 0.0013811164099444947,
+        "ndcg_at_k_mean": 0.03593199624897551,
+        "ndcg_at_k_std": 0.13501140586666144
+      },
+      "combined_retrieval_score": 0.2590223266674947
+    },
+    "decision_prediction": {
+      "embedder": "clip-large",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.7006578947368421,
+        "f1": 0.6861369356575931
+      },
+      "tool_prediction": {
+        "accuracy": 0.694078947368421,
+        "f1": 0.6525975499092558
+      },
+      "budget_prediction": {
+        "accuracy": 0.8914473684210527,
+        "f1": 0.8917400671206437
+      },
+      "combined_accuracy": 0.4967105263157895,
+      "average_accuracy": 0.7620614035087719,
+      "decision_score": 0.6957236842105263
+    },
+    "total_time_seconds": 37.06865835189819
+  },
+  {
+    "embedder": "clip-base-patch16",
+    "config": {
+      "type": "clip-ViT-B/16",
+      "dim": 512,
+      "description": "CLIP base ViT-B/16"
+    },
+    "projection_mode": "projected",
+    "use_projection": true,
+    "clustering": {
+      "embedder": "clip-base-patch16",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.03318910673260689,
+      "adjusted_rand_index": 0.3691222052224794,
+      "avg_intra_cluster_similarity": 0.6760439276695251,
+      "avg_inter_cluster_similarity": 0.845192551612854,
+      "cluster_separation": -0.16914862394332886
+    },
+    "classification": {
+      "embedder": "clip-base-patch16",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9796052631578946,
+        "cv_accuracy_std": 0.0038361525623982033,
+        "test_accuracy": 0.9802631578947368,
+        "test_f1": 0.9737980437454935
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6592105263157894,
+        "cv_accuracy_std": 0.20216324894593657,
+        "test_accuracy": 0.6842105263157895,
+        "test_f1": 0.6477455327096514
+      },
+      "average_accuracy": 0.8322368421052632,
+      "average_f1": 0.8107717882275725
+    },
+    "complexity": {
+      "embedder": "clip-base-patch16",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.010898425156848471,
+        "test_mse": 0.01500567689626226,
+        "train_r2": 0.8495657143184636,
+        "test_r2": 0.8000280446557109
+      },
+      "ranking": {
+        "spearman_train": 0.9153322450296153,
+        "spearman_test": 0.8896929035703287,
+        "pearson_test": 0.8947843985986502,
+        "ranking_accuracy_train": 0.86647579597141,
+        "ranking_accuracy_test": 0.8470557582073996
+      },
+      "complexity_score": 0.8448604741130198
+    },
+    "retrieval": {
+      "embedder": "clip-base-patch16",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.014862356291530425,
+        "recall_at_k_std": 0.03547971492408956,
+        "ndcg_at_k_mean": 0.9904731966912032,
+        "ndcg_at_k_std": 0.05479428458609365
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.00024935312752771106,
+        "recall_at_k_std": 0.0011403061109877305,
+        "ndcg_at_k_mean": 0.035832436655941075,
+        "ndcg_at_k_std": 0.15800230115021247
+      },
+      "combined_retrieval_score": 0.26035433569155053
+    },
+    "decision_prediction": {
+      "embedder": "clip-base-patch16",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.7039473684210527,
+        "f1": 0.663237657547472
+      },
+      "tool_prediction": {
+        "accuracy": 0.7072368421052632,
+        "f1": 0.663831420642283
+      },
+      "budget_prediction": {
+        "accuracy": 0.8947368421052632,
+        "f1": 0.8950632174730209
+      },
+      "combined_accuracy": 0.4407894736842105,
+      "average_accuracy": 0.7686403508771931,
+      "decision_score": 0.6866776315789475
+    },
+    "total_time_seconds": 34.83358669281006
+  },
+  {
+    "embedder": "all-MiniLM-L6-v2",
+    "config": {
+      "type": "sentence-all-MiniLM-L6-v2",
+      "dim": 384,
+      "description": "Fast, lightweight sentence-transformer"
+    },
+    "projection_mode": "projected",
+    "use_projection": true,
+    "clustering": {
+      "embedder": "all-MiniLM-L6-v2",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.03563016653060913,
+      "adjusted_rand_index": 0.3213113738721632,
+      "avg_intra_cluster_similarity": 0.28579357266426086,
+      "avg_inter_cluster_similarity": 0.18328846991062164,
+      "cluster_separation": 0.10250510275363922
+    },
+    "classification": {
+      "embedder": "all-MiniLM-L6-v2",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9875,
+        "cv_accuracy_std": 0.0038361525623982493,
+        "test_accuracy": 0.9736842105263158,
+        "test_f1": 0.9673135276664485
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6335526315789475,
+        "cv_accuracy_std": 0.19994588949453743,
+        "test_accuracy": 0.6743421052631579,
+        "test_f1": 0.6505190605125041
+      },
+      "average_accuracy": 0.8240131578947368,
+      "average_f1": 0.8089162940894763
+    },
+    "complexity": {
+      "embedder": "all-MiniLM-L6-v2",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.013777224391456165,
+        "test_mse": 0.017724512275429993,
+        "train_r2": 0.8098287706549449,
+        "test_r2": 0.7637957020036555
+      },
+      "ranking": {
+        "spearman_train": 0.892165084736385,
+        "spearman_test": 0.8754534815893391,
+        "pearson_test": 0.8739726243778306,
+        "ranking_accuracy_train": 0.8497549815897769,
+        "ranking_accuracy_test": 0.8445153725898906
+      },
+      "complexity_score": 0.8196245917964973
+    },
+    "retrieval": {
+      "embedder": "all-MiniLM-L6-v2",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.013990085434025941,
+        "recall_at_k_std": 0.02904782358244868,
+        "ndcg_at_k_mean": 0.9981074266502177,
+        "ndcg_at_k_std": 0.013248336399199033
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 4.3514207388712415e-05,
+        "recall_at_k_std": 0.0004285652409292941,
+        "ndcg_at_k_mean": 0.006367862449018754,
+        "ndcg_at_k_std": 0.06271617176178278
+      },
+      "combined_retrieval_score": 0.25462722218516276
+    },
+    "decision_prediction": {
+      "embedder": "all-MiniLM-L6-v2",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.6743421052631579,
+        "f1": 0.6262231599292611
+      },
+      "tool_prediction": {
+        "accuracy": 0.680921052631579,
+        "f1": 0.6408365026786079
+      },
+      "budget_prediction": {
+        "accuracy": 0.8782894736842105,
+        "f1": 0.8788774818054662
+      },
+      "combined_accuracy": 0.4473684210526316,
+      "average_accuracy": 0.7445175438596491,
+      "decision_score": 0.6702302631578947
+    },
+    "total_time_seconds": 34.49033308029175
+  },
+  {
+    "embedder": "all-MiniLM-L12-v2",
+    "config": {
+      "type": "sentence-all-MiniLM-L12-v2",
+      "dim": 384,
+      "description": "Larger MiniLM variant"
+    },
+    "projection_mode": "projected",
+    "use_projection": true,
+    "clustering": {
+      "embedder": "all-MiniLM-L12-v2",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.03742976486682892,
+      "adjusted_rand_index": 0.3125297751245621,
+      "avg_intra_cluster_similarity": 0.3174431324005127,
+      "avg_inter_cluster_similarity": 0.26337531208992004,
+      "cluster_separation": 0.05406782031059265
+    },
+    "classification": {
+      "embedder": "all-MiniLM-L12-v2",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9861842105263158,
+        "cv_accuracy_std": 0.0024616167018249842,
+        "test_accuracy": 0.9868421052631579,
+        "test_f1": 0.9803442600324795
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6368421052631579,
+        "cv_accuracy_std": 0.19500337378997748,
+        "test_accuracy": 0.6907894736842105,
+        "test_f1": 0.6701038559422489
+      },
+      "average_accuracy": 0.8388157894736842,
+      "average_f1": 0.8252240579873642
+    },
+    "complexity": {
+      "embedder": "all-MiniLM-L12-v2",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.012855148427735826,
+        "test_mse": 0.01803476403205786,
+        "train_r2": 0.8225564663495121,
+        "test_r2": 0.7596611567345029
+      },
+      "ranking": {
+        "spearman_train": 0.9020798684690018,
+        "spearman_test": 0.8776054048186089,
+        "pearson_test": 0.8720584135883245,
+        "ranking_accuracy_train": 0.8551995343296512,
+        "ranking_accuracy_test": 0.8402813965607087
+      },
+      "complexity_score": 0.818633280776556
+    },
+    "retrieval": {
+      "embedder": "all-MiniLM-L12-v2",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.011924902436451845,
+        "recall_at_k_std": 0.01527082811357233,
+        "ndcg_at_k_mean": 1.0,
+        "ndcg_at_k_std": 0.0
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 4.3514207388712415e-05,
+        "recall_at_k_std": 0.0004285652409292941,
+        "ndcg_at_k_mean": 0.005114957503488644,
+        "ndcg_at_k_std": 0.050376489114089644
+      },
+      "combined_retrieval_score": 0.25427084353683227
+    },
+    "decision_prediction": {
+      "embedder": "all-MiniLM-L12-v2",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.6710526315789473,
+        "f1": 0.6301948336975894
+      },
+      "tool_prediction": {
+        "accuracy": 0.7006578947368421,
+        "f1": 0.657360809261747
+      },
+      "budget_prediction": {
+        "accuracy": 0.8881578947368421,
+        "f1": 0.8878259266328198
+      },
+      "combined_accuracy": 0.4309210526315789,
+      "average_accuracy": 0.7532894736842105,
+      "decision_score": 0.6726973684210525
+    },
+    "total_time_seconds": 44.177406311035156
+  },
+  {
+    "embedder": "all-mpnet-base-v2",
+    "config": {
+      "type": "sentence-all-mpnet-base-v2",
+      "dim": 768,
+      "description": "Higher quality sentence-transformer"
+    },
+    "projection_mode": "projected",
+    "use_projection": true,
+    "clustering": {
+      "embedder": "all-mpnet-base-v2",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.035901498049497604,
+      "adjusted_rand_index": 0.3534475672535704,
+      "avg_intra_cluster_similarity": 0.3377196192741394,
+      "avg_inter_cluster_similarity": 0.27181461453437805,
+      "cluster_separation": 0.06590500473976135
+    },
+    "classification": {
+      "embedder": "all-mpnet-base-v2",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9940789473684211,
+        "cv_accuracy_std": 0.003223012819451533,
+        "test_accuracy": 0.9967105263157895,
+        "test_f1": 0.9964837466801333
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6302631578947369,
+        "cv_accuracy_std": 0.2071020865134563,
+        "test_accuracy": 0.6644736842105263,
+        "test_f1": 0.6452305440835083
+      },
+      "average_accuracy": 0.830592105263158,
+      "average_f1": 0.8208571453818208
+    },
+    "complexity": {
+      "embedder": "all-mpnet-base-v2",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.011295816339618158,
+        "test_mse": 0.016402660159281355,
+        "train_r2": 0.8440804026467554,
+        "test_r2": 0.7814112587139345
+      },
+      "ranking": {
+        "spearman_train": 0.911410719577804,
+        "spearman_test": 0.8855279668169603,
+        "pearson_test": 0.8844129721050962,
+        "ranking_accuracy_train": 0.8649312324019927,
+        "ranking_accuracy_test": 0.8499652596838632
+      },
+      "complexity_score": 0.8334696127654474
+    },
+    "retrieval": {
+      "embedder": "all-mpnet-base-v2",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.009979959919839678,
+        "recall_at_k_std": 0.00039879255996257286,
+        "ndcg_at_k_mean": 0.9994690242952597,
+        "ndcg_at_k_std": 0.0052831415562538805
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 4.9444980098395505e-05,
+        "recall_at_k_std": 0.00048445988633255267,
+        "ndcg_at_k_mean": 0.005882904319127012,
+        "ndcg_at_k_std": 0.0576404551499059
+      },
+      "combined_retrieval_score": 0.2538453333785812
+    },
+    "decision_prediction": {
+      "embedder": "all-mpnet-base-v2",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.6381578947368421,
+        "f1": 0.5625319411320308
+      },
+      "tool_prediction": {
+        "accuracy": 0.6907894736842105,
+        "f1": 0.6473833230307312
+      },
+      "budget_prediction": {
+        "accuracy": 0.8848684210526315,
+        "f1": 0.8842682498409992
+      },
+      "combined_accuracy": 0.3717105263157895,
+      "average_accuracy": 0.7379385964912281,
+      "decision_score": 0.6463815789473684
+    },
+    "total_time_seconds": 54.59767413139343
+  },
+  {
+    "embedder": "sentence-t5-base",
+    "config": {
+      "type": "sentence-sentence-t5-base",
+      "dim": 768,
+      "description": "T5-based sentence-transformer"
+    },
+    "projection_mode": "projected",
+    "use_projection": true,
+    "clustering": {
+      "embedder": "sentence-t5-base",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.0621785968542099,
+      "adjusted_rand_index": 0.4142393829422599,
+      "avg_intra_cluster_similarity": 0.726570188999176,
+      "avg_inter_cluster_similarity": 0.7408348917961121,
+      "cluster_separation": -0.014264702796936035
+    },
+    "classification": {
+      "embedder": "sentence-t5-base",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9986842105263157,
+        "cv_accuracy_std": 0.0016115064097257665,
+        "test_accuracy": 1.0,
+        "test_f1": 1.0
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6736842105263159,
+        "cv_accuracy_std": 0.21088989985652667,
+        "test_accuracy": 0.7105263157894737,
+        "test_f1": 0.6953249601275917
+      },
+      "average_accuracy": 0.8552631578947368,
+      "average_f1": 0.8476624800637959
+    },
+    "complexity": {
+      "embedder": "sentence-t5-base",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.0089485258395772,
+        "test_mse": 0.01112316432436713,
+        "train_r2": 0.8764807691748335,
+        "test_r2": 0.8517680385272333
+      },
+      "ranking": {
+        "spearman_train": 0.9323456077851067,
+        "spearman_test": 0.9203910922671694,
+        "pearson_test": 0.9230921949236548,
+        "ranking_accuracy_train": 0.8817183777344596,
+        "ranking_accuracy_test": 0.8743051936772624
+      },
+      "complexity_score": 0.8860795653972013
+    },
+    "retrieval": {
+      "embedder": "sentence-t5-base",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.010020040080160317,
+        "recall_at_k_std": 3.469446951953614e-18,
+        "ndcg_at_k_mean": 1.0,
+        "ndcg_at_k_std": 0.0
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.0,
+        "recall_at_k_std": 0.0,
+        "ndcg_at_k_mean": 0.0,
+        "ndcg_at_k_std": 0.0
+      },
+      "combined_retrieval_score": 0.25250501002004005
+    },
+    "decision_prediction": {
+      "embedder": "sentence-t5-base",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.7368421052631579,
+        "f1": 0.7078913095633688
+      },
+      "tool_prediction": {
+        "accuracy": 0.7105263157894737,
+        "f1": 0.6663051498239043
+      },
+      "budget_prediction": {
+        "accuracy": 0.881578947368421,
+        "f1": 0.8814018776452347
+      },
+      "combined_accuracy": 0.5263157894736842,
+      "average_accuracy": 0.7763157894736841,
+      "decision_score": 0.7138157894736841
+    },
+    "total_time_seconds": 48.39794611930847
+  },
+  {
+    "embedder": "e5-base",
+    "config": {
+      "type": "e5-intfloat/e5-base-v2",
+      "dim": 768,
+      "description": "E5 base model (modern embedding)"
+    },
+    "projection_mode": "projected",
+    "use_projection": true,
+    "error": "Failed to load E5 intfloat/base-v2: intfloat/base-v2 is not a local folder and is not a valid model identifier listed on 'https://huggingface.co/models'\nIf this is a private repository, make sure to pass a token having permission to this repo either by logging in with `hf auth login` or by passing `token=<your_token>`"
+  },
+  {
+    "embedder": "jina-clip-v2",
+    "config": {
+      "type": "jina-clip-v2",
+      "dim": 1024,
+      "description": "Jina CLIP v2 - multilingual multimodal (supports 89 languages, 8192 tokens)"
+    },
+    "projection_mode": "native",
+    "use_projection": false,
+    "clustering": {
+      "embedder": "jina-clip-v2",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.036861274391412735,
+      "adjusted_rand_index": 0.3389906392966019,
+      "avg_intra_cluster_similarity": 0.3948339521884918,
+      "avg_inter_cluster_similarity": 0.4508459270000458,
+      "cluster_separation": -0.056011974811553955
+    },
+    "classification": {
+      "embedder": "jina-clip-v2",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.993421052631579,
+        "cv_accuracy_std": 0.0029421947072365497,
+        "test_accuracy": 0.993421052631579,
+        "test_f1": 0.992357130449887
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6625,
+        "cv_accuracy_std": 0.2013695318702682,
+        "test_accuracy": 0.7105263157894737,
+        "test_f1": 0.6836341419130186
+      },
+      "average_accuracy": 0.8519736842105263,
+      "average_f1": 0.8379956361814529
+    },
+    "complexity": {
+      "embedder": "jina-clip-v2",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.009393308593553517,
+        "test_mse": 0.013349334562532587,
+        "train_r2": 0.8703412971947146,
+        "test_r2": 0.8221011585502229
+      },
+      "ranking": {
+        "spearman_train": 0.9265098894337026,
+        "spearman_test": 0.9058503068580108,
+        "pearson_test": 0.9075076735066969,
+        "ranking_accuracy_train": 0.8760098548841239,
+        "ranking_accuracy_test": 0.860495918012854
+      },
+      "complexity_score": 0.8639757327041169
+    },
+    "retrieval": {
+      "embedder": "jina-clip-v2",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.014982596772492349,
+        "recall_at_k_std": 0.03545743396874793,
+        "ndcg_at_k_mean": 0.9959337544319662,
+        "ndcg_at_k_std": 0.028417765908764842
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 7.652280379553107e-05,
+        "recall_at_k_std": 0.0007575371087091878,
+        "ndcg_at_k_mean": 0.005050505050505051,
+        "ndcg_at_k_std": 0.0499974491748064
+      },
+      "combined_retrieval_score": 0.25401084476468977
+    },
+    "decision_prediction": {
+      "embedder": "jina-clip-v2",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.7138157894736842,
+        "f1": 0.7045025604956558
+      },
+      "tool_prediction": {
+        "accuracy": 0.7138157894736842,
+        "f1": 0.668484650640142
+      },
+      "budget_prediction": {
+        "accuracy": 0.8848684210526315,
+        "f1": 0.8849951449919358
+      },
+      "combined_accuracy": 0.48355263157894735,
+      "average_accuracy": 0.7708333333333334,
+      "decision_score": 0.6990131578947368
+    },
+    "total_time_seconds": 241.62935209274292
+  },
+  {
+    "embedder": "flava-full",
+    "config": {
+      "type": "flava-full",
+      "dim": 768,
+      "description": "FLAVA full model - unified vision-language model"
+    },
+    "projection_mode": "native",
+    "use_projection": false,
+    "clustering": {
+      "embedder": "flava-full",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.04845432937145233,
+      "adjusted_rand_index": 0.35197029188542167,
+      "avg_intra_cluster_similarity": 0.9125181436538696,
+      "avg_inter_cluster_similarity": 0.8699471950531006,
+      "cluster_separation": 0.04257094860076904
+    },
+    "classification": {
+      "embedder": "flava-full",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9835526315789472,
+        "cv_accuracy_std": 0.004160891658116266,
+        "test_accuracy": 0.9868421052631579,
+        "test_f1": 0.9857937383747014
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6638157894736841,
+        "cv_accuracy_std": 0.2162503102330729,
+        "test_accuracy": 0.694078947368421,
+        "test_f1": 0.6561870819539221
+      },
+      "average_accuracy": 0.8404605263157894,
+      "average_f1": 0.8209904101643117
+    },
+    "complexity": {
+      "embedder": "flava-full",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.012944943502893786,
+        "test_mse": 0.015037848094504331,
+        "train_r2": 0.82131699754602,
+        "test_r2": 0.7995993177503729
+      },
+      "ranking": {
+        "spearman_train": 0.9016909556656777,
+        "spearman_test": 0.8894630283417394,
+        "pearson_test": 0.8951111688332627,
+        "ranking_accuracy_train": 0.8564205653021443,
+        "ranking_accuracy_test": 0.8489881882925134
+      },
+      "complexity_score": 0.8445311730460561
+    },
+    "retrieval": {
+      "embedder": "flava-full",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.014842316211370103,
+        "recall_at_k_std": 0.03548527374427795,
+        "ndcg_at_k_mean": 0.995752465931864,
+        "ndcg_at_k_std": 0.021473263636597864
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.0002023631291923975,
+        "recall_at_k_std": 0.0013363982168964298,
+        "ndcg_at_k_mean": 0.012608140640215433,
+        "ndcg_at_k_std": 0.07141302076781075
+      },
+      "combined_retrieval_score": 0.2558513214781604
+    },
+    "decision_prediction": {
+      "embedder": "flava-full",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.6743421052631579,
+        "f1": 0.5869269625611186
+      },
+      "tool_prediction": {
+        "accuracy": 0.6644736842105263,
+        "f1": 0.6201754385964913
+      },
+      "budget_prediction": {
+        "accuracy": 0.881578947368421,
+        "f1": 0.8827565419080607
+      },
+      "combined_accuracy": 0.375,
+      "average_accuracy": 0.7401315789473685,
+      "decision_score": 0.6488486842105263
+    },
+    "total_time_seconds": 41.812169551849365
+  },
+  {
+    "embedder": "siglip-base",
+    "config": {
+      "type": "siglip-google/siglip-base-patch16-224",
+      "dim": 768,
+      "description": "SigLIP base patch16-224"
+    },
+    "projection_mode": "native",
+    "use_projection": false,
+    "clustering": {
+      "embedder": "siglip-base",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.0418841615319252,
+      "adjusted_rand_index": 0.32267051221398296,
+      "avg_intra_cluster_similarity": 0.6695160269737244,
+      "avg_inter_cluster_similarity": 0.6989299654960632,
+      "cluster_separation": -0.029413938522338867
+    },
+    "classification": {
+      "embedder": "siglip-base",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9618421052631578,
+        "cv_accuracy_std": 0.017480697704719012,
+        "test_accuracy": 0.9671052631578947,
+        "test_f1": 0.9668777433721557
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6756578947368421,
+        "cv_accuracy_std": 0.20405981619921548,
+        "test_accuracy": 0.680921052631579,
+        "test_f1": 0.6432817086658122
+      },
+      "average_accuracy": 0.8240131578947368,
+      "average_f1": 0.8050797260189839
+    },
+    "complexity": {
+      "embedder": "siglip-base",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.009924494200519713,
+        "test_mse": 0.01494548224909704,
+        "train_r2": 0.8630091802880753,
+        "test_r2": 0.8008302238161782
+      },
+      "ranking": {
+        "spearman_train": 0.9246889766234768,
+        "spearman_test": 0.8822814607953207,
+        "pearson_test": 0.8949156641450393,
+        "ranking_accuracy_train": 0.8760166233484947,
+        "ranking_accuracy_test": 0.84607868681605
+      },
+      "complexity_score": 0.8415558423057494
+    },
+    "retrieval": {
+      "embedder": "siglip-base",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.009298597194388776,
+        "recall_at_k_std": 0.0018040524945774586,
+        "ndcg_at_k_mean": 0.9697957545137643,
+        "ndcg_at_k_std": 0.12688180445229758
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.0008572471122235529,
+        "recall_at_k_std": 0.00242818283295159,
+        "ndcg_at_k_mean": 0.07723738705540947,
+        "ndcg_at_k_std": 0.19972541781849854
+      },
+      "combined_retrieval_score": 0.26429724646894653
+    },
+    "decision_prediction": {
+      "embedder": "siglip-base",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.756578947368421,
+        "f1": 0.7541748029347005
+      },
+      "tool_prediction": {
+        "accuracy": 0.6875,
+        "f1": 0.6434348901948654
+      },
+      "budget_prediction": {
+        "accuracy": 0.9013157894736842,
+        "f1": 0.9016595971551625
+      },
+      "combined_accuracy": 0.5296052631578947,
+      "average_accuracy": 0.7817982456140351,
+      "decision_score": 0.71875
+    },
+    "total_time_seconds": 35.473485708236694
+  },
+  {
+    "embedder": "siglip-large",
+    "config": {
+      "type": "siglip-google/siglip-large-patch16-384",
+      "dim": 1024,
+      "description": "SigLIP large patch16-384"
+    },
+    "projection_mode": "native",
+    "use_projection": false,
+    "clustering": {
+      "embedder": "siglip-large",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.06553017348051071,
+      "adjusted_rand_index": 0.2921074536507582,
+      "avg_intra_cluster_similarity": 0.6191965341567993,
+      "avg_inter_cluster_similarity": 0.6075528264045715,
+      "cluster_separation": 0.011643707752227783
+    },
+    "classification": {
+      "embedder": "siglip-large",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9315789473684211,
+        "cv_accuracy_std": 0.009624170288373538,
+        "test_accuracy": 0.9144736842105263,
+        "test_f1": 0.9119481536428166
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6697368421052632,
+        "cv_accuracy_std": 0.21457456458609678,
+        "test_accuracy": 0.6644736842105263,
+        "test_f1": 0.626726617680565
+      },
+      "average_accuracy": 0.7894736842105263,
+      "average_f1": 0.7693373856616907
+    },
+    "complexity": {
+      "embedder": "siglip-large",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.009897184178262356,
+        "test_mse": 0.015678340472071138,
+        "train_r2": 0.8633861488529004,
+        "test_r2": 0.7910638472074178
+      },
+      "ranking": {
+        "spearman_train": 0.9212112446469891,
+        "spearman_test": 0.8811297302505919,
+        "pearson_test": 0.8894782558660357,
+        "ranking_accuracy_train": 0.8748727528698289,
+        "ranking_accuracy_test": 0.8441245440333507
+      },
+      "complexity_score": 0.836096788729005
+    },
+    "retrieval": {
+      "embedder": "siglip-large",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.012135850648665746,
+        "recall_at_k_std": 0.025679727653647504,
+        "ndcg_at_k_mean": 0.9479366539363582,
+        "ndcg_at_k_std": 0.16531578658132548
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.001720693588370453,
+        "recall_at_k_std": 0.004026813935317918,
+        "ndcg_at_k_mean": 0.1385861480801255,
+        "ndcg_at_k_std": 0.3019065412103791
+      },
+      "combined_retrieval_score": 0.27509483656337996
+    },
+    "decision_prediction": {
+      "embedder": "siglip-large",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.7828947368421053,
+        "f1": 0.7813590920134905
+      },
+      "tool_prediction": {
+        "accuracy": 0.6907894736842105,
+        "f1": 0.6474467231030346
+      },
+      "budget_prediction": {
+        "accuracy": 0.8881578947368421,
+        "f1": 0.8890117153164661
+      },
+      "combined_accuracy": 0.5230263157894737,
+      "average_accuracy": 0.787280701754386,
+      "decision_score": 0.721217105263158
+    },
+    "total_time_seconds": 51.91876459121704
+  },
+  {
+    "embedder": "clip-base",
+    "config": {
+      "type": "clip-ViT-B/32",
+      "dim": 512,
+      "description": "CLIP base ViT-B/32"
+    },
+    "projection_mode": "native",
+    "use_projection": false,
+    "clustering": {
+      "embedder": "clip-base",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.03984901309013367,
+      "adjusted_rand_index": 0.32155027266875663,
+      "avg_intra_cluster_similarity": 0.7129456400871277,
+      "avg_inter_cluster_similarity": 0.8331188559532166,
+      "cluster_separation": -0.12017321586608887
+    },
+    "classification": {
+      "embedder": "clip-base",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9789473684210526,
+        "cv_accuracy_std": 0.003354618101047867,
+        "test_accuracy": 0.9802631578947368,
+        "test_f1": 0.9738132094943239
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6414473684210527,
+        "cv_accuracy_std": 0.22078225946434832,
+        "test_accuracy": 0.6776315789473685,
+        "test_f1": 0.6408523834839626
+      },
+      "average_accuracy": 0.8289473684210527,
+      "average_f1": 0.8073327964891432
+    },
+    "complexity": {
+      "embedder": "clip-base",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.011000384522209616,
+        "test_mse": 0.015070694542341967,
+        "train_r2": 0.8481583381080569,
+        "test_r2": 0.7991615921852008
+      },
+      "ranking": {
+        "spearman_train": 0.9145610433559004,
+        "spearman_test": 0.8872824242180272,
+        "pearson_test": 0.8946546164974649,
+        "ranking_accuracy_train": 0.8654320987654321,
+        "ranking_accuracy_test": 0.8448410630536738
+      },
+      "complexity_score": 0.843222008201614
+    },
+    "retrieval": {
+      "embedder": "clip-base",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.014862356291530425,
+        "recall_at_k_std": 0.03548763753524075,
+        "ndcg_at_k_mean": 0.9868225332538083,
+        "ndcg_at_k_std": 0.10210118705790433
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.00011204776461394572,
+        "recall_at_k_std": 0.000880796818003272,
+        "ndcg_at_k_mean": 0.009496699572177482,
+        "ndcg_at_k_std": 0.06598113072898991
+      },
+      "combined_retrieval_score": 0.25282340922053254
+    },
+    "decision_prediction": {
+      "embedder": "clip-base",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.6973684210526315,
+        "f1": 0.6521196214085588
+      },
+      "tool_prediction": {
+        "accuracy": 0.7105263157894737,
+        "f1": 0.6671507558790594
+      },
+      "budget_prediction": {
+        "accuracy": 0.8947368421052632,
+        "f1": 0.8948162979913551
+      },
+      "combined_accuracy": 0.4375,
+      "average_accuracy": 0.7675438596491229,
+      "decision_score": 0.6850328947368421
+    },
+    "total_time_seconds": 36.068984508514404
+  },
+  {
+    "embedder": "clip-large",
+    "config": {
+      "type": "clip-ViT-L/14",
+      "dim": 768,
+      "description": "CLIP large ViT-L/14"
+    },
+    "projection_mode": "native",
+    "use_projection": false,
+    "clustering": {
+      "embedder": "clip-large",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.025961939245462418,
+      "adjusted_rand_index": 0.3265621520949155,
+      "avg_intra_cluster_similarity": 0.582808792591095,
+      "avg_inter_cluster_similarity": 0.7345755696296692,
+      "cluster_separation": -0.15176677703857422
+    },
+    "classification": {
+      "embedder": "clip-large",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9855263157894738,
+        "cv_accuracy_std": 0.00446205919942454,
+        "test_accuracy": 0.9868421052631579,
+        "test_f1": 0.9839386963048229
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.650657894736842,
+        "cv_accuracy_std": 0.2121075486359824,
+        "test_accuracy": 0.6743421052631579,
+        "test_f1": 0.6406484221418827
+      },
+      "average_accuracy": 0.8305921052631579,
+      "average_f1": 0.8122935592233528
+    },
+    "complexity": {
+      "embedder": "clip-large",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.010149383859646104,
+        "test_mse": 0.015645720225918675,
+        "train_r2": 0.8599049597478641,
+        "test_r2": 0.7914985583138888
+      },
+      "ranking": {
+        "spearman_train": 0.9218697759299346,
+        "spearman_test": 0.8819058266927378,
+        "pearson_test": 0.8899558031137418,
+        "ranking_accuracy_train": 0.8722601256226987,
+        "ranking_accuracy_test": 0.8413018933472295
+      },
+      "complexity_score": 0.8367021925033133
+    },
+    "retrieval": {
+      "embedder": "clip-large",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.014762155890728821,
+        "recall_at_k_std": 0.035516434431926425,
+        "ndcg_at_k_mean": 0.9740082469544142,
+        "ndcg_at_k_std": 0.14342505848263756
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 7.936507936507937e-05,
+        "recall_at_k_std": 0.0007896725691322382,
+        "ndcg_at_k_mean": 0.006309297535714575,
+        "ndcg_at_k_std": 0.06277671785003756
+      },
+      "combined_retrieval_score": 0.24878976636505568
+    },
+    "decision_prediction": {
+      "embedder": "clip-large",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.7203947368421053,
+        "f1": 0.703123326961824
+      },
+      "tool_prediction": {
+        "accuracy": 0.7138157894736842,
+        "f1": 0.6704293628808863
+      },
+      "budget_prediction": {
+        "accuracy": 0.881578947368421,
+        "f1": 0.8825734867591031
+      },
+      "combined_accuracy": 0.48026315789473684,
+      "average_accuracy": 0.7719298245614036,
+      "decision_score": 0.6990131578947368
+    },
+    "total_time_seconds": 39.884156703948975
+  },
+  {
+    "embedder": "clip-base-patch16",
+    "config": {
+      "type": "clip-ViT-B/16",
+      "dim": 512,
+      "description": "CLIP base ViT-B/16"
+    },
+    "projection_mode": "native",
+    "use_projection": false,
+    "clustering": {
+      "embedder": "clip-base-patch16",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.03318910673260689,
+      "adjusted_rand_index": 0.3691222052224794,
+      "avg_intra_cluster_similarity": 0.6760439276695251,
+      "avg_inter_cluster_similarity": 0.845192551612854,
+      "cluster_separation": -0.16914862394332886
+    },
+    "classification": {
+      "embedder": "clip-base-patch16",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9796052631578946,
+        "cv_accuracy_std": 0.0038361525623982033,
+        "test_accuracy": 0.9802631578947368,
+        "test_f1": 0.9737980437454935
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6592105263157894,
+        "cv_accuracy_std": 0.20216324894593657,
+        "test_accuracy": 0.6842105263157895,
+        "test_f1": 0.6477455327096514
+      },
+      "average_accuracy": 0.8322368421052632,
+      "average_f1": 0.8107717882275725
+    },
+    "complexity": {
+      "embedder": "clip-base-patch16",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.010898425156848471,
+        "test_mse": 0.01500567689626226,
+        "train_r2": 0.8495657143184636,
+        "test_r2": 0.8000280446557109
+      },
+      "ranking": {
+        "spearman_train": 0.9153322450296153,
+        "spearman_test": 0.8896929035703287,
+        "pearson_test": 0.8947843985986502,
+        "ranking_accuracy_train": 0.86647579597141,
+        "ranking_accuracy_test": 0.8470557582073996
+      },
+      "complexity_score": 0.8448604741130198
+    },
+    "retrieval": {
+      "embedder": "clip-base-patch16",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.009739478957915831,
+        "recall_at_k_std": 0.0010611785406712405,
+        "ndcg_at_k_mean": 0.9883922032685287,
+        "ndcg_at_k_std": 0.04613069526149126
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.0004658041435549193,
+        "recall_at_k_std": 0.001766112514855348,
+        "ndcg_at_k_mean": 0.045156247387829314,
+        "ndcg_at_k_std": 0.16807227783131168
+      },
+      "combined_retrieval_score": 0.2609384334394572
+    },
+    "decision_prediction": {
+      "embedder": "clip-base-patch16",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.680921052631579,
+        "f1": 0.6269281439390629
+      },
+      "tool_prediction": {
+        "accuracy": 0.7138157894736842,
+        "f1": 0.6697641756897758
+      },
+      "budget_prediction": {
+        "accuracy": 0.8947368421052632,
+        "f1": 0.8950632174730209
+      },
+      "combined_accuracy": 0.4243421052631579,
+      "average_accuracy": 0.7631578947368421,
+      "decision_score": 0.6784539473684211
+    },
+    "total_time_seconds": 35.79761338233948
+  },
+  {
+    "embedder": "all-MiniLM-L6-v2",
+    "config": {
+      "type": "sentence-all-MiniLM-L6-v2",
+      "dim": 384,
+      "description": "Fast, lightweight sentence-transformer"
+    },
+    "projection_mode": "native",
+    "use_projection": false,
+    "clustering": {
+      "embedder": "all-MiniLM-L6-v2",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.033201929181814194,
+      "adjusted_rand_index": 0.32224335013034766,
+      "avg_intra_cluster_similarity": 0.28956061601638794,
+      "avg_inter_cluster_similarity": 0.20938485860824585,
+      "cluster_separation": 0.08017575740814209
+    },
+    "classification": {
+      "embedder": "all-MiniLM-L6-v2",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9901315789473685,
+        "cv_accuracy_std": 0.002942194707236599,
+        "test_accuracy": 0.9835526315789473,
+        "test_f1": 0.9806815473930361
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6335526315789474,
+        "cv_accuracy_std": 0.2014662320570864,
+        "test_accuracy": 0.6546052631578947,
+        "test_f1": 0.6234344432287668
+      },
+      "average_accuracy": 0.819078947368421,
+      "average_f1": 0.8020579953109015
+    },
+    "complexity": {
+      "embedder": "all-MiniLM-L6-v2",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.012639341787412625,
+        "test_mse": 0.01750877336230812,
+        "train_r2": 0.8255353112115106,
+        "test_r2": 0.7666707294082227
+      },
+      "ranking": {
+        "spearman_train": 0.9025572363565323,
+        "spearman_test": 0.8808240860919091,
+        "pearson_test": 0.8756485099611365,
+        "ranking_accuracy_train": 0.8573153562919644,
+        "ranking_accuracy_test": 0.846512940767761
+      },
+      "complexity_score": 0.8237474077500659
+    },
+    "retrieval": {
+      "embedder": "all-MiniLM-L6-v2",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.012290897584642963,
+        "recall_at_k_std": 0.025257079962445212,
+        "ndcg_at_k_mean": 0.9781752936530793,
+        "ndcg_at_k_std": 0.12854753520820184
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 5.545696539485359e-05,
+        "recall_at_k_std": 0.0005461877662930405,
+        "ndcg_at_k_mean": 0.003947477624842262,
+        "ndcg_at_k_std": 0.038878145802843274
+      },
+      "combined_retrieval_score": 0.24861728145698986
+    },
+    "decision_prediction": {
+      "embedder": "all-MiniLM-L6-v2",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.6513157894736842,
+        "f1": 0.5776019477277677
+      },
+      "tool_prediction": {
+        "accuracy": 0.6743421052631579,
+        "f1": 0.6334763293752055
+      },
+      "budget_prediction": {
+        "accuracy": 0.8848684210526315,
+        "f1": 0.8852870176266133
+      },
+      "combined_accuracy": 0.41118421052631576,
+      "average_accuracy": 0.7368421052631579,
+      "decision_score": 0.6554276315789473
+    },
+    "total_time_seconds": 34.776567697525024
+  },
+  {
+    "embedder": "all-MiniLM-L12-v2",
+    "config": {
+      "type": "sentence-all-MiniLM-L12-v2",
+      "dim": 384,
+      "description": "Larger MiniLM variant"
+    },
+    "projection_mode": "native",
+    "use_projection": false,
+    "clustering": {
+      "embedder": "all-MiniLM-L12-v2",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.034609604626894,
+      "adjusted_rand_index": 0.3115722346875329,
+      "avg_intra_cluster_similarity": 0.33237558603286743,
+      "avg_inter_cluster_similarity": 0.2752966284751892,
+      "cluster_separation": 0.05707895755767822
+    },
+    "classification": {
+      "embedder": "all-MiniLM-L12-v2",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9888157894736842,
+        "cv_accuracy_std": 0.001611506409725821,
+        "test_accuracy": 0.9835526315789473,
+        "test_f1": 0.9770551878440006
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6434210526315789,
+        "cv_accuracy_std": 0.19637469131887061,
+        "test_accuracy": 0.7039473684210527,
+        "test_f1": 0.6858504740623058
+      },
+      "average_accuracy": 0.84375,
+      "average_f1": 0.8314528309531533
+    },
+    "complexity": {
+      "embedder": "all-MiniLM-L12-v2",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.011828847690218957,
+        "test_mse": 0.017146080283254993,
+        "train_r2": 0.8367228083779075,
+        "test_r2": 0.7715041297745974
+      },
+      "ranking": {
+        "spearman_train": 0.9101346411340544,
+        "spearman_test": 0.8880165695011379,
+        "pearson_test": 0.8785147553610109,
+        "ranking_accuracy_train": 0.8615307559021009,
+        "ranking_accuracy_test": 0.8470123328122285
+      },
+      "complexity_score": 0.8297603496378676
+    },
+    "retrieval": {
+      "embedder": "all-MiniLM-L12-v2",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.015082797173293949,
+        "recall_at_k_std": 0.03543929965193545,
+        "ndcg_at_k_mean": 1.0,
+        "ndcg_at_k_std": 0.0
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.0,
+        "recall_at_k_std": 0.0,
+        "ndcg_at_k_mean": 0.0,
+        "ndcg_at_k_std": 0.0
+      },
+      "combined_retrieval_score": 0.25377069929332347
+    },
+    "decision_prediction": {
+      "embedder": "all-MiniLM-L12-v2",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.6414473684210527,
+        "f1": 0.5749869942925016
+      },
+      "tool_prediction": {
+        "accuracy": 0.7039473684210527,
+        "f1": 0.6608108055528356
+      },
+      "budget_prediction": {
+        "accuracy": 0.8914473684210527,
+        "f1": 0.8914473684210527
+      },
+      "combined_accuracy": 0.42105263157894735,
+      "average_accuracy": 0.7456140350877193,
+      "decision_score": 0.6644736842105263
+    },
+    "total_time_seconds": 45.56664538383484
+  },
+  {
+    "embedder": "all-mpnet-base-v2",
+    "config": {
+      "type": "sentence-all-mpnet-base-v2",
+      "dim": 768,
+      "description": "Higher quality sentence-transformer"
+    },
+    "projection_mode": "native",
+    "use_projection": false,
+    "clustering": {
+      "embedder": "all-mpnet-base-v2",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.03523223474621773,
+      "adjusted_rand_index": 0.320952907111395,
+      "avg_intra_cluster_similarity": 0.33962568640708923,
+      "avg_inter_cluster_similarity": 0.27427318692207336,
+      "cluster_separation": 0.06535249948501587
+    },
+    "classification": {
+      "embedder": "all-mpnet-base-v2",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9953947368421053,
+        "cv_accuracy_std": 0.003354618101047867,
+        "test_accuracy": 0.993421052631579,
+        "test_f1": 0.9923409269442264
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6322368421052632,
+        "cv_accuracy_std": 0.217258717697386,
+        "test_accuracy": 0.6710526315789473,
+        "test_f1": 0.654646674156656
+      },
+      "average_accuracy": 0.8322368421052632,
+      "average_f1": 0.8234938005504412
+    },
+    "complexity": {
+      "embedder": "all-mpnet-base-v2",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.00986902531308091,
+        "test_mse": 0.015568911252606378,
+        "train_r2": 0.8637748342554434,
+        "test_r2": 0.7925221469655326
+      },
+      "ranking": {
+        "spearman_train": 0.9248110663070646,
+        "spearman_test": 0.8931977516784741,
+        "pearson_test": 0.890609530634425,
+        "ranking_accuracy_train": 0.8750054147714966,
+        "ranking_accuracy_test": 0.8556322737536911
+      },
+      "complexity_score": 0.8428599493220034
+    },
+    "retrieval": {
+      "embedder": "all-mpnet-base-v2",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.009919839679358715,
+        "recall_at_k_std": 0.0009969813999064327,
+        "ndcg_at_k_mean": 0.99,
+        "ndcg_at_k_std": 0.09949874371066199
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.0,
+        "recall_at_k_std": 0.0,
+        "ndcg_at_k_mean": 0.0,
+        "ndcg_at_k_std": 0.0
+      },
+      "combined_retrieval_score": 0.24997995991983968
+    },
+    "decision_prediction": {
+      "embedder": "all-mpnet-base-v2",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.680921052631579,
+        "f1": 0.6685904289500371
+      },
+      "tool_prediction": {
+        "accuracy": 0.694078947368421,
+        "f1": 0.6495600468849204
+      },
+      "budget_prediction": {
+        "accuracy": 0.881578947368421,
+        "f1": 0.8805362524567103
+      },
+      "combined_accuracy": 0.47368421052631576,
+      "average_accuracy": 0.7521929824561404,
+      "decision_score": 0.6825657894736843
+    },
+    "total_time_seconds": 56.000446796417236
+  },
+  {
+    "embedder": "sentence-t5-base",
+    "config": {
+      "type": "sentence-sentence-t5-base",
+      "dim": 768,
+      "description": "T5-based sentence-transformer"
+    },
+    "projection_mode": "native",
+    "use_projection": false,
+    "clustering": {
+      "embedder": "sentence-t5-base",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.17258372902870178,
+      "adjusted_rand_index": 0.6326196308945592,
+      "avg_intra_cluster_similarity": 0.6912924647331238,
+      "avg_inter_cluster_similarity": 0.745239794254303,
+      "cluster_separation": -0.0539473295211792
+    },
+    "classification": {
+      "embedder": "sentence-t5-base",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9986842105263157,
+        "cv_accuracy_std": 0.0016115064097257665,
+        "test_accuracy": 1.0,
+        "test_f1": 1.0
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6782894736842106,
+        "cv_accuracy_std": 0.21201570200043401,
+        "test_accuracy": 0.743421052631579,
+        "test_f1": 0.7251326648837533
+      },
+      "average_accuracy": 0.8717105263157895,
+      "average_f1": 0.8625663324418766
+    },
+    "complexity": {
+      "embedder": "sentence-t5-base",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.007986040644484917,
+        "test_mse": 0.010110861086048238,
+        "train_r2": 0.8897662458119582,
+        "test_r2": 0.8652584168265559
+      },
+      "ranking": {
+        "spearman_train": 0.9404472361655514,
+        "spearman_test": 0.928739372915115,
+        "pearson_test": 0.9306621876565139,
+        "ranking_accuracy_train": 0.8898026315789473,
+        "ranking_accuracy_test": 0.8816440854611777
+      },
+      "complexity_score": 0.8969988948708354
+    },
+    "retrieval": {
+      "embedder": "sentence-t5-base",
+      "n_samples": 1520,
+      "n_queries_evaluated": 100,
+      "within_dataset": {
+        "recall_at_k_mean": 0.010020040080160317,
+        "recall_at_k_std": 3.469446951953614e-18,
+        "ndcg_at_k_mean": 1.0,
+        "ndcg_at_k_std": 0.0
+      },
+      "cross_dataset": {
+        "recall_at_k_mean": 0.0,
+        "recall_at_k_std": 0.0,
+        "ndcg_at_k_mean": 0.0,
+        "ndcg_at_k_std": 0.0
+      },
+      "combined_retrieval_score": 0.25250501002004005
+    },
+    "decision_prediction": {
+      "embedder": "sentence-t5-base",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.756578947368421,
+        "f1": 0.7444383675837135
+      },
+      "tool_prediction": {
+        "accuracy": 0.7269736842105263,
+        "f1": 0.6816838291380625
+      },
+      "budget_prediction": {
+        "accuracy": 0.9013157894736842,
+        "f1": 0.9015359680240557
+      },
+      "combined_accuracy": 0.5427631578947368,
+      "average_accuracy": 0.7949561403508771,
+      "decision_score": 0.731907894736842
+    },
+    "total_time_seconds": 47.565781116485596
+  },
+  {
+    "embedder": "e5-base",
+    "config": {
+      "type": "e5-intfloat/e5-base-v2",
+      "dim": 768,
+      "description": "E5 base model (modern embedding)"
+    },
+    "projection_mode": "native",
+    "use_projection": false,
+    "error": "Failed to load E5 intfloat/base-v2: intfloat/base-v2 is not a local folder and is not a valid model identifier listed on 'https://huggingface.co/models'\nIf this is a private repository, make sure to pass a token having permission to this repo either by logging in with `hf auth login` or by passing `token=<your_token>`"
+  }
+]
