@@ -1,0 +1,21 @@
+Embedding Ablation Study - Summary
+================================================================================
+
+PROJECTED MODE:
+                            Embedder      Mode Overall_Score Clustering_ARI Classify_Avg_Acc Complexity_Spearman Decision_Score Time_Seconds
+metaclip-2-worldwide-l14 (projected) projected        0.7025         0.3272           0.8470              0.9114         0.7245      49.1961
+
+NATIVE MODE:
+                         Embedder   Mode Overall_Score Clustering_ARI Classify_Avg_Acc Complexity_Spearman Decision_Score Time_Seconds
+metaclip-2-worldwide-l14 (native) native        0.7151         0.3470           0.8553              0.9131         0.7451      43.9119
+
+ALL RESULTS:
+                            Embedder      Mode Overall_Score Clustering_ARI Classify_Avg_Acc Complexity_Spearman Decision_Score Time_Seconds
+   metaclip-2-worldwide-l14 (native)    native        0.7151         0.3470           0.8553              0.9131         0.7451      43.9119
+metaclip-2-worldwide-l14 (projected) projected        0.7025         0.3272           0.8470              0.9114         0.7245      49.1961
+
+================================================================================
+Full results saved to:
+  - embedder_selection_results/comparison_table.csv
+  - embedder_selection_results/comparison_table.xlsx
+  - embedder_selection_results/all_results_20260107_114937.json

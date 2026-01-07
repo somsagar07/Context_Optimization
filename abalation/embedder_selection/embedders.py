@@ -265,6 +265,87 @@ class MetaCLIPEmbedder(BaseEmbedder):
             outputs = self.model.get_text_features(**inputs)
             return outputs.cpu().numpy().flatten()
 
+class MetaCLIP2Embedder(BaseEmbedder):
+    """
+    Dedicated embedder for MetaCLIP v2 (Worldwide) models.
+    Fixes the 'int too big to convert' error caused by unbounded tokenizer max_length.
+    """
+    
+    def __init__(self, model_name: str, target_dim: Optional[int] = None):
+        # Clean prefix if present
+        clean_name = model_name.replace("metaclip2-", "")
+        super().__init__(f"metaclip2-{clean_name.split('/')[-1]}", target_dim)
+        self.model_name = model_name
+        self.processor = None
+        self.model = None
+        self.device = None
+        self.max_length = 77  # Default fallback for CLIP
+    
+    def _init_embedder(self):
+        try:
+            from transformers import AutoProcessor, AutoModel
+            
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            print(f"  Loading MetaCLIP v2: {self.model_name}...", end=" ", flush=True)
+            
+            try:
+                self.processor = AutoProcessor.from_pretrained(self.model_name)
+                self.model = AutoModel.from_pretrained(self.model_name)
+            except Exception as model_error:
+                raise RuntimeError(f"Failed to load model {self.model_name}: {model_error}")
+                
+            self.model.to(self.device).eval()
+            
+            # --- CRITICAL FIX FOR METACLIP 2 ---
+            # MetaCLIP 2 tokenizers often report effectively infinite max_length
+            # We explicitly clamp it to 77 (standard CLIP) or the model's actual limit if reasonable
+            if hasattr(self.processor, 'tokenizer') and hasattr(self.processor.tokenizer, 'model_max_length'):
+                raw_max = self.processor.tokenizer.model_max_length
+                # If larger than 10,000, it's likely an overflow/placeholder value. Use 77.
+                if raw_max > 10000:
+                    self.max_length = 77
+                else:
+                    self.max_length = raw_max
+            else:
+                self.max_length = 77
+            # -----------------------------------
+
+            # Get embedding dimension
+            with torch.no_grad():
+                # Use a short string to ensure no overflow during this test
+                inputs = self.processor(
+                    text=["test"], 
+                    return_tensors="pt",
+                    max_length=self.max_length,
+                    truncation=True,
+                    padding=True 
+                ).to(self.device)
+                outputs = self.model.get_text_features(**inputs)
+                self.embedding_dim = outputs.shape[1]
+            
+            if self.target_dim and self.embedding_dim != self.target_dim:
+                self._init_projection(self.embedding_dim)
+                
+            output_dim = self.target_dim if self.target_dim else self.embedding_dim
+            print(f"✓ Loaded. Dim: {self.embedding_dim} -> {output_dim}, Max len: {self.max_length}")
+            
+        except ImportError:
+            raise ImportError("transformers not installed")
+        except Exception as e:
+            raise RuntimeError(f"Failed to load MetaCLIP v2 {self.model_name}: {e}")
+    
+    def _embed(self, text: str) -> np.ndarray:
+        # Standardize CLIP behavior: truncate to 77 tokens to prevent crashing
+        with torch.no_grad():
+            inputs = self.processor(
+                text=[text], 
+                return_tensors="pt", 
+                truncation=True,
+                padding=False,
+                max_length=self.max_length 
+            ).to(self.device)
+            outputs = self.model.get_text_features(**inputs)
+            return outputs.cpu().numpy().flatten()
 
 class JinaCLIPEmbedder(BaseEmbedder):
     """Jina CLIP v2 embedder - multilingual multimodal embeddings."""
@@ -499,6 +580,11 @@ def create_embedder(embedder_type: str, **kwargs) -> BaseEmbedder:
         # Remove "metaclip-" prefix (9 characters)
         model_name = embedder_type[9:]
         return MetaCLIPEmbedder(model_name, target_dim=target_dim)
+
+    elif embedder_type.startswith("metaclip2-"):
+        # Remove "metaclip2-" prefix (10 characters)
+        model_name = embedder_type[10:]
+        return MetaCLIP2Embedder(model_name, target_dim=target_dim)
     
     elif embedder_type.startswith("e5-"):
         # Only remove the prefix "e5-", not all occurrences
@@ -600,6 +686,13 @@ EMBEDDER_CONFIGS = {
         "type": "metaclip-facebook/metaclip-h14-fullcc2.5b",
         "dim": 1024,  # MetaCLIP H14 has 1024D embeddings
         "description": "MetaCLIP H14 - trained on 2.5B CommonCrawl data points"
+    },
+    
+    # MetaCLIP 2 Worldwide
+    "metaclip-2-worldwide-l14": {
+        "type": "metaclip2-facebook/metaclip-2-worldwide-l14",
+        "dim": 768,  # L/14 usually has 768 dimensions (auto-detected by code)
+        "description": "MetaCLIP 2 Worldwide L14 - trained on multilingual data"
     },
     
     # Jina CLIP v2 (multilingual multimodal)

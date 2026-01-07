@@ -41,3 +41,6 @@ pytesseract # Have to install this as well ``sudo apt install tesseract-ocr``
 SpeechRecognition
 pdf2image
 opencv-python-headless
+
+# Benchmarking
+git+https://github.com/sierra-research/tau2-bench.git

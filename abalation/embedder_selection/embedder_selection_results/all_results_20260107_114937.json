@@ -1,0 +1,154 @@
+[
+  {
+    "embedder": "metaclip-2-worldwide-l14",
+    "config": {
+      "type": "metaclip2-facebook/metaclip-2-worldwide-l14",
+      "dim": 768,
+      "description": "MetaCLIP 2 Worldwide L14 - trained on multilingual data"
+    },
+    "projection_mode": "projected",
+    "use_projection": true,
+    "clustering": {
+      "embedder": "metaclip-2-worldwide-l14",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.03733227774500847,
+      "adjusted_rand_index": 0.32718272247877356,
+      "avg_intra_cluster_similarity": 0.6539002656936646,
+      "avg_inter_cluster_similarity": 0.7250813841819763,
+      "cluster_separation": -0.07118111848831177
+    },
+    "classification": {
+      "embedder": "metaclip-2-worldwide-l14",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9914473684210527,
+        "cv_accuracy_std": 0.0016115064097257665,
+        "test_accuracy": 0.9901315789473685,
+        "test_f1": 0.9898881870543006
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6631578947368422,
+        "cv_accuracy_std": 0.1996209184437653,
+        "test_accuracy": 0.7039473684210527,
+        "test_f1": 0.6771478529871953
+      },
+      "average_accuracy": 0.8470394736842106,
+      "average_f1": 0.8335180200207479
+    },
+    "complexity": {
+      "embedder": "metaclip-2-worldwide-l14",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.010717506826081805,
+        "test_mse": 0.012130301098216457,
+        "train_r2": 0.8480646616102667,
+        "test_r2": 0.8532514558438514
+      },
+      "ranking": {
+        "spearman_train": 0.9142830780143809,
+        "spearman_test": 0.9114251801825496,
+        "pearson_test": 0.9276574257839457,
+        "ranking_accuracy_train": 0.8665218215291315,
+        "ranking_accuracy_test": 0.8608216084766371
+      },
+      "complexity_score": 0.8823383180132005
+    },
+    "decision_prediction": {
+      "embedder": "metaclip-2-worldwide-l14",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.7598684210526315,
+        "f1": 0.7490406979597044
+      },
+      "tool_prediction": {
+        "accuracy": 0.756578947368421,
+        "f1": 0.7129388171132055
+      },
+      "budget_prediction": {
+        "accuracy": 0.881578947368421,
+        "f1": 0.8823917696896733
+      },
+      "combined_accuracy": 0.5,
+      "average_accuracy": 0.7993421052631579,
+      "decision_score": 0.7245065789473684
+    },
+    "total_time_seconds": 49.19605016708374
+  },
+  {
+    "embedder": "metaclip-2-worldwide-l14",
+    "config": {
+      "type": "metaclip2-facebook/metaclip-2-worldwide-l14",
+      "dim": 768,
+      "description": "MetaCLIP 2 Worldwide L14 - trained on multilingual data"
+    },
+    "projection_mode": "native",
+    "use_projection": false,
+    "clustering": {
+      "embedder": "metaclip-2-worldwide-l14",
+      "n_samples": 1520,
+      "n_clusters": 10,
+      "silhouette_score": 0.041529037058353424,
+      "adjusted_rand_index": 0.34701056326718355,
+      "avg_intra_cluster_similarity": 0.6469079852104187,
+      "avg_inter_cluster_similarity": 0.7224634885787964,
+      "cluster_separation": -0.07555550336837769
+    },
+    "classification": {
+      "embedder": "metaclip-2-worldwide-l14",
+      "n_samples": 1520,
+      "dataset_classification": {
+        "cv_accuracy_mean": 0.9927631578947368,
+        "cv_accuracy_std": 0.0013157894736842036,
+        "test_accuracy": 0.993421052631579,
+        "test_f1": 0.9931942729959227
+      },
+      "tool_classification": {
+        "cv_accuracy_mean": 0.6657894736842105,
+        "cv_accuracy_std": 0.20173460047912187,
+        "test_accuracy": 0.7171052631578947,
+        "test_f1": 0.6784301292615099
+      },
+      "average_accuracy": 0.8552631578947368,
+      "average_f1": 0.8358122011287163
+    },
+    "complexity": {
+      "embedder": "metaclip-2-worldwide-l14",
+      "n_samples": 1520,
+      "regression": {
+        "train_mse": 0.009465712189243178,
+        "test_mse": 0.011634655833351241,
+        "train_r2": 0.8658105650959248,
+        "test_r2": 0.8592476154154842
+      },
+      "ranking": {
+        "spearman_train": 0.9262259331547887,
+        "spearman_test": 0.9131014380976873,
+        "pearson_test": 0.9307070957458449,
+        "ranking_accuracy_train": 0.8768775720164609,
+        "ranking_accuracy_test": 0.8629928782351919
+      },
+      "complexity_score": 0.8861745267565857
+    },
+    "decision_prediction": {
+      "embedder": "metaclip-2-worldwide-l14",
+      "n_samples": 1520,
+      "workflow_prediction": {
+        "accuracy": 0.7796052631578947,
+        "f1": 0.7758237326033249
+      },
+      "tool_prediction": {
+        "accuracy": 0.7664473684210527,
+        "f1": 0.7214418940392217
+      },
+      "budget_prediction": {
+        "accuracy": 0.8848684210526315,
+        "f1": 0.8854608275813022
+      },
+      "combined_accuracy": 0.5493421052631579,
+      "average_accuracy": 0.8103070175438596,
+      "decision_score": 0.7450657894736842
+    },
+    "total_time_seconds": 43.91185259819031
+  }
+]

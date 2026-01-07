@@ -6,6 +6,7 @@ Configuration for embedding ablation experiments.
 EMBEDDERS_TO_TEST = [
 
     # MetaCLIP
+    "metaclip-2-worldwide-l14",
     "metaclip-h14",
 
     # Multimodal embedders
