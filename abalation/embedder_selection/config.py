@@ -3,8 +3,10 @@ Configuration for embedding ablation experiments.
 """
 
 # Embedders to test
-# Focus on CLIP and SigLIP variants first (since sentence-transformers already work)
 EMBEDDERS_TO_TEST = [
+
+    # MetaCLIP
+    "metaclip-h14",
 
     # Multimodal embedders
     "jina-clip-v2",  # Jina CLIP v2 - multilingual multimodal (89 languages, 8192 tokens)
@@ -40,24 +42,26 @@ DATASETS = ["gsm8k", "hotpotqa", "aime25", "medqa"]
 # Number of samples to use per dataset (None = use all)
 MAX_SAMPLES_PER_DATASET = 500  # Reduce for faster experiments
 
+RANDOM_STATE = 789
+
 # Experiment settings
 EXPERIMENT_SETTINGS = {
     "clustering": {
         "n_clusters": 10,  # Number of clusters for K-means
-        "random_state": 42,
+        "random_state": RANDOM_STATE,
     },
     "classification": {
         "test_size": 0.2,
-        "random_state": 42,
+        "random_state": RANDOM_STATE,
         "cv_folds": 5,  # Cross-validation folds
     },
     "complexity": {
         "test_size": 0.2,
-        "random_state": 42,
+        "random_state": RANDOM_STATE,
     },
     "decision_prediction": {
         "test_size": 0.2,
-        "random_state": 42,
+        "random_state": RANDOM_STATE,
         "hidden_dim": 256,
         "epochs": 50,
     },

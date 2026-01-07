@@ -1,0 +1,69 @@
+Embedding Ablation Study - Summary
+================================================================================
+
+PROJECTED MODE:
+                     Embedder      Mode Overall_Score Clustering_ARI Classify_Avg_Acc Complexity_Spearman Decision_Score Time_Seconds
+ sentence-t5-base (projected) projected        0.7778         0.6306           0.8602              0.9049         0.7155      37.0632
+      siglip-base (projected) projected        0.7022         0.3895           0.8306              0.8673         0.7212      26.1030
+     siglip-large (projected) projected        0.6980         0.3812           0.8125              0.8845         0.7138      46.7793
+     metaclip-h14 (projected) projected        0.6894         0.3545           0.8536              0.8704         0.6793      62.0954
+       clip-large (projected) projected        0.6837         0.3303           0.8438              0.8594         0.7015      29.2031
+clip-base-patch16 (projected) projected        0.6807         0.3325           0.8536              0.8720         0.6645      26.4469
+       flava-full (projected) projected        0.6798         0.3426           0.8487              0.8808         0.6472      30.3206
+     jina-clip-v2 (projected) projected        0.6781         0.3155           0.8487              0.8664         0.6817     235.2928
+all-mpnet-base-v2 (projected) projected        0.6766         0.3354           0.8503              0.8620         0.6587      40.1217
+all-MiniLM-L12-v2 (projected) projected        0.6666         0.3410           0.8421              0.8379         0.6456      33.4671
+        clip-base (projected) projected        0.6663         0.3177           0.8289              0.8623         0.6562      26.8004
+ all-MiniLM-L6-v2 (projected) projected        0.6636         0.3283           0.8487              0.8279         0.6497      25.6728
+          e5-base (projected) projected        0.6587         0.3213           0.8421              0.8339         0.6373      35.0860
+
+NATIVE MODE:
+                  Embedder   Mode Overall_Score Clustering_ARI Classify_Avg_Acc Complexity_Spearman Decision_Score Time_Seconds
+ sentence-t5-base (native) native        0.7274         0.4162           0.8684              0.9129         0.7122      37.4154
+     siglip-large (native) native        0.7057         0.3876           0.8174              0.8885         0.7294      38.9486
+     metaclip-h14 (native) native        0.7036         0.3682           0.8536              0.8885         0.7039      43.3400
+     jina-clip-v2 (native) native        0.6877         0.3251           0.8536              0.8848         0.6875     176.5152
+       clip-large (native) native        0.6832         0.3329           0.8438              0.8664         0.6900      30.1453
+clip-base-patch16 (native) native        0.6821         0.3325           0.8536              0.8720         0.6702      28.6535
+       flava-full (native) native        0.6820         0.3472           0.8520              0.8834         0.6456      30.8617
+      siglip-base (native) native        0.6768         0.2773           0.8207              0.8740         0.7352      26.6338
+all-mpnet-base-v2 (native) native        0.6749         0.3128           0.8503              0.8681         0.6686      42.7308
+        clip-base (native) native        0.6675         0.3177           0.8289              0.8623         0.6612      26.8061
+ all-MiniLM-L6-v2 (native) native        0.6659         0.3209           0.8536              0.8363         0.6530      26.0854
+          e5-base (native) native        0.6638         0.3229           0.8470              0.8519         0.6332      35.5322
+all-MiniLM-L12-v2 (native) native        0.6596         0.3113           0.8470              0.8460         0.6340      32.9288
+
+ALL RESULTS:
+                     Embedder      Mode Overall_Score Clustering_ARI Classify_Avg_Acc Complexity_Spearman Decision_Score Time_Seconds
+ sentence-t5-base (projected) projected        0.7778         0.6306           0.8602              0.9049         0.7155      37.0632
+    sentence-t5-base (native)    native        0.7274         0.4162           0.8684              0.9129         0.7122      37.4154
+        siglip-large (native)    native        0.7057         0.3876           0.8174              0.8885         0.7294      38.9486
+        metaclip-h14 (native)    native        0.7036         0.3682           0.8536              0.8885         0.7039      43.3400
+      siglip-base (projected) projected        0.7022         0.3895           0.8306              0.8673         0.7212      26.1030
+     siglip-large (projected) projected        0.6980         0.3812           0.8125              0.8845         0.7138      46.7793
+     metaclip-h14 (projected) projected        0.6894         0.3545           0.8536              0.8704         0.6793      62.0954
+        jina-clip-v2 (native)    native        0.6877         0.3251           0.8536              0.8848         0.6875     176.5152
+       clip-large (projected) projected        0.6837         0.3303           0.8438              0.8594         0.7015      29.2031
+          clip-large (native)    native        0.6832         0.3329           0.8438              0.8664         0.6900      30.1453
+   clip-base-patch16 (native)    native        0.6821         0.3325           0.8536              0.8720         0.6702      28.6535
+          flava-full (native)    native        0.6820         0.3472           0.8520              0.8834         0.6456      30.8617
+clip-base-patch16 (projected) projected        0.6807         0.3325           0.8536              0.8720         0.6645      26.4469
+       flava-full (projected) projected        0.6798         0.3426           0.8487              0.8808         0.6472      30.3206
+     jina-clip-v2 (projected) projected        0.6781         0.3155           0.8487              0.8664         0.6817     235.2928
+         siglip-base (native)    native        0.6768         0.2773           0.8207              0.8740         0.7352      26.6338
+all-mpnet-base-v2 (projected) projected        0.6766         0.3354           0.8503              0.8620         0.6587      40.1217
+   all-mpnet-base-v2 (native)    native        0.6749         0.3128           0.8503              0.8681         0.6686      42.7308
+           clip-base (native)    native        0.6675         0.3177           0.8289              0.8623         0.6612      26.8061
+all-MiniLM-L12-v2 (projected) projected        0.6666         0.3410           0.8421              0.8379         0.6456      33.4671
+        clip-base (projected) projected        0.6663         0.3177           0.8289              0.8623         0.6562      26.8004
+    all-MiniLM-L6-v2 (native)    native        0.6659         0.3209           0.8536              0.8363         0.6530      26.0854
+             e5-base (native)    native        0.6638         0.3229           0.8470              0.8519         0.6332      35.5322
+ all-MiniLM-L6-v2 (projected) projected        0.6636         0.3283           0.8487              0.8279         0.6497      25.6728
+   all-MiniLM-L12-v2 (native)    native        0.6596         0.3113           0.8470              0.8460         0.6340      32.9288
+          e5-base (projected) projected        0.6587         0.3213           0.8421              0.8339         0.6373      35.0860
+
+================================================================================
+Full results saved to:
+  - embedder_selection_results/comparison_table.csv
+  - embedder_selection_results/comparison_table.xlsx
+  - embedder_selection_results/all_results_20260106_234405.json

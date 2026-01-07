@@ -7,6 +7,7 @@ import os
 import sys
 import json
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 import pandas as pd
@@ -256,9 +257,13 @@ def main():
             with open(results_dir / f"{embedder_name}{mode_suffix}_results.json", "w") as f:
                 json.dump(results, f, indent=2)
     
-    # Save all results
-    with open(results_dir / "all_results.json", "w") as f:
+    # Save all results with timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    results_filename = f"all_results_{timestamp}.json"
+    with open(results_dir / results_filename, "w") as f:
         json.dump(all_results, f, indent=2)
+    
+    print(f"\nResults saved to: {results_dir / results_filename}")
     
     # Generate comparison table
     print(f"\n{'='*80}")
@@ -328,7 +333,7 @@ def main():
         f.write("Full results saved to:\n")
         f.write(f"  - {results_dir / 'comparison_table.csv'}\n")
         f.write(f"  - {results_dir / 'comparison_table.xlsx'}\n")
-        f.write(f"  - {results_dir / 'all_results.json'}\n")
+        f.write(f"  - {results_dir / results_filename}\n")
     
     print(f"\n✓ Results saved to {results_dir}/")
     print(f"  - comparison_table.csv (all results)")
@@ -341,30 +346,49 @@ def main():
     print(f"{'='*80}")
     
     if not df_projected.empty:
-        top_projected = df_projected.loc[df_projected["Overall_Score"].idxmax()]
-        print(f"\nBest Embedder (Projected to {TARGET_EMBEDDING_DIM}D):")
-        print(f"  Name: {top_projected['Base_Embedder']}")
-        print(f"  Overall Score: {top_projected['Overall_Score']:.4f}")
-        print(f"  → Use this for RL training (fixed dimension required)")
+        # Filter out rows with NaN Overall_Score
+        df_projected_valid = df_projected[df_projected["Overall_Score"].notna()]
+        if not df_projected_valid.empty:
+            top_projected = df_projected_valid.loc[df_projected_valid["Overall_Score"].idxmax()]
+            print(f"\nBest Embedder (Projected to {TARGET_EMBEDDING_DIM}D):")
+            print(f"  Name: {top_projected['Base_Embedder']}")
+            print(f"  Overall Score: {top_projected['Overall_Score']:.4f}")
+            print(f"  → Use this for RL training (fixed dimension required)")
+        else:
+            print("\nNo valid results in projected mode")
     
     if not df_native.empty:
-        top_native = df_native.loc[df_native["Overall_Score"].idxmax()]
-        print(f"\nBest Embedder (Native Dimensions):")
-        print(f"  Name: {top_native['Base_Embedder']}")
-        print(f"  Overall Score: {top_native['Overall_Score']:.4f}")
-        print(f"  → Intrinsic quality (no information loss)")
+        # Filter out rows with NaN Overall_Score
+        df_native_valid = df_native[df_native["Overall_Score"].notna()]
+        if not df_native_valid.empty:
+            top_native = df_native_valid.loc[df_native_valid["Overall_Score"].idxmax()]
+            print(f"\nBest Embedder (Native Dimensions):")
+            print(f"  Name: {top_native['Base_Embedder']}")
+            print(f"  Overall Score: {top_native['Overall_Score']:.4f}")
+            print(f"  → Intrinsic quality (no information loss)")
+        else:
+            print("\nNo valid results in native mode")
     
     # Overall best
-    top_overall = df.loc[df["Overall_Score"].idxmax()]
-    print(f"\nOverall Best (across both modes):")
-    print(f"  Name: {top_overall['Base_Embedder']} ({top_overall['Mode']} mode)")
-    print(f"  Overall Score: {top_overall['Overall_Score']:.4f}")
-    if not df_projected.empty and not df_native.empty:
-        print(f"\nComparison:")
-        print(f"  Projected mode best: {top_projected['Base_Embedder']} ({top_projected['Overall_Score']:.4f})")
-        print(f"  Native mode best: {top_native['Base_Embedder']} ({top_native['Overall_Score']:.4f})")
-        print(f"\n  → If scores are similar, use projected mode for RL")
-        print(f"  → If native mode is significantly better, consider using that embedder's native dimension")
+    df_valid = df[df["Overall_Score"].notna()]
+    if not df_valid.empty:
+        top_overall = df_valid.loc[df_valid["Overall_Score"].idxmax()]
+        print(f"\nOverall Best (across both modes):")
+        print(f"  Name: {top_overall['Base_Embedder']} ({top_overall['Mode']} mode)")
+        print(f"  Overall Score: {top_overall['Overall_Score']:.4f}")
+        if not df_projected.empty and not df_native.empty:
+            df_projected_valid = df_projected[df_projected["Overall_Score"].notna()]
+            df_native_valid = df_native[df_native["Overall_Score"].notna()]
+            if not df_projected_valid.empty and not df_native_valid.empty:
+                top_proj = df_projected_valid.loc[df_projected_valid["Overall_Score"].idxmax()]
+                top_nat = df_native_valid.loc[df_native_valid["Overall_Score"].idxmax()]
+                print(f"\nComparison:")
+                print(f"  Projected mode best: {top_proj['Base_Embedder']} ({top_proj['Overall_Score']:.4f})")
+                print(f"  Native mode best: {top_nat['Base_Embedder']} ({top_nat['Overall_Score']:.4f})")
+                print(f"\n  → If scores are similar, use projected mode for RL")
+                print(f"  → If native mode is significantly better, consider using that embedder's native dimension")
+    else:
+        print("\nNo valid results available")
     print(f"{'='*80}")
 
 

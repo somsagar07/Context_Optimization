@@ -202,6 +202,70 @@ class SigLIPEmbedder(BaseEmbedder):
             return outputs.cpu().numpy().flatten()
 
 
+class MetaCLIPEmbedder(BaseEmbedder):
+    """MetaCLIP embedder (Facebook's CLIP variant from HuggingFace)."""
+    
+    def __init__(self, model_name: str, target_dim: Optional[int] = None):
+        super().__init__(f"metaclip-{model_name.split('/')[-1]}", target_dim)
+        self.model_name = model_name
+        self.processor = None
+        self.model = None
+        self.device = None
+    
+    def _init_embedder(self):
+        try:
+            try:
+                from transformers import AutoProcessor, AutoModel
+            except ImportError as ie:
+                raise ImportError(f"transformers not installed: pip install transformers. Original: {ie}")
+            
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            print(f"  Loading MetaCLIP: {self.model_name}...", end=" ", flush=True)
+            try:
+                self.processor = AutoProcessor.from_pretrained(self.model_name)
+                self.model = AutoModel.from_pretrained(self.model_name)
+            except Exception as model_error:
+                raise RuntimeError(f"Failed to load model {self.model_name} from HuggingFace: {model_error}. "
+                                 f"Make sure the model exists and you have access (run: huggingface-cli login)")
+            self.model.to(self.device).eval()
+            
+            # Get embedding dimension
+            with torch.no_grad():
+                inputs = self.processor(text=["test"], return_tensors="pt").to(self.device)
+                outputs = self.model.get_text_features(**inputs)
+                self.embedding_dim = outputs.shape[1]
+            
+            # Get max sequence length from tokenizer
+            if hasattr(self.processor, 'tokenizer') and hasattr(self.processor.tokenizer, 'model_max_length'):
+                self.max_length = self.processor.tokenizer.model_max_length
+            else:
+                self.max_length = 77  # Default for CLIP-like models
+            
+            if self.target_dim and self.embedding_dim != self.target_dim:
+                self._init_projection(self.embedding_dim)
+            output_dim = self.target_dim if self.target_dim else self.embedding_dim
+            print(f"✓ Loaded. Dimension: {self.embedding_dim} -> {output_dim}, Max length: {self.max_length}")
+        except ImportError as ie:
+            raise ImportError(f"transformers not installed: pip install transformers. Original error: {ie}")
+        except Exception as e:
+            raise RuntimeError(f"Failed to load MetaCLIP {self.model_name}: {e}")
+    
+    def _embed(self, text: str) -> np.ndarray:
+        """Embed text with proper truncation to model's max length."""
+        max_len = self.max_length
+        
+        with torch.no_grad():
+            inputs = self.processor(
+                text=[text], 
+                return_tensors="pt", 
+                truncation=True,
+                padding=False,
+                max_length=max_len
+            ).to(self.device)
+            outputs = self.model.get_text_features(**inputs)
+            return outputs.cpu().numpy().flatten()
+
+
 class JinaCLIPEmbedder(BaseEmbedder):
     """Jina CLIP v2 embedder - multilingual multimodal embeddings."""
     
@@ -431,8 +495,16 @@ def create_embedder(embedder_type: str, **kwargs) -> BaseEmbedder:
         model_name = embedder_type[7:]
         return SigLIPEmbedder(model_name, target_dim=target_dim)
     
+    elif embedder_type.startswith("metaclip-"):
+        # Remove "metaclip-" prefix (9 characters)
+        model_name = embedder_type[9:]
+        return MetaCLIPEmbedder(model_name, target_dim=target_dim)
+    
     elif embedder_type.startswith("e5-"):
-        model_name = embedder_type.replace("e5-", "") or "intfloat/e5-base-v2"
+        # Only remove the prefix "e5-", not all occurrences
+        model_name = embedder_type[3:] if len(embedder_type) > 3 else "intfloat/e5-base-v2"
+        if not model_name:
+            model_name = "intfloat/e5-base-v2"
         return E5Embedder(model_name, target_dim=target_dim)
     
     elif embedder_type.startswith("jina-clip"):
@@ -522,6 +594,13 @@ EMBEDDER_CONFIGS = {
         "description": "SigLIP large patch16-384"
     },
     # Note: patch32 and so400m variants may not exist - only base and large are verified
+    
+    # MetaCLIP (Facebook's CLIP variant)
+    "metaclip-h14": {
+        "type": "metaclip-facebook/metaclip-h14-fullcc2.5b",
+        "dim": 1024,  # MetaCLIP H14 has 1024D embeddings
+        "description": "MetaCLIP H14 - trained on 2.5B CommonCrawl data points"
+    },
     
     # Jina CLIP v2 (multilingual multimodal)
     "jina-clip-v2": {
