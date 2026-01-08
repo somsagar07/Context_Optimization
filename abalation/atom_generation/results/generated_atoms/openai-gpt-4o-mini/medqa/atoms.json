@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Analyze the clinical vignette, identify key symptoms and relevant medical knowledge, and select the most appropriate answer from the provided options based on clinical reasoning.",
+    "101": "Analyze the clinical vignette, identify key symptoms and relevant medical knowledge, and systematically evaluate each option to determine the most appropriate answer based on clinical reasoning.",
+    "102": "Analyze the clinical vignette carefully, identify key symptoms and relevant medical knowledge, and systematically evaluate each option to determine the most appropriate answer based on clinical reasoning.",
+    "103": "Analyze the question complexity and select the appropriate agent based on the clinical scenario, ensuring adherence to strict formatting and constraints.",
+    "104": "Analyze the complexity of the clinical question and determine the appropriate expert agent to provide a precise medical answer based on established guidelines and knowledge.",
+    "105": "Decompose the problem into sub-tasks that analyze clinical scenarios, identify key medical knowledge, and evaluate treatment options in parallel threads.",
+    "106": "Decompose the problem into sub-tasks that involve analyzing the clinical scenario, identifying key medical concepts, evaluating treatment options, and justifying the correct answer based on the provided information."
+  },
+  "verifier": {
+    "100": "Critique the reasoning in the provided medical scenarios by identifying any logical inconsistencies, incorrect assumptions, or gaps in medical knowledge that may lead to an inaccurate conclusion.",
+    "101": "Critique the reasoning in the provided medical scenarios by identifying any logical inconsistencies or gaps in the application of medical knowledge, while considering alternative explanations and solutions.",
+    "102": "Critique the reasoning in the provided medical question and answer pairs, ensuring adherence to medical accuracy, logical consistency, and clarity in the explanation of the correct answer.",
+    "103": "Critique the reasoning in the provided medical scenarios by identifying any logical inconsistencies or gaps in the application of medical knowledge to ensure accurate conclusions are drawn.",
+    "104": "Critique the reasoning in the provided medical scenarios by systematically breaking down each component of the question, options, and correct answer to identify any logical inconsistencies or errors in medical knowledge application."
+  },
+  "answerer": {
+    "100": "Format the final output as a single sentence that clearly states the correct answer to the medical question provided.",
+    "101": "Format the final output as a single, clear sentence that directly states the correct answer to the medical question.",
+    "102": "Format the final output as Final Answer: <your_answer>.",
+    "103": "Resolve conflicts between multiple answers by verifying the accuracy of each response against the provided data and identifying any assumptions that may lead to discrepancies.",
+    "104": "Resolve conflicts between different answers or sub-task results by evaluating the reasoning behind each response and synthesizing a consensus based on the most comprehensive and contextually relevant information."
+  }
+}

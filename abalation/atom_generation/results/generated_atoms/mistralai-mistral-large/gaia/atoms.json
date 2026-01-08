@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Break down the problem into sequential retrieval and verification steps, explicitly state assumptions at each stage, and cross-check constraints against intermediate findings before finalizing the answer.",
+    "101": "Decompose the problem into discrete logical steps, verify each constraint mathematically, and synthesize only the minimal precise output after filtering all retrieved data against the given conditions.",
+    "102": "Break down the problem into precise retrieval steps, synthesize disparate information while strictly adhering to constraints, and format the final answer to match the exact requirements without assumptions.",
+    "103": "Analyze the question for multi-hop reasoning depth, domain-specific knowledge requirements, and explicit or implicit constraints to route it to the agent with the optimal expertise in retrieval synthesis, conditional filtering, or cross-domain inference.",
+    "104": "Classify the question by decomposing its logical structure into retrieval hops, exclusion constraints, and domain-specific transformations to route it to the agent with the minimal sufficient reasoning depth.",
+    "105": "Decompose the problem into parallel sub-tasks by formally modeling it as a directed acyclic graph where nodes represent atomic retrieval or computation steps with strict input-output dependencies, and edges enforce logical constraints or temporal ordering.",
+    "106": "Decompose the problem into parallel threads for multi-hop retrieval, domain-specific filtering, and constraint validation, then synthesize results while enforcing strict formatting and logical negation rules."
+  },
+  "verifier": {
+    "100": "Verify that the reasoning strictly adheres to all constraints, filters data precisely without false inclusions or exclusions, and formats the final answer exactly as specified in the question.",
+    "101": "Verify each step of the reasoning chain for logical consistency, factual accuracy, and strict adherence to constraints, ensuring no critical details are overlooked or misinterpreted.",
+    "102": "Verify each reasoning step for logical consistency, constraint adherence, and mathematical precision by decomposing the problem into atomic sub-tasks, cross-checking retrieved data against explicit conditions, and validating intermediate outputs before synthesis.",
+    "103": "Verify the reasoning chain for logical gaps, incorrect assumptions, or violations of constraints (e.g., ignored negations, misapplied filters, or unmet output formatting requirements).",
+    "104": "Verify the reasoning chain by rigorously testing each step for logical gaps, unstated assumptions, misapplied constraints, or overlooked edge cases while proposing alternative interpretations or data sources to challenge the solution."
+  },
+  "answerer": {
+    "100": "Format the final answer as the exact target output from the provided examples, omitting prefixes, normalizing numbers to text, and preserving precise capitalization and punctuation.",
+    "101": "Final Answer: Format the final answer as a single, precise term or phrase matching the question's constraints, omitting prefixes, normalizing numbers to text, and excluding extraneous details.",
+    "102": "Format the final answer as a single, precise term or phrase that strictly adheres to the question\u2019s constraints, omitting prefixes, normalizing numbers to text, and matching the exact required output style.",
+    "103": "Resolve conflicts by selecting the answer that strictly adheres to all given constraints, formatting rules, and domain-specific requirements while excluding any non-compliant or ambiguous results.",
+    "104": "Resolve conflicts by applying set-theoretic intersection to validated sub-results, retaining only elements present in all non-empty, logically consistent answer sets."
+  }
+}

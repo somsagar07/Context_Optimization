@@ -39,12 +39,13 @@ class StructureEnv(gym.Env):
     The PromptEnv handles the actual LLM execution after prompt selection.
     """
     
-    def __init__(self, cfg=None, is_eval=False, use_api=False, api_model=None):
+    def __init__(self, cfg=None, is_eval=False, use_api=False, api_model=None, hf_model=None):
         """
         Args:
             cfg: Configuration module
             use_api: If True, use OpenRouterWorker instead of LLMWorker
             api_model: OpenRouter model ID (e.g., 'openai/gpt-4o')
+            hf_model: HuggingFace model name (e.g., 'Qwen/Qwen2.5-7B-Instruct'). Defaults to LLM_MODEL_NAME from config
         """
         super().__init__()
         
@@ -58,7 +59,7 @@ class StructureEnv(gym.Env):
         if use_api:
             self.worker = OpenRouterWorker(model_name=api_model)
         else:
-            self.worker = LLMWorker()
+            self.worker = LLMWorker(model_name=hf_model)
         self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
         # Structure dimensions: [workflow, agent1_tools, agent1_budget, agent2_tools, agent2_budget, answerer_budget]
@@ -69,6 +70,7 @@ class StructureEnv(gym.Env):
         self.action_space = spaces.MultiDiscrete(self.structure_dims)
         
         # Observation space: question embedding + question statistics
+        # Question embedding is 1024D from MetaCLIP-H14
         hidden_size = self.worker.model.config.hidden_size
         num_stats = 8
         

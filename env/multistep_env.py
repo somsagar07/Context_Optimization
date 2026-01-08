@@ -72,7 +72,7 @@ class MultiStepAgentEnv(gym.Env):
         }
         
         # Observation: question embedding + stage encoding + partial decisions
-        # - question_embedding: hidden_size (e.g., 1536 for Qwen2.5-1.5B)
+        # - question_embedding: hidden_size (1024 for MetaCLIP-H14)
         # - stage_onehot: 4 dims (which decision stage we're in)
         # - workflow_chosen: 9 dims (one-hot of depth)
         # - reasoner_chosen: 24 dims (one-hot of tools×budget)

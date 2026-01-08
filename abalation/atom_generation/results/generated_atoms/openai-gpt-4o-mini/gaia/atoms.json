@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Analyze the provided dataset step-by-step to extract relevant information and formulate accurate answers to specific questions.",
+    "101": "Decompose the problem logically, identify relevant data points, and systematically derive the answer through structured reasoning.",
+    "102": "Guide the reasoning process by breaking down the question into key components, identifying relevant information, and systematically deriving the answer based on the available data.",
+    "103": "Analyze the question's complexity and select the most suitable approach or agent for a comprehensive solution.",
+    "104": "Analyze the question complexity and select the appropriate approach or agent based on the domain expertise required to provide an accurate response.",
+    "105": "Decompose the problem into specific sub-tasks that can be executed in parallel, ensuring each sub-task addresses a distinct aspect of the overall question.",
+    "106": "Decompose the problem into sub-tasks that explore different aspects of the question simultaneously, encouraging innovative solutions and diverse approaches."
+  },
+  "verifier": {
+    "100": "Critique the reasoning by breaking down the argument into its logical components and verifying each step against established mathematical principles.",
+    "101": "Critique the reasoning by exploring alternative interpretations and identifying any logical inconsistencies.",
+    "102": "Critique the reasoning in the provided response by identifying any logical inconsistencies or errors in the interpretation of the question.",
+    "103": "Critique the reasoning in the provided input by identifying any logical fallacies, unsupported assumptions, or inconsistencies in the conclusions drawn.",
+    "104": "Critique the reasoning of the provided answers, ensuring strict adherence to formatting and constraints specified in the examples."
+  },
+  "answerer": {
+    "100": "Format the final output as a single, clear sentence without any additional context or explanation.",
+    "101": "Format the final output as a single, clear sentence without any additional context or explanation.",
+    "102": "Format the final output as a single, clear sentence without any additional context or explanation.",
+    "103": "Resolve conflicts by selecting the most accurate answer based on strict adherence to formatting and constraints provided in the input.",
+    "104": "Resolve conflicts by evaluating the validity and relevance of each answer or sub-task result, prioritizing the most accurate and contextually appropriate response."
+  }
+}

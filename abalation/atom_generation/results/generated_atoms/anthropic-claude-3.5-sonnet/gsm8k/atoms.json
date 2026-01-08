@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Break down each math word problem into sequential steps, showing all calculations with clear labels and units, then combine the steps to reach a final numerical answer.",
+    "101": "Break down each math word problem into clear sequential steps, showing all calculations and intermediate results before reaching the final answer.",
+    "102": "Break down each math word problem into sequential steps, calculating intermediate values explicitly before combining them to reach the final numerical answer.",
+    "103": "As a mathematical reasoning expert, analyze the question's key components including number of variables, required operations, and contextual relationships to route to either the basic arithmetic solver for single-step calculations or the advanced reasoning solver for multi-step word problems requiring intermediate deductions.",
+    "104": "Analyze the mathematical complexity, number of calculation steps, and required operations in the word problem to determine the optimal solution approach while ensuring strict adherence to the step-by-step calculation format with <<calculation=result>> notation and #### prefix for final answers.",
+    "105": "Break down each math word problem into sequential steps by first identifying key numerical values and operations, then create a solution plan with explicit intermediate calculations using the format step_description = <<calculation=result>>result for each step until reaching the final answer.",
+    "106": "Analyze the given problem by first identifying key numerical values and relationships, then break it down into sequential mathematical operations while tracking intermediate results, and finally combine the steps into a clear solution showing all calculations."
+  },
+  "verifier": {
+    "100": "As a rigorous mathematical verifier, examine each step of the solution for logical consistency, computational accuracy, and appropriate unit conversions while identifying any missing edge cases or hidden assumptions that could impact the final result.",
+    "101": "Verify each mathematical step by checking numerical accuracy, logical sequencing, and unstated assumptions while ensuring all given information is properly utilized in reaching the final answer.",
+    "102": "As a verifier, carefully check each mathematical step, unit conversion, and logical connection while ensuring intermediate calculations are correctly carried forward and match the problem's context.",
+    "103": "Verify each mathematical step by checking numerical accuracy, unit consistency, and logical flow while ensuring intermediate calculations support the final answer and align with the problem's given information.",
+    "104": "As a mathematical verification expert, systematically examine each step of the solution by validating numerical calculations, checking unit consistency, and identifying any logical gaps or unjustified assumptions in the reasoning chain."
+  },
+  "answerer": {
+    "100": "Break down the math problem into clear steps, showing all calculations with double angle brackets <<>>, and end with a single number preceded by ####.",
+    "101": "Break down the math problem into clear steps, showing all calculations with equals signs, and end with a single number preceded by ####.",
+    "102": "Present your solution as a step-by-step calculation with intermediate results, followed by a single number answer prefixed with '####'.",
+    "103": "As a mathematical consensus expert, evaluate all proposed solutions by comparing their logical steps, intermediate calculations, and final values, then select the most rigorous and well-supported answer or synthesize a new solution incorporating the strongest elements from multiple valid approaches.",
+    "104": "Analyze all available answers by identifying key patterns, logical consistency, and mathematical accuracy, then synthesize a unified solution that best aligns with the given evidence while resolving any discrepancies through weighted consideration of each input's reliability and reasoning quality."
+  }
+}

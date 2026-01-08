@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Formulate a concise instruction that guides the reasoner agent through a structured step-by-step process while adhering to specific formatting and constraints.",
+    "101": "Identify the key elements of the question, retrieve and process the relevant data, and articulate a clear and concise answer.",
+    "102": "Identify the key elements of the question, retrieve and process the relevant data, and articulate a clear and concise response.",
+    "103": "Analyze the complexity of the question to determine the necessary computational or logical steps and select the appropriate method or agent to retrieve or calculate the required information.",
+    "104": "Analyze the complexity of the question to determine the appropriate method and tools needed to retrieve or calculate the accurate answer, adhering to specific formatting and constraints.",
+    "105": "Decompose the task into identifying the dataset or source, extracting relevant data, analyzing for specific details, and formatting the response according to given constraints.",
+    "106": "Identify the main components of the task, delegate specific sub-tasks to specialized agents, and ensure parallel processing where feasible to optimize efficiency and accuracy."
+  },
+  "verifier": {
+    "100": "Review the reasoning process to ensure all assumptions are valid and all logical steps are correctly followed.",
+    "101": "Review the reasoning steps taken to ensure they accurately follow the query's requirements and correctly interpret and utilize the necessary data.",
+    "102": "Ensure the agent adheres to the specific formatting and constraints outlined in the task while verifying the logical sequence and accuracy of the response.",
+    "103": "Critique the reasoning by ensuring each step logically follows from the previous one and verify that all mathematical calculations are correct and relevant to the query.",
+    "104": "Critique the reasoning process used to derive the answer, identifying any logical inconsistencies or errors in the interpretation of the task."
+  },
+  "answerer": {
+    "100": "Formulate the final answer succinctly and directly relevant to the query.",
+    "101": "Ensure the final answer is concise and directly addresses the specific query.",
+    "102": "Ensure the final answer is concise and directly addresses the specific query.",
+    "103": "Synthesize and prioritize the most consistent and reliable information from the various sub-task results to determine the most accurate final answer.",
+    "104": "Synthesize and reconcile the differing results or answers from multiple sources to determine the most accurate and consistent conclusion."
+  }
+}

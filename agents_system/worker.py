@@ -1,5 +1,5 @@
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoProcessor, AutoModel
 import numpy as np
 import sys
 import os
@@ -20,6 +20,116 @@ try:
 except ImportError:
     # python-dotenv not installed, skip loading .env file
     pass
+
+
+class MetaCLIPEmbedder:
+    """MetaCLIP-H14 embedder for consistent embeddings across API and HuggingFace modes."""
+    
+    def __init__(self, target_dim: int = None):
+        """
+        Initialize MetaCLIP-H14 embedder.
+        
+        Args:
+            target_dim: Target embedding dimension (None = use native 1024D, no projection)
+        """
+        self.model_name = "facebook/metaclip-h14-fullcc2.5b"
+        self.target_dim = target_dim
+        self.processor = None
+        self.model = None
+        self.device = None
+        self.embedding_dim = None
+        self.projection = None
+        self._initialized = False
+    
+    def _init_embedder(self):
+        """Initialize the MetaCLIP model."""
+        if self._initialized:
+            return
+        
+        try:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            print(f"Loading MetaCLIP-H14 embedder: {self.model_name}...", end=" ", flush=True)
+            
+            self.processor = AutoProcessor.from_pretrained(self.model_name)
+            self.model = AutoModel.from_pretrained(self.model_name)
+            self.model.to(self.device).eval()
+            
+            # Get embedding dimension
+            with torch.no_grad():
+                inputs = self.processor(text=["test"], return_tensors="pt").to(self.device)
+                outputs = self.model.get_text_features(**inputs)
+                self.embedding_dim = outputs.shape[1]
+            
+            # Get max sequence length from tokenizer
+            if hasattr(self.processor, 'tokenizer') and hasattr(self.processor.tokenizer, 'model_max_length'):
+                self.max_length = self.processor.tokenizer.model_max_length
+            else:
+                self.max_length = 77  # Default for CLIP-like models
+            
+            # Initialize projection if needed
+            if self.target_dim and self.embedding_dim != self.target_dim:
+                self._init_projection(self.embedding_dim)
+            
+            output_dim = self.target_dim if self.target_dim else self.embedding_dim
+            print(f"✓ Loaded. Dimension: {self.embedding_dim} -> {output_dim}")
+            self._initialized = True
+            
+        except Exception as e:
+            raise RuntimeError(f"Failed to load MetaCLIP-H14 embedder: {e}. "
+                             f"Make sure the model exists and you have access (run: huggingface-cli login)")
+    
+    def _init_projection(self, input_dim: int):
+        """Initialize projection matrix (fixed random projection)."""
+        np.random.seed(42)  # Deterministic
+        self.projection = np.random.randn(self.target_dim, input_dim).astype(np.float32)
+        # Normalize projection matrix
+        self.projection = self.projection / np.linalg.norm(self.projection, axis=0, keepdims=True)
+    
+    def embed(self, text: str) -> np.ndarray:
+        """
+        Embed text using MetaCLIP-H14.
+        
+        Args:
+            text: Input text to embed
+            
+        Returns:
+            numpy array embedding (1024D if target_dim=None, otherwise target_dim)
+        """
+        if not self._initialized:
+            self._init_embedder()
+        
+        max_len = self.max_length
+        
+        with torch.no_grad():
+            inputs = self.processor(
+                text=[text], 
+                return_tensors="pt", 
+                truncation=True,
+                padding=False,
+                max_length=max_len
+            ).to(self.device)
+            outputs = self.model.get_text_features(**inputs)
+            embedding = outputs.cpu().numpy().flatten()
+        
+        # Normalize to unit length
+        norm = np.linalg.norm(embedding)
+        if norm > 0:
+            embedding = embedding / norm
+        
+        # Project if needed
+        if self.target_dim and embedding.shape[0] != self.target_dim:
+            if self.projection is None:
+                self._init_projection(embedding.shape[0])
+            embedding = self.projection @ embedding
+        
+        return embedding.astype(np.float32)
+    
+    def get_dimension(self) -> int:
+        """Get the output embedding dimension."""
+        if not self._initialized:
+            self._init_embedder()
+        return self.target_dim if self.target_dim else self.embedding_dim
+
 
 class LLMWorker:
     """LLM-based worker that handles reasoning, verification, and answering."""
@@ -72,40 +182,30 @@ class LLMWorker:
         # Verify device
         first_param_device = next(self.model.parameters()).device
         print(f"Model device verified: {first_param_device}")
+        
+        # Initialize MetaCLIP-H14 embedder for embeddings (native 1024D, no projection)
+        print("Initializing MetaCLIP-H14 embedder for question embeddings...")
+        self.embedder = MetaCLIPEmbedder(target_dim=None)  # Use native 1024D
+        self.embedding_dim = self.embedder.get_dimension()
+        print(f"MetaCLIP-H14 embedder initialized. Embedding dimension: {self.embedding_dim}")
+        
+        # Update model.config.hidden_size for compatibility with observation spaces
+        class FakeConfig:
+            def __init__(self, hidden_size):
+                self.hidden_size = hidden_size
+        original_config = self.model.config
+        self.model.config = FakeConfig(self.embedding_dim)
 
     def get_embedding(self, text: str) -> np.ndarray:
-        """Get embedding for text using model's hidden states."""
+        """Get embedding for text using MetaCLIP-H14 embedder."""
         try:
-            inputs = self.tokenizer(
-                text, 
-                return_tensors="pt", 
-                truncation=True, 
-                max_length=512
-            ).to(self.device)
-            
-            with torch.no_grad():
-                outputs = self.model(inputs.input_ids, output_hidden_states=True)
-                hidden_states = outputs.hidden_states[-1]
-                embedding = hidden_states.mean(dim=1).squeeze().float().cpu().numpy()
-                
-                if np.isnan(embedding).any():
-                    raise ValueError("NaNs in embedding")
-                return embedding
-                
+            embedding = self.embedder.embed(text)
+            if np.isnan(embedding).any():
+                raise ValueError("NaNs in embedding")
+            return embedding
         except Exception as e:
-            print(f"Embedding failed on {self.device}: {e}. Falling back to CPU...")
-            self.model.to("cpu")
-            inputs = self.tokenizer(
-                text, 
-                return_tensors="pt", 
-                truncation=True, 
-                max_length=512
-            ).to("cpu")
-            
-            with torch.no_grad():
-                outputs = self.model(inputs.input_ids, output_hidden_states=True)
-                hidden_states = outputs.hidden_states[-1]
-                return hidden_states.mean(dim=1).squeeze().float().cpu().numpy()
+            print(f"Embedding failed: {e}")
+            raise
 
     def _generate(self, prompt: str, active_tools: list = None, max_tokens: int = 512, prompt_suffix: str = None) -> str:
         """
@@ -250,11 +350,10 @@ class LLMWorker:
 class OpenRouterWorker:
     """OpenRouter API-based worker that handles reasoning, verification, and answering.
     Compatible interface with LLMWorker for drop-in replacement.
-    Uses sentence-transformers for embeddings.
+    Uses MetaCLIP-H14 for embeddings.
     """
     
-    def __init__(self, model_name: str = None, api_key: str = None, 
-                 embedding_model: str = "all-MiniLM-L6-v2"):
+    def __init__(self, model_name: str = None, api_key: str = None):
         """
         Initialize OpenRouter worker.
         
@@ -262,7 +361,6 @@ class OpenRouterWorker:
             model_name: OpenRouter model ID (e.g., "openai/gpt-4o", "anthropic/claude-3.5-sonnet")
                        If None, uses OPENROUTER_MODEL from .env or defaults to "openai/gpt-4o"
             api_key: OpenRouter API key (or use OPENROUTER_API_KEY env var)
-            embedding_model: Sentence transformer model name for embeddings
         """
         self.model_name = model_name or os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
@@ -275,21 +373,11 @@ class OpenRouterWorker:
         
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
         
-        # Load sentence transformer for embeddings
-        try:
-            from sentence_transformers import SentenceTransformer
-            print(f"Loading embedding model: {embedding_model}...")
-            self.embedding_model = SentenceTransformer(embedding_model)
-            self.embedding_dim = self.embedding_model.get_sentence_embedding_dimension()
-            print(f"Embedding dimension: {self.embedding_dim}")
-        except ImportError:
-            print("Warning: sentence-transformers not installed. Install with: pip install sentence-transformers")
-            self.embedding_model = None
-            self.embedding_dim = 384  # Default fallback dimension
-        except Exception as e:
-            print(f"Warning: Could not load embedding model: {e}")
-            self.embedding_model = None
-            self.embedding_dim = 384
+        # Initialize MetaCLIP-H14 embedder for embeddings (native 1024D, no projection)
+        print("Initializing MetaCLIP-H14 embedder for question embeddings...")
+        self.embedder = MetaCLIPEmbedder(target_dim=None)  # Use native 1024D
+        self.embedding_dim = self.embedder.get_dimension()
+        print(f"MetaCLIP-H14 embedder initialized. Embedding dimension: {self.embedding_dim}")
         
         # Fake model.config for compatibility with existing code that expects model.config.hidden_size
         class FakeConfig:
@@ -355,7 +443,7 @@ class OpenRouterWorker:
 
     def get_embedding(self, text: str) -> np.ndarray:
         """
-        Get text embedding using sentence transformers.
+        Get text embedding using MetaCLIP-H14 embedder.
         
         Args:
             text: Input text
@@ -363,20 +451,14 @@ class OpenRouterWorker:
         Returns:
             numpy array embedding
         """
-        if self.embedding_model is None:
-            # Fallback: hash-based embedding
-            import hashlib
-            hash_obj = hashlib.sha256(text.encode())
-            hash_bytes = hash_obj.digest()
-            # Create fixed-size embedding from hash
-            embedding = np.frombuffer(hash_bytes[:self.embedding_dim*4], dtype=np.float32)[:self.embedding_dim]
-            if len(embedding) < self.embedding_dim:
-                embedding = np.pad(embedding, (0, self.embedding_dim - len(embedding)), mode='constant')
+        try:
+            embedding = self.embedder.embed(text)
+            if np.isnan(embedding).any():
+                raise ValueError("NaNs in embedding")
             return embedding
-        
-        # Use sentence transformer
-        embedding = self.embedding_model.encode(text, convert_to_numpy=True, show_progress_bar=False)
-        return embedding.astype(np.float32)
+        except Exception as e:
+            print(f"Embedding failed: {e}")
+            raise
 
     def _generate(self, prompt: str, active_tools: list = None, max_tokens: int = 512, prompt_suffix: str = None) -> str:
         """

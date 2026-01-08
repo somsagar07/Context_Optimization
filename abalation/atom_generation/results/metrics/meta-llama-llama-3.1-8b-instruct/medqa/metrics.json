@@ -1,0 +1,48 @@
+{
+  "model_id": "meta-llama/llama-3.1-8b-instruct",
+  "dataset": "medqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.1741979718208313,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.24375271797180176
+    },
+    "verifier": {
+      "uniqueness": 0.1237492561340332,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.23210686445236206,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.2235090732574463,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.31045761704444885
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.2242679170199803,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.25162515640258787,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.19407395124435425,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.22343358572791605,
+      "clarity": 5.5
+    }
+  }
+}

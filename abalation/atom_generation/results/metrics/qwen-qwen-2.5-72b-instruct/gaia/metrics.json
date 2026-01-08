@@ -1,0 +1,48 @@
+{
+  "model_id": "qwen/qwen-2.5-72b-instruct",
+  "dataset": "gaia",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.1849207878112793,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.18789447844028473
+    },
+    "verifier": {
+      "uniqueness": 0.12673455476760864,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.17302781343460083,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.18732315301895142,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.20496679842472076
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.21844348737171718,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.18706669807434081,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.16538230180740357,
+      "clarity": 5.6
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.19360878888298483,
+      "clarity": 5.529411764705882
+    }
+  }
+}

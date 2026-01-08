@@ -419,16 +419,17 @@ class BaseTrainer(ABC):
     
     algorithm: Algorithm = None
     
-    def __init__(self, cfg, device="cuda" if torch.cuda.is_available() else "cpu", use_action_masking=False, use_api=False, api_model=None):
+    def __init__(self, cfg, device="cuda" if torch.cuda.is_available() else "cpu", use_action_masking=False, use_api=False, api_model=None, hf_model=None):
         self.cfg = cfg
         self.device = device
         self.use_action_masking = use_action_masking
         self.use_api = use_api
         self.api_model = api_model
+        self.hf_model = hf_model
         
         # Create environments
-        self.structure_env = StructureEnv(cfg, use_api=use_api, api_model=api_model)
-        self.prompt_env = PromptEnv(cfg, use_api=use_api, api_model=api_model)
+        self.structure_env = StructureEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
+        self.prompt_env = PromptEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
         
         # Dimensions
         self.struct_obs_dim = self.structure_env.observation_space.shape[0]

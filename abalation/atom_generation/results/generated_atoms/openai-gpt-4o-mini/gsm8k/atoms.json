@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Break down the problem into smaller steps, identify the necessary arithmetic operations, and combine the results to reach the final answer.",
+    "101": "Break down the problem into smaller steps, identify the necessary arithmetic operations, and combine the results to arrive at the final answer.",
+    "102": "Carefully analyze each step of the problem, verify assumptions, and ensure all arithmetic operations are correctly applied to reach the final answer.",
+    "103": "Analyze the question complexity by identifying arithmetic operations and multi-step reasoning requirements, then select the appropriate approach or agent to solve it effectively.",
+    "104": "Analyze the question complexity by identifying arithmetic operations and multi-step reasoning requirements, then select the appropriate approach or agent for accurate problem-solving.",
+    "105": "Decompose the problem into sub-tasks by identifying key arithmetic operations, contextual elements, and multi-step calculations required to arrive at the final answer.",
+    "106": "Decompose the problem into sub-tasks by identifying key operations, extracting relevant information, and determining the sequence of calculations needed to arrive at the final answer."
+  },
+  "verifier": {
+    "100": "Critique the reasoning process for errors in arithmetic operations, assumptions, and the clarity of multi-step problem breakdowns.",
+    "101": "Critique the reasoning by strictly decomposing the problem into logical steps and verifying each mathematical operation for accuracy.",
+    "102": "Critique the reasoning in the provided solution by identifying any arithmetic errors, misinterpretations of the problem context, or failures in multi-step calculations.",
+    "103": "Critique the reasoning process by identifying any miscalculations, misinterpretations of the problem context, or failures to apply appropriate arithmetic operations.",
+    "104": "Critique the reasoning in the provided solution by identifying any errors in arithmetic operations, multi-step calculations, or contextual understanding."
+  },
+  "answerer": {
+    "100": "Format the final output as the calculated answer preceded by the relevant reasoning steps.",
+    "101": "Format the final output as: Final Answer: <your_answer>.",
+    "102": "Format the final output as #### <final_answer>.",
+    "103": "Resolve conflicts by systematically evaluating each answer's logical consistency and mathematical accuracy, prioritizing the most rigorous and well-supported solution.",
+    "104": "Resolve conflicts by verifying the accuracy of each answer through cross-referencing calculations and assumptions made in the sub-tasks."
+  }
+}

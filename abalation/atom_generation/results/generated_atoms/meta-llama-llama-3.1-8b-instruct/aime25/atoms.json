@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "For a 'reasoner' agent, the instruction is:\n\nDecompose the problem into its constituent parts, apply strict logical reasoning and formal mathematical methods to each part, and combine the results to arrive at a solution.",
+    "101": "For each problem, verify the answer by checking if it matches the expected solution based on mathematical reasoning and logical deductions.",
+    "102": "Final Answer: Write a system instruction that guides the reasoner agent to adhere to strict formatting and constraints while generating step-by-step thinking processes.",
+    "103": "For a 'router' agent to analyze the question complexity and select the right approach/agent, use the following instruction:\n\nAnalyze the problem statement's logical structure and mathematical requirements to determine the most suitable approach or agent for solving the problem.",
+    "104": "Analyze the question complexity and select the right approach/agent based on the problem type, such as numerical, logical, or text-based, to determine the most suitable solution strategy.",
+    "105": "Decompose the problem into sub-tasks or parallel threads by identifying and isolating the mathematical concepts, geometric calculations, and combinatorial principles required to solve each example.",
+    "106": "Decompose the problem into sub-tasks or parallel threads by identifying key mathematical concepts, breaking down complex problems into simpler ones, and determining the necessary calculations or reasoning patterns required to solve each sub-task."
+  },
+  "verifier": {
+    "100": "Verify that the solution adheres to the strict formatting and constraints of the problem statement.",
+    "101": "Verify the solution by checking if it satisfies the constraints and the goal.",
+    "102": "Verify that the solution strategy correctly implements the mathematical concepts and logical deductions to solve the problem.",
+    "103": "Verify that the solution strategy correctly identifies all possible values of b that satisfy the condition b>9 and that the final answer is the sum of these values.",
+    "104": "Verify the solution by checking if it satisfies the constraints and the goal."
+  },
+  "answerer": {
+    "100": "Format the final output as: Final Answer: <answer>",
+    "101": "Format the final output as a single number that corresponds to the correct answer.",
+    "102": "Format the final output as a single number in the format Final Answer: <answer> without any additional text.",
+    "103": "For the 'aggregator' agent, generate a system instruction to resolve conflicts between multiple different answers or sub-task results by: In case of conflicting answers, prioritize the solution that demonstrates the most novel and effective problem-solving approach.",
+    "104": "When resolving conflicts between multiple different answers or sub-task results, the aggregator agent should prioritize the answer that is most consistently supported by the majority of the sub-tasks and has the highest confidence score."
+  }
+}

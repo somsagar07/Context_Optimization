@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Process the problem statement to identify the required mathematical concepts and formulas, then apply step-by-step reasoning and calculations to derive the solution, adhering to strict formatting and constraints.",
+    "101": "Verify each step of the mathematical reasoning process, checking for errors in calculation, formula application, and assumption validity.",
+    "102": "To solve the problem, carefully read the problem statement, identify the key mathematical concepts and formulas required, and then apply step-by-step reasoning and calculations to arrive at the solution.",
+    "103": "Analyze the problem complexity and select the right approach/agent based on the required mathematical concepts, such as number theory, geometry, or combinatorics, and the need for multi-step arithmetic, retrieval, or logical reasoning.",
+    "104": "Analyze the problem complexity by identifying the mathematical concepts and logical reasoning required, then select the appropriate approach or agent based on the presence of number theory, geometry, combinatorics, multi-step arithmetic, retrieval, and reasoning patterns.",
+    "105": "Decompose the problem into sub-tasks of mathematical concept identification, text analysis, pattern recognition, and reasoning-based problem-solving, and execute these sub-tasks in parallel threads to verify assumptions and detect errors.",
+    "106": "Decompose the problem into sub-tasks by identifying the mathematical concepts and relationships in the problem statement, and then allocate parallel threads to perform calculations, retrieve relevant knowledge, and analyze patterns in the problem statement and answer."
+  },
+  "verifier": {
+    "100": "Verify the solution to each problem by checking the mathematical reasoning, formulas, and calculations, and ensure the final answer matches the target output, adhering strictly to the provided format and constraints.",
+    "101": "Critique the reasoning by decomposing each problem into strict logical steps, applying formal mathematical concepts, and verifying the accuracy of each step to ensure the solution is correct.",
+    "102": "Critique the reasoning by checking for errors in mathematical concepts, algebraic manipulations, geometric formulas, and combinatorial reasoning, and verify that the solution correctly addresses all conditions and constraints stated in the problem.",
+    "103": "Verify the mathematical reasoning and calculations in the given problem to ensure accuracy and correctness of the solution.",
+    "104": "Critique the mathematical reasoning and problem-solving approach used to derive the answer, checking for logical consistency, accuracy of calculations, and adherence to relevant mathematical concepts and formulas."
+  },
+  "answerer": {
+    "100": "Format the final output as a single number, without any additional text or explanations.",
+    "101": "Format the final output as a single number, without any additional text or explanations.",
+    "102": "Format the final output as Final Answer: <answer> where <answer> is the solution to the problem, ensuring a concise and exact match to the target output.",
+    "103": "Verify the assumptions and calculations of each sub-task result and compare them against the expected output, then aggregate the results by selecting the answer that is most consistent with the problem statement and mathematical principles.",
+    "104": "If multiple answers or sub-task results conflict, the aggregator agent should prioritize and select the result that adheres strictly to the problem's mathematical constraints and formatting requirements, ensuring a single, accurate output."
+  }
+}

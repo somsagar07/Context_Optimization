@@ -1,0 +1,234 @@
+{
+  "openai/gpt-5.2": {
+    "gsm8k": {
+      "success": true,
+      "model_id": "openai/gpt-5.2",
+      "dataset": "gsm8k",
+      "atoms": {
+        "reasoner": {
+          "100": "Final Answer: Reason step by step by translating the story into explicit quantities and equations, consider alternative representations (tables/units) to avoid misparsing relations like half/twice/totals, compute intermediate results carefully in the correct order, and finish by clearly stating the final numeric answer with units.",
+          "101": "Final Answer: Think like a careful mathematician: translate the word problem into explicit quantities and equations, solve step-by-step with correct unit conversions and proportional relationships while tracking intermediate totals/remainders, and verify the final value matches what is asked.",
+          "102": "Final Answer: Decompose each word problem into explicit variables and equations, solve step-by-step with correct unit conversions and proportional relationships, track intermediate totals/remainders carefully, and present the final numeric result clearly.",
+          "103": "Final Answer: Analyze the word problem\u2019s operations (rates/unit conversions, proportions like half/twice, and multi-step add/subtract), route to the simplest arithmetic/step-tracking solver that fits, and enforce exact required output formatting (final value only after correct intermediate reasoning, no extra text).",
+          "104": "Final Answer: Assess the math word problem\u2019s operations (rates/unit conversions, proportional reasoning, multi-step totals/remaining), track required state carefully, then route to the simplest capable solver while considering alternative formulations that reduce steps or error risk.",
+          "105": "Final Answer: Decompose each word problem into parallel checks for (1) extracting quantities/units and relationships, (2) forming equations/step plan, and (3) verifying arithmetic and unit consistency at every step, then reconcile any discrepancies before producing the final numeric answer.",
+          "106": "Final Answer: Decompose the word problem by (1) extracting all quantities, units, and relational phrases into a structured list, (2) translating each relation into explicit equations with intermediate variables, (3) computing step-by-step arithmetic in the correct order while tracking units, and (4) returning the final requested value with a quick consistency check."
+        },
+        "verifier": {
+          "100": "Final Answer: Act as a meticulous mathematician-verifier who audits each step of the solution for correct operation choice, unit consistency, and arithmetic accuracy, flagging any missing steps, double-counting, or unsupported assumptions and stating the correct result if an error is found.",
+          "101": "Final Answer: Rigorously verify each reasoning step against the problem text by checking units, arithmetic, and operation choices, explicitly flag any unsupported assumptions or double-counting, and ensure the final output strictly matches the required GSM8K format (ending with \u201c#### <number>\u201d).",
+          "102": "Final Answer: Rigorously verify each reasoning step by extracting all quantities and units, independently recomputing intermediate results, checking for missing/extra operations or assumptions, and proposing alternative interpretations or solution paths to identify any logical or arithmetic errors.",
+          "103": "Final Answer: Check the solution step by step like a careful teacher, verifying that each quantity is correctly extracted from the text, each operation and unit conversion is justified, and all intermediate arithmetic is accurate, then point out any logical or calculation errors and how to fix them.",
+          "104": "Final Answer: Verify the solution by extracting all quantities and units from the problem, decomposing the reasoning into explicit step-by-step equations, checking each operation and intermediate result for arithmetic and logical consistency with the text (including unit conversions and avoiding double-counting), and flagging any unsupported assumptions or missing steps."
+        },
+        "answerer": {
+          "100": "Final Answer: As a careful mathematician, show brief step-by-step calculations as needed and end with only the final numeric result on its own line prefixed by \u201c#### \u201d.",
+          "101": "Final Answer: Solve the problem with minimal, explicit step-by-step arithmetic while checking units and assumptions, and output only the final numeric answer on its own line formatted exactly as \u201c#### <answer>\u201d.",
+          "102": "Final Answer: Solve the problem step by step with clear arithmetic explanations (showing intermediate calculations inline when helpful) and end with the final numeric answer on its own line formatted exactly as #### <answer>.",
+          "103": "Final Answer: When multiple candidate solutions conflict, decompose the problem into explicit verifiable steps, check each step\u2019s assumptions, units, and arithmetic against the original text, discard any answer with an invalid step, and return the unique result that follows from a complete logically consistent computation (not by voting).",
+          "104": "As a careful mathematician, compare all candidate sub-results for consistency with the problem statement and arithmetic, reconcile by re-deriving key steps, and output the single final numeric answer that is best-supported while discarding any inconsistent or unverified claims."
+        }
+      },
+      "metadata": {
+        "model_id": "openai/gpt-5.2",
+        "model_metadata": {
+          "display_name": "GPT-5.2",
+          "family": "OpenAI",
+          "estimated_params": "~2T",
+          "type": "chat",
+          "cost_tier": "high",
+          "capabilities": "High quality, multimodal, strong reasoning"
+        },
+        "api_calls": 0,
+        "api_errors": 0,
+        "dataset": "gsm8k",
+        "generation_time": 1767859667.4321785
+      },
+      "output_dir": "results/generated_atoms/openai-gpt-5.2/gsm8k"
+    },
+    "hotpotqa": {
+      "success": true,
+      "model_id": "openai/gpt-5.2",
+      "dataset": "hotpotqa",
+      "atoms": {
+        "reasoner": {
+          "100": "Final Answer: Break the question into explicit sub-questions, retrieve the needed facts for each hop, carry intermediate results forward, and apply any required comparison or mapping step-by-step to derive the final answer.",
+          "101": "Final Answer: Retrieve and verify the necessary facts via explicit multi-hop entity linking, keep intermediate results, then perform the required comparison or mapping step to produce a single final answer in the exact requested format without adding extra text.",
+          "102": "Final Answer: Break the problem into explicit hops, retrieve and verify each intermediate entity/fact from reliable context before proceeding, track the chain of evidence, and only then perform the required operation (e.g., comparison or mapping) while checking for assumption or date-ordering errors.",
+          "103": "Decide whether the question is single-hop or multi-hop (needs bridging/entity linking and possibly a comparison like dates/locations), then route it to the appropriate agent (simple lookup vs multi-step reasoning) and require explicit chained evidence before producing the final entity.",
+          "104": "Final Answer: Analyze the question to determine whether it requires multi-hop entity linking, temporal/relational comparison, or single-hop lookup, explicitly flag assumptions/distractors to verify, and route to the appropriate retrieval-and-reasoning approach before answering.",
+          "105": "Final Answer: Decompose the question into parallel fact-finding threads to retrieve and verify each needed intermediate entity/fact from separate sources, cross-check for disambiguation errors, then combine the verified facts with the required comparison/bridge inference to produce the final answer.",
+          "106": "Final Answer: Decompose the question into parallel evidence-retrieval sub-tasks for each required entity/document, extract and verify the needed intermediate facts, then perform the final comparison/bridge inference and output only the final answer in the required format with no extra text."
+        },
+        "verifier": {
+          "100": "Final Answer: Rigorously critique the proposed multi-hop reasoning by checking each link for entity disambiguation errors, missing or unsupported facts, and incorrect final comparison/selection logic, and flag any format or constraint violations while stating what evidence would be needed to verify each step.",
+          "101": "Final Answer: Act as a rigorous verifier that challenges each step of the proposed multi-hop reasoning by cross-checking entity links, resolving ambiguities/coreference, validating intermediate facts against plausible sources, and pinpointing any unsupported leaps or logical/computational errors before accepting the final answer.",
+          "102": "Final Answer: Act as a strict verifier: check each reasoning step for unsupported assumptions, incorrect entity links/coreference, missing evidence for multi-hop claims, and ensure the final comparison/selection follows the question\u2019s rule, explicitly flagging any errors or gaps.",
+          "103": "Final Answer: Critique the proposed answer by checking each multi-hop link and entity disambiguation against the question, flag any unsupported assumptions or missing evidence, and verify the final comparison/selection step is correctly applied and consistent with the referenced facts.",
+          "104": "Final Answer: Rigorously verify each multi-hop link by decomposing the argument into explicit atomic claims, checking entity disambiguation and evidence support for every hop, validating any comparisons or calculations, and flagging any unsupported assumptions, missing steps, or logical leaps."
+        },
+        "answerer": {
+          "100": "Final Answer: Output only the final answer entity (or short phrase) on a single line with no explanations, extra text, or formatting, ensuring it exactly matches what the question asks.",
+          "101": "Final Answer: Produce only the final answer as a single short phrase or name (no explanation), after chaining the needed multi-hop facts with correct entity disambiguation and any required comparison.",
+          "102": "Final Answer: Provide only the final answer as a single concise entity or short phrase, after verifying each multi-hop link and disambiguating entities, with no explanations or extra text.",
+          "103": "Final Answer: As the aggregator, reconcile conflicting sub-results by preferring answers that are best supported by explicit multi-hop evidence and required operations (e.g., link following or date comparison), discard unsupported or format-violating candidates, and output exactly one final answer in the specified format with no extra text.",
+          "104": "Final Answer: When merging multiple candidate answers, explicitly trace and verify the full multi-hop reasoning chain for each (resolving entity ambiguities), prefer the answer best supported by consistent evidence and required operations (e.g., date comparison or link-following), and if conflicts remain, seek an alternative derivation or additional corroboration rather than guessing."
+        }
+      },
+      "metadata": {
+        "model_id": "openai/gpt-5.2",
+        "model_metadata": {
+          "display_name": "GPT-5.2",
+          "family": "OpenAI",
+          "estimated_params": "~2T",
+          "type": "chat",
+          "cost_tier": "high",
+          "capabilities": "High quality, multimodal, strong reasoning"
+        },
+        "api_calls": 0,
+        "api_errors": 0,
+        "dataset": "hotpotqa",
+        "generation_time": 1767859763.9782388
+      },
+      "output_dir": "results/generated_atoms/openai-gpt-5.2/hotpotqa"
+    },
+    "gaia": {
+      "success": true,
+      "model_id": "openai/gpt-5.2",
+      "dataset": "gaia",
+      "atoms": {
+        "reasoner": {
+          "100": "Final Answer: Reason step-by-step by explicitly planning the multi-hop retrieval chain, verifying each entity from reliable sources before proceeding, strictly applying all stated constraints and transformations (exclusions, prefix/number normalization), avoiding unstated assumptions or guesses, and outputting only the final answer in the exact required format.",
+          "101": "Final Answer: Proceed step by step by explicitly verifying each inferred entity and constraint against reliable sources before moving on, flagging and correcting any uncertainty, and only then applying the required output transformation/formatting exactly.",
+          "102": "Final Answer: Work step-by-step to identify the correct source entity, follow all required cross-references to resolve ambiguous names or metadata, verify each hop with evidence, apply every stated constraint and transformation exactly (filters, exclusions, normalization), and only then output the single final answer.",
+          "103": "Final Answer: Analyze the query\u2019s hops, constraints, and likely sources, then route to the agent(s) best suited for verified stepwise retrieval/cross-referencing (using tools for any file paths or calculations) and explicitly check each intermediate assumption before producing the final normalized answer.",
+          "104": "Analyze the user\u2019s question to determine required multi-hop retrieval, disambiguation, and constraint handling (formatting, exclusions, normalization), then route to the appropriate specialist/tool-based approach that verifies each intermediate step with reliable sources and produces an answer strictly matching all stated constraints.",
+          "105": "Final Answer: Decompose the user\u2019s query into parallel sub-tasks (identify all referenced sources/entities, retrieve the exact supporting documents for each hop, apply all constraints including negations and \u201ccomplete title\u201d/accession lookups, cross-link results to the target attribute, then normalize/format the final answer exactly as requested).",
+          "106": "Final Answer: Break the user\u2019s question into clear, checkable sub-tasks (identify the relevant source, locate the exact entity/record, extract the needed attribute under all constraints like negation or formatting rules, cross-verify with a second source, then normalize the final answer) and run independent lookup threads in parallel when multiple hops or disambiguations are required."
+        },
+        "verifier": {
+          "100": "Final Answer: Act as a verifier that rigorously checks the solver\u2019s chain-of-thought for unsupported assumptions, missed constraints (including negative filters and normalization rules), and entity-resolution errors by pinpointing exactly where evidence is insufficient or contradictory and what would be needed to confirm the final answer.",
+          "101": "Final Answer: Act as a meticulous domain expert verifier who checks each reasoning step for missing evidence, incorrect assumptions, faulty entity resolution, and rule/constraint violations (e.g., exclusions, normalization, spelling-out numbers), and explicitly points out where the argument fails or needs stronger support.",
+          "102": "Act as a strict verifier: identify any unsupported assumptions or missing evidence in the solution\u2019s multi-hop chain, confirm all negative/normalization constraints (e.g., excluding forbidden terms, dropping required prefixes, spelling out numbers) and entity disambiguations are satisfied, and ensure the final output matches the exact required format.",
+          "103": "Final Answer: Critique the solution by independently re-deriving each step from the original question, checking every claim against the cited sources, exploring alternative interpretations and edge cases (constraints, normalization rules, entity disambiguation), and explicitly flagging any unsupported leaps, mismatches, or missing evidence.",
+          "104": "Final Answer: Verify the solution by rigorously checking each evidence link and constraint against reliable sources, flagging any unsupported assumptions, misread details, normalization/formatting mistakes, or entity-resolution errors, and stating precisely where and why the reasoning fails or holds."
+        },
+        "answerer": {
+          "100": "Final Answer: Output only the final result as a single concise line in the exact format \u201cFinal Answer: <answer>\u201d, applying any required normalization (e.g., remove specified prefixes, spell out numerals) and including no extra explanation.",
+          "101": "Provide a single concise final answer in the exact required format (no extra commentary), using careful cross-source verification, disambiguation, and any specified transformations/filters, and apply creative multi-hop reasoning when direct retrieval is insufficient.",
+          "102": "Respond with only one concise line in the exact format Final Answer: <answer>, ensuring the answer is fully verified and satisfies all stated constraints and transformations without adding any extra text.",
+          "103": "Final Answer: Combine all candidate answers by tracing each back to the strongest verifiable evidence and the question\u2019s exact constraints, resolve disagreements via cross-checking authoritative sources and disambiguation, then output only the single best-supported normalized final answer (or flag \u201cinsufficient evidence\u201d if none qualify).",
+          "104": "Prioritize and merge sub-results by strictly enforcing all stated constraints and required output formatting, selecting the best-supported answer from verifiable evidence, resolving ambiguities via disambiguation checks, and discarding any candidate that violates exclusions, normalization rules, or exact-string requirements."
+        }
+      },
+      "metadata": {
+        "model_id": "openai/gpt-5.2",
+        "model_metadata": {
+          "display_name": "GPT-5.2",
+          "family": "OpenAI",
+          "estimated_params": "~2T",
+          "type": "chat",
+          "cost_tier": "high",
+          "capabilities": "High quality, multimodal, strong reasoning"
+        },
+        "api_calls": 0,
+        "api_errors": 0,
+        "dataset": "gaia",
+        "generation_time": 1767859859.1185718
+      },
+      "output_dir": "results/generated_atoms/openai-gpt-5.2/gaia"
+    },
+    "medqa": {
+      "success": true,
+      "model_id": "openai/gpt-5.2",
+      "dataset": "medqa",
+      "atoms": {
+        "reasoner": {
+          "100": "Final Answer: For each MedQA vignette, explicitly extract and verify key clinical clues, map them to the most likely diagnosis/pathophysiology, rule out close distractors by checking contraindications/guidelines/embryology facts, and then choose the single best option while flagging and correcting any unsupported assumptions.",
+          "101": "Final Answer: Decompose each MedQA vignette by (1) extracting key discriminative clinical clues, (2) mapping them to the most likely diagnosis/mechanism via pathophysiology and guidelines/contraindications, (3) eliminating distractors with explicit rule-based justification",
+          "102": "Final Answer: Analyze each MedQA vignette step-by-step by (1) summarizing the key clinical clues, (2) naming the most likely diagnosis/mechanism those clues imply, (3) recalling the relevant guideline/embryology/pharmacology fact (including contraindications), and (4) eliminating distractors to choose the single best option and briefly justify why it fits better than the alternatives.",
+          "103": "Final Answer: Analyze the vignette for required inference depth (pattern recognition vs multi-step diagnosis\u2192mechanism/guideline\u2192best next step), then route to the appropriate agent (diagnosis, management/guidelines, embryology/pathophysiology, or contraindication-elimination) while enforcing strict option-based selection and returning only the final choice in the required format.",
+          "104": "Final Answer: Analyze the medical question to decide whether it primarily requires (1) straightforward recall, (2) clinical vignette pattern recognition plus guideline-based management, or (3) multi-step reasoning (diagnosis \u2192 mechanism/contraindications \u2192 best next step), then route to the agent best suited for that level while explicitly identifying the key clues and ruling out common distractors.",
+          "105": "Decompose each clinical MCQ into parallel steps: extract key symptoms/signs and context, map them to the most likely diagnosis/pathophysiology, retrieve the relevant guideline/first-line management or embryologic mechanism, eliminate distractors by contrasting hallmark features/contraindications, and then select the best option with a brief justification.",
+          "106": "Final Answer: Decompose each MedQA item into parallel threads (clinical syndrome identification from clues, guideline/knowledge retrieval for management/etiology, and systematic option-by-option elimination including contraindications/age/pregnancy nuances), then reconcile threads into a single best answer with a brief justification anchored to the key discriminating finding."
+        },
+        "verifier": {
+          "100": "Final Answer: Critique the solver\u2019s reasoning step by step by extracting the vignette\u2019s key clinical cues, checking each inference against standard medical knowledge/guidelines, identifying missed differentials or contraindications, and verifying that the chosen option is the single best next step/mechanism while explicitly pointing out any logical leaps or unsupported assumptions.",
+          "101": "Final Answer: Scrutinize the solution step-by-step by extracting key clinical cues, testing alternative diagnoses/management choices (including contraindications and guideline priorities), checking each inference for missing evidence or logical leaps, and explicitly flagging any incorrect assumptions or mismatches between findings and the selected option.",
+          "102": "Final Answer: As a meticulous medical-domain verifier, scrutinize the solution\u2019s vignette cue extraction, differential exclusion, and guideline/embryology-based \u201cbest next step\u201d choice, explicitly flagging any logical leaps, missed contraindications (e.g., pregnancy safety), or mismatches between presentation and selected option.",
+          "103": "Final Answer: Rigorously verify each step by explicitly mapping every vignette clue to the proposed diagnosis and then to the guideline-consistent best option, checking for omitted differentials, contraindications (e.g., pregnancy/age), embryology-to-presentation mismatches, and any unsupported assumptions or logical leaps.",
+          "104": "Final Answer: Critique the solution by checking that the diagnosis and \u201cbest next step\u201d choice follow from the key vignette clues (timing, risk factors, safety/guidelines, embryology-to-presentation), explicitly rule out major distractors, and flag any unsupported assumptions or formatting/constraint violations."
+        },
+        "answerer": {
+          "100": "Provide only the selected option letter and exact answer text in one line (e.g., \u201cD: Nitrofurantoin\u201d), double-checking that it matches the question\u2019s key clinical cues and ruling out common distractors before responding.",
+          "101": "Respond with only the single best choice in the format \u201c<Option Letter>. <Exact Answer Text>\u201d and nothing else.",
+          "102": "Provide only the correct option letter followed by a colon and the exact answer text, with no explanation or additional content.",
+          "103": "Final Answer: When multiple candidate answers conflict, independently re-derive the solution from the original prompt (extract key clinical cues \u2192 map to diagnosis/mechanism \u2192 apply guidelines/contraindications), cross-check each option for internal consistency and evidence-based fit, and then select the single best-supported answer while explicitly discarding plausible distractors.",
+          "104": "Final Answer: When multiple candidate answers disagree, explicitly restate the key clinical cues, map them to the most specific diagnosis/mechanism and guideline-consistent management, cross-check against the exact option wording, and choose the single best-supported choice while briefly noting why close distractors are incorrect."
+        }
+      },
+      "metadata": {
+        "model_id": "openai/gpt-5.2",
+        "model_metadata": {
+          "display_name": "GPT-5.2",
+          "family": "OpenAI",
+          "estimated_params": "~2T",
+          "type": "chat",
+          "cost_tier": "high",
+          "capabilities": "High quality, multimodal, strong reasoning"
+        },
+        "api_calls": 0,
+        "api_errors": 0,
+        "dataset": "medqa",
+        "generation_time": 1767859973.6766233
+      },
+      "output_dir": "results/generated_atoms/openai-gpt-5.2/medqa"
+    },
+    "aime25": {
+      "success": true,
+      "model_id": "openai/gpt-5.2",
+      "dataset": "aime25",
+      "atoms": {
+        "reasoner": {
+          "100": "Think step-by-step by identifying the governing structure (e.g., modular constraints, similarity/area scaling, or integer compositions), translating the problem into algebraic relations, exhaustively but efficiently enumerating cases under all inequalities/divisibility conditions, and verifying the result with an independent check or alternate approach.",
+          "101": "Final Answer: Reason step by step like a teacher by translating the problem into precise algebraic/geometric/combinatorial constraints, selecting the key theorem or structure, systematically handling all cases without omission, and verifying the final result against the original conditions.",
+          "102": "Final Answer: Solve the problem by writing a clear step-by-step chain of symbolic deductions (algebra/geometry/combinatorics as appropriate), explicitly tracking all constraints and cases, using modular/ratio/counting arguments when needed, and finish with only the final value in the required format without any extra text.",
+          "103": "Final Answer: As an expert mathematician, quickly classify the problem\u2019s domain (number theory/base representation, geometry/area transformations, or combinatorics/counting with constraints), identify the key invariants and required computations/casework, and route it to the specialized solver best suited to execute the full exact solution accurately.",
+          "104": "Final Answer: Analyze the problem to identify its primary domain (number theory/base representation, geometry/area transformations, or combinatorics/counting with inequalities), translate the wording into a precise formal model (equations/invariants/casework), and route it to the corresponding specialized solver that can execute exact symbolic/algebraic computations without overcounting or arithmetic error.",
+          "105": "Decompose the problem into parallel sub-tasks (formalize the statement into equations/constraints, solve each component via rigorous algebra/geometry/combinatorics with explicit casework and invariants, then verify and combine results into a single exact integer answer with consistency checks at each step).",
+          "106": "Final Answer: Decompose each problem into explicit subtasks (parse and restate constraints; choose the appropriate method\u2014number theory/base conversion, geometry via coordinates/ratios/reflections/areas, or combinatorics via casework and counting; solve each subpart with careful validation of all inequalities and domain conditions; recombine results into a single integer) and enforce exact arithmetic and strict output formatting with no extraneous text."
+        },
+        "verifier": {
+          "100": "Final Answer: Critically verify each step by re-deriving the setup from the problem statement, testing alternative interpretations and edge cases, checking algebra/geometry/combinatorics invariants and counting for omissions or double-counting, and confirming the final result with an independent method or consistency check, explicitly flagging any unsupported leaps or arithmetic errors.",
+          "101": "Final Answer: Rigorously verify each step of the solution for correct translation from the problem statement into equations/invariants, valid casework and counting without over/undercounting, exact algebra/geometry/divisibility logic and arithmetic (including modular conditions), and confirm the final output is a single correctly formatted integer with no unstated assumptions or skipped justifications.",
+          "102": "Act as a rigorous verifier: restate the problem formally, check each inference step-by-step for correctness and completeness, test edge cases and counting/geometry/divisibility constraints, and either confirm the final result or pinpoint the first invalid step with a corrected derivation.",
+          "103": "Final Answer: Act as a meticulous competition mathematician and rigorously verify each step of the proposed solution by checking translations from notation to algebra/geometry/combinatorics, validating all assumptions and casework for completeness, testing arithmetic/modular/divisibility and area-ratio invariants, and explicitly flagging any logical gaps, miscounts, or unjustified conclusions.",
+          "104": "Final Answer: Critique the proposed solution step-by-step like a careful teacher by verifying each translation from the problem statement into mathematical expressions, checking every algebraic/geometry/combinatorics inference for hidden assumptions or overcounting, testing key constraints with small or edge cases, and confirming the final arithmetic matches the required output."
+        },
+        "answerer": {
+          "100": "Final Answer: Output only the final result (typically a single integer), with no explanations, steps, labels, or extra text.",
+          "101": "Final Answer: Output only the final numeric answer (no steps, labels, or extra text) after carefully verifying all assumptions, casework completeness, and arithmetic/mod computations.",
+          "102": "As an expert mathematician, output only the final answer (typically a single integer) with no steps, explanation, or extra text.",
+          "103": "Final Answer: When combining multiple candidate results, select the final answer by systematically verifying each one against the original problem\u2019s constraints and invariants, recomputing any nontrivial steps to catch arithmetic/logic slips, rejecting any answer that relies on unstated assumptions or inconsistent intermediate values, and using independent cross-checks (e.g., modular checks, boundary cases, or alternative derivations) to break ties.",
+          "104": "Final Answer: When multiple candidate answers or sub-results conflict, identify the shared definitions and constraints, validate each option by recomputing the key steps (favoring invariant/constraint checks over surface agreement), discard any result that violates the problem conditions, and output the unique value that remains consistent with all verified reasoning."
+        }
+      },
+      "metadata": {
+        "model_id": "openai/gpt-5.2",
+        "model_metadata": {
+          "display_name": "GPT-5.2",
+          "family": "OpenAI",
+          "estimated_params": "~2T",
+          "type": "chat",
+          "cost_tier": "high",
+          "capabilities": "High quality, multimodal, strong reasoning"
+        },
+        "api_calls": 0,
+        "api_errors": 0,
+        "dataset": "aime25",
+        "generation_time": 1767860073.6385727
+      },
+      "output_dir": "results/generated_atoms/openai-gpt-5.2/aime25"
+    }
+  }
+}

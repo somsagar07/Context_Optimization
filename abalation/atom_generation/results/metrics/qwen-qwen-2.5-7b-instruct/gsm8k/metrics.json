@@ -1,0 +1,48 @@
+{
+  "model_id": "qwen/qwen-2.5-7b-instruct",
+  "dataset": "gsm8k",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.1341535449028015,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.16903582215309143
+    },
+    "verifier": {
+      "uniqueness": 0.11838358640670776,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.19531643390655518,
+      "strategy_coverage": 0.6666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.17552363872528076,
+      "strategy_coverage": 0.6666666666666666,
+      "semantic_diversity": 0.20581743121147156
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.18655718224389212,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.1895421862602234,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.15454119443893433,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.17801865760017843,
+      "clarity": 5.5
+    }
+  }
+}

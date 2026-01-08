@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Extract relevant information from the problem, identify the required arithmetic operations, and perform them in the correct sequence to arrive at the final answer.",
+    "101": "Perform step-by-step logical decomposition of the problem by extracting relevant information, identifying necessary arithmetic operations, and executing calculations in the correct order to arrive at the final answer.",
+    "102": "Verify each step's calculation and assumption, ensuring correct arithmetic operations and contextual understanding to arrive at the final answer.",
+    "103": "Analyze question complexity and select the right approach/agent by identifying key components, reasoning patterns, and specific difficulties, and then choose the appropriate agent based on the required skills and constraints.",
+    "104": "Analyze the question complexity by identifying the required arithmetic operations, numerical values, and contextual relationships, then select the right approach or agent to perform the calculations and provide the final answer.",
+    "105": "Decompose the problem into sub-tasks by identifying the sequence of arithmetic operations, extracting numerical values from text, and understanding contextual relationships, then allocate these sub-tasks to parallel threads for processing.",
+    "106": "Decompose the problem into sub-tasks of numerical value extraction, unit conversion, and sequential arithmetic operations, and execute them in parallel threads to obtain intermediate results for final calculation."
+  },
+  "verifier": {
+    "100": "Verify the arithmetic calculations, contextual understanding, and variable representation in the given examples to identify any errors in reasoning.",
+    "101": "Verify the arithmetic calculations, variable representations, and contextual understanding in the given examples, ensuring adherence to strict formatting and constraints, and identify any errors in reasoning that may lead to incorrect final answers.",
+    "102": "Verify the calculations and assumptions in the given examples by re-executing the arithmetic operations and checking the extracted variables and contextual understanding to detect any errors or inconsistencies in the reasoning.",
+    "103": "Verify the logical decomposition of each problem by checking the sequential application of arithmetic operations, correct extraction of relevant information from text-based input, and accurate representation and manipulation of variables to ensure the final answer is mathematically sound.",
+    "104": "Critique the reasoning by checking if the model accurately extracts relevant information from the text-based input, performs the correct sequence of arithmetic operations, and applies contextual understanding to arrive at the final answer."
+  },
+  "answerer": {
+    "100": "Format the final output as: Final Answer: <answer_value>",
+    "101": "Format the final output as: Final Answer: <answer_value>",
+    "102": "Format the final output as: Final Answer: <answer_value>",
+    "103": "Evaluate the arithmetic calculations and variable extractions from each sub-task result, then aggregate the results to produce a single, mathematically correct answer.",
+    "104": "Aggregate results by applying logical decomposition and formal math to resolve conflicts between multiple answers or sub-task results, ensuring strict adherence to arithmetic operations and sequential reasoning."
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "model_id": "anthropic/claude-3.5-sonnet",
+  "dataset": "medqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.06980496644973755,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.12204955518245697
+    },
+    "verifier": {
+      "uniqueness": 0.12424910068511963,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.1924331784248352,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.1546526551246643,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.3098815679550171
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.2446807622909546,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.2274004578590393,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.20448383092880248,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.2277756929397583,
+      "clarity": 5.5
+    }
+  }
+}

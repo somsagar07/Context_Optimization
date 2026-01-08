@@ -1,0 +1,48 @@
+{
+  "model_id": "google/gemini-2.5-pro",
+  "dataset": "gsm8k",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.1952570080757141,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.32719478011131287
+    },
+    "verifier": {
+      "uniqueness": 0.1914762258529663,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.152032732963562,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.1953105926513672,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.15548337996006012
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 3.0714285714285716,
+      "specificity": 0.2024376392364502,
+      "clarity": 2.9285714285714284
+    },
+    "verifier": {
+      "coherence": 3.7,
+      "specificity": 0.20375076532363892,
+      "clarity": 4.6
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.18340883255004883,
+      "clarity": 2.8
+    },
+    "overall": {
+      "coherence": 3.9705882352941178,
+      "specificity": 0.19722714494256413,
+      "clarity": 3.3823529411764706
+    }
+  }
+}

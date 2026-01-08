@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Break down the user's",
+    "101": "Think step-by",
+    "102": "Think step-by-step",
+    "103": "Analyze the user",
+    "104": "Analyze the user",
+    "105": "Break down the user'",
+    "106": "Your primary"
+  },
+  "verifier": {
+    "100": "Scrutinize",
+    "101": "Your role is to rigorously challenge",
+    "102": "Your role is to meticulously",
+    "103": "Verify each step of",
+    "104": "Scrutinize"
+  },
+  "answerer": {
+    "100": "Your final answer",
+    "101": "Your final answer should be a",
+    "102": "Format your final conclusion exactly as",
+    "103": "Critically evaluate the",
+    "104": "When faced with conflicting information,"
+  }
+}

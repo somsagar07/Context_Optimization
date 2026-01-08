@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Systematically decompose word problems into precise mathematical steps by: (1) extracting numerical values, (2) identifying required operations, (3) calculating sequentially with clear intermediate results, and (4) showing complete reasoning that transforms narrative context into a logical computational pathway.",
+    "101": "Break down each word problem systematically by: 1) identifying key numerical values, 2) determining required mathematical operations in sequence, 3) showing explicit step-by-step computational work with clear intermediate calculations, and 4) verifying the final numerical result matches the problem's original constraints.",
+    "102": "Break down each word problem systematically by first identifying the key numerical values, then methodically solve the problem step-by-step, showing all computational work, intermediate calculations, and final result while maintaining clear mathematical reasoning and logical decomposition.",
+    "103": "Route each mathematical word problem by first decomposing the narrative into numerical components, identifying required computational steps, and selecting an agent specialized in systematic arithmetic reasoning and transparent step-by-step solution generation.",
+    "104": "Route the problem-solving task by first decomposing the input into numerical components, identifying the required mathematical operations, and selecting an agent specialized in step-by-step arithmetic reasoning that can transparently map language semantics to computational transformations.",
+    "105": "Systematically decompose the mathematical word problem into discrete, traceable computational sub-tasks by identifying key numerical entities, extracting implicit mathematical relationships, and constructing a transparent, step-by-step reasoning workflow that transforms narrative context into precise computational operations.",
+    "106": "Systematically decompose the problem into discrete, traceable mathematical sub-tasks, explicitly tracking each computational step, intermediate value, and final result while maintaining a clear, logical reasoning flow that transforms the narrative context into precise numerical operations."
+  },
+  "verifier": {
+    "100": "Systematically verify each mathematical step by checking: (1) numerical accuracy, (2) logical operation sequence, and (3) alignment between problem context and computational approach, flagging any inconsistencies or computational errors.",
+    "101": "Systematically verify each mathematical reasoning step by checking: (1) numerical accuracy, (2) operation correctness, (3) logical flow, and (4) alignment with original problem statement, flagging any computational or conceptual errors with precise line-item feedback.",
+    "102": "Systematically verify each mathematical step by checking intermediate calculations, identifying potential logical errors, and ensuring the final solution follows a coherent reasoning path that matches the original problem's constraints.",
+    "103": "Meticulously verify each mathematical step by checking: (1) numerical accuracy, (2) logical operation sequence, and (3) alignment between problem context and computational transformations, flagging any deviation from precise, transparent reasoning.",
+    "104": "Systematically verify each mathematical reasoning step by checking: (1) numerical extraction accuracy, (2) operation selection validity, (3) computational precision, and (4) logical flow coherence, flagging any deviation from expected problem-solving methodology."
+  },
+  "answerer": {
+    "100": "Always solve the problem step-by-step, clearly showing mathematical work, and conclude with the final numerical answer using the format: [Computational steps] #### [Final Answer].",
+    "101": "Always solve the problem step-by-step, clearly showing your mathematical reasoning, and conclude with the final numerical answer formatted as #### [result].",
+    "102": "Always solve the problem step-by-step, showing all mathematical work, and conclude with the final numerical answer formatted as a single integer or decimal value.",
+    "103": "When multiple sub-task results or answers conflict, systematically compare their computational steps, validate each solution's logical integrity, and select the most mathematically consistent and contextually aligned resolution that minimally deviates from the original problem's constraints.",
+    "104": "When multiple solution paths or answers emerge, systematically evaluate each proposed solution's logical consistency, computational accuracy, and alignment with the original problem constraints, selecting the most robust and mathematically validated approach."
+  }
+}

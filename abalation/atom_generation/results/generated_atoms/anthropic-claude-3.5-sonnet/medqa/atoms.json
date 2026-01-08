@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Analyze the medical scenario by systematically evaluating patient presentation, relevant clinical factors, and underlying mechanisms before selecting the most appropriate answer from the given options, ensuring each step is clearly documented.",
+    "101": "Analyze the medical scenario by systematically evaluating patient characteristics, symptoms, and relevant pathophysiology to identify the most appropriate clinical decision through evidence-based reasoning.",
+    "102": "As a medical expert, systematically analyze the clinical scenario by identifying key patient factors, relevant pathophysiology, and diagnostic findings before applying evidence-based medical knowledge to determine the most appropriate answer.",
+    "103": "Analyze the medical question's key elements including clinical presentation, required medical domains, and reasoning complexity to determine whether it needs basic pattern matching, multi-step clinical reasoning, or advanced pathophysiological analysis.",
+    "104": "Analyze the medical question's key elements including clinical presentation, required knowledge domains, and reasoning complexity to determine the optimal problem-solving approach and specialist agent needed for accurate diagnosis or treatment selection.",
+    "105": "Analyze the medical scenario by systematically evaluating patient characteristics, symptoms, and clinical context before identifying the most appropriate answer from the given options while strictly adhering to evidence-based medical guidelines.",
+    "106": "Analyze the medical scenario by sequentially evaluating patient characteristics, clinical presentation, relevant medical knowledge domains, and treatment guidelines to determine the most appropriate clinical decision."
+  },
+  "verifier": {
+    "100": "As a medical expert, critically evaluate the clinical reasoning, factual accuracy, and logical flow of the proposed answer while identifying any diagnostic, therapeutic, or pathophysiological inconsistencies that could impact patient care.",
+    "101": "Critically evaluate medical reasoning by checking for logical fallacies, factual accuracy, and evidence-based clinical decision-making while identifying any gaps in the diagnostic or therapeutic chain of thought.",
+    "102": "Critically evaluate medical reasoning by verifying scientific accuracy, logical flow, and clinical appropriateness while flagging any inconsistencies in diagnostic thinking, treatment choices, or pathophysiological explanations.",
+    "103": "Critically evaluate medical reasoning by checking for logical fallacies, unsupported assumptions, and inconsistencies between the clinical presentation, diagnostic reasoning, and proposed interventions while verifying that conclusions align with current medical evidence and best practices.",
+    "104": "Carefully evaluate the medical reasoning, factual accuracy, and logical flow of the proposed answer while checking for any contradictions with established clinical guidelines or scientific evidence."
+  },
+  "answerer": {
+    "100": "Format your response by stating only the letter (A-D) corresponding to the most appropriate answer choice, followed by a brief one-line explanation of the key clinical reasoning.",
+    "101": "Format your answer by stating only the selected option letter and its corresponding text, without additional explanation or commentary.",
+    "102": "Analyze the medical scenario carefully, identify the key clinical findings and underlying mechanisms, and select the single most appropriate answer from the given options, providing only the letter and corresponding answer text.",
+    "103": "Analyze all available answers and evidence systematically, weighing the credibility and reasoning of each source, then synthesize a unified solution that best addresses the core problem while accounting for any uncertainties or conflicting information.",
+    "104": "As a medical expert, synthesize the available responses by prioritizing evidence-based clinical guidelines, established medical principles, and patient safety considerations while resolving any conflicts between different answers."
+  }
+}

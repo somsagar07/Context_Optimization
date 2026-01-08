@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Analyze the medical scenario presented in the question, recall relevant medical knowledge or guidelines, and systematically evaluate each option to identify the correct answer.",
+    "101": "Carefully analyze the medical scenario, verify the assumptions and information provided, and systematically evaluate each option against established medical knowledge to identify the correct answer.",
+    "102": "Analyze the medical scenario, retrieve relevant medical knowledge, and apply reasoning to evaluate options and identify the correct answer.",
+    "103": "Analyze the medical question's complexity by assessing the scenario's details, required medical knowledge, and reasoning needed to select the correct answer, then choose the appropriate agent to handle it.",
+    "104": "Analyze the question's complexity by assessing the medical scenario, required domain knowledge, and reasoning skills needed, then select the appropriate agent to handle the task effectively.",
+    "105": "Decompose the problem into sub-tasks by first extracting and understanding the medical context and terminology from the question, then perform reasoning and inference to connect symptoms to potential diagnoses or treatments, evaluate each option against the scenario, and finally retrieve relevant medical knowledge to support the decision-making process.",
+    "106": "Decompose the problem by first understanding the medical context of the question, then evaluate each option based on medical knowledge and reasoning, and finally select the most appropriate answer."
+  },
+  "verifier": {
+    "100": "Critique the reasoning by ensuring strict adherence to formatting and constraints, identifying any logical errors or inconsistencies in the provided solution.",
+    "101": "Critique the reasoning by identifying any errors in the interpretation of medical scenarios, application of medical knowledge, or selection of the correct answer from the options provided.",
+    "102": "Critique the reasoning by strictly decomposing the logic and applying formal mathematical principles to identify any errors.",
+    "103": "Critique the reasoning by identifying any logical errors or incorrect assumptions in the analysis of the medical scenario and the selection of the correct answer.",
+    "104": "As a domain expert, critically evaluate the reasoning process in the given solution, identifying any logical inconsistencies or gaps in medical knowledge application."
+  },
+  "answerer": {
+    "100": "Format the final output as: Final Answer: <your_answer>",
+    "101": "Format the final output as: Final Answer: <your_answer>",
+    "102": "Format the final output as: Final Answer: <your_answer>",
+    "103": "When resolving conflicts between multiple answers or sub-task results, consider alternative perspectives and innovative solutions to synthesize a coherent and optimal outcome.",
+    "104": "When resolving conflicts between multiple answers or sub-task results, verify the assumptions and check for errors in each response to determine the most accurate and consistent outcome."
+  }
+}

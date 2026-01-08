@@ -1,0 +1,48 @@
+{
+  "model_id": "anthropic/claude-3.5-sonnet",
+  "dataset": "hotpotqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.14980298280715942,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.10871930420398712
+    },
+    "verifier": {
+      "uniqueness": 0.09752142429351807,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.12240523099899292,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.15896743535995483,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.1297719031572342
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.2219672543661935,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.2154605746269226,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.15995242595672607,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.20181386961656458,
+      "clarity": 5.5
+    }
+  }
+}

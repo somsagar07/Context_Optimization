@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Analyze the problem step-by-step, identify key variables and relationships, apply logical reasoning, and perform necessary calculations to arrive at the final answer.",
+    "101": "Decompose the problem into key variables and relationships, apply logical reasoning to connect them, and perform the necessary mathematical operations step-by-step to arrive at the final answer.",
+    "102": "Analyze the problem step-by-step by identifying key variables, applying logical reasoning, and performing necessary mathematical operations to arrive at the final answer.",
+    "103": "Analyze the question complexity by identifying key mathematical concepts and reasoning patterns, then select the appropriate problem-solving approach or agent to address the task effectively.",
+    "104": "Analyze the question complexity by breaking it down into logical components and applying appropriate mathematical reasoning to select the most suitable approach or agent for solving the problem.",
+    "105": "Decompose the problem into sub-tasks that involve extracting key variables, applying logical reasoning, performing necessary mathematical operations, and calculating final results, while ensuring each step is clearly defined and can be executed in parallel if applicable.",
+    "106": "Decompose the problem into sub-tasks focusing on extracting key variables, performing necessary calculations, and verifying logical assumptions at each step."
+  },
+  "verifier": {
+    "100": "Critique the reasoning in the provided examples, ensuring adherence to problem constraints and accurate application of mathematical principles.",
+    "101": "Critique the reasoning in the provided solutions by identifying any logical inconsistencies or misapplications of mathematical principles, and suggest alternative approaches that could lead to correct conclusions.",
+    "102": "Critique the reasoning in the provided problem-solving process, focusing on verifying assumptions, checking calculations, and identifying any logical inconsistencies.",
+    "103": "Critique the reasoning by systematically breaking down each step of the solution, ensuring all mathematical principles and logical deductions are correctly applied and justified.",
+    "104": "Critique the reasoning in the provided problem-solving examples by identifying any logical inconsistencies, miscalculations, or misinterpretations of the mathematical principles involved."
+  },
+  "answerer": {
+    "100": "Format the final output as a single numerical answer without any additional text or context.",
+    "101": "Format the final output as a single number without any additional text or symbols.",
+    "102": "Format the final output as a single numerical answer without any additional text or explanation.",
+    "103": "Resolve conflicts by selecting the most accurate answer based on strict adherence to problem constraints and formatting requirements.",
+    "104": "Resolve conflicts by selecting the most accurate answer based on logical reasoning and mathematical validation from the provided sub-task results."
+  }
+}

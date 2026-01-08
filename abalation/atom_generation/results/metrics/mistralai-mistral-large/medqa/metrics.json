@@ -1,0 +1,48 @@
+{
+  "model_id": "mistralai/mistral-large",
+  "dataset": "medqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.14057070016860962,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.11170840263366699
+    },
+    "verifier": {
+      "uniqueness": 0.09202402830123901,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.20723867416381836,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.20089071989059448,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.27096110582351685
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.24300244876316615,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.23637207746505737,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.1698017120361328,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.21952271110871258,
+      "clarity": 5.5
+    }
+  }
+}

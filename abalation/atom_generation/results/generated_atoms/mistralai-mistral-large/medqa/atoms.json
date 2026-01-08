@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Analyze the clinical scenario step-by-step, linking symptoms to medical concepts, ruling out incorrect options with evidence, and selecting the answer that best matches established guidelines or pathophysiological principles.",
+    "101": "Decompose the clinical scenario into explicit pathophysiological steps, systematically eliminate incorrect options by cross-referencing each with known medical principles, and derive the correct answer through logical deduction.",
+    "102": "Analyze the clinical scenario step-by-step, verify each assumption against medical knowledge, and systematically eliminate incorrect options by identifying contradictions or mismatches with the presented findings.",
+    "103": "Analyze the medical question to determine if it requires clinical guideline application, symptom-to-diagnosis mapping, embryologic/developmental knowledge, or risk factor prevention, then route to the agent specialized in the identified reasoning pattern.",
+    "104": "Classify the question by decomposing it into clinical reasoning depth (single-step diagnosis, multi-step deduction, or guideline-based elimination) and route to the agent specialized in the identified complexity level.",
+    "105": "Decompose the medical question into parallel sub-tasks: extract clinical details, retrieve relevant medical knowledge, eliminate incorrect options, and validate the final answer while strictly adhering to the input format and constraints.",
+    "106": "Decompose the medical question into parallel threads to extract clinical details, retrieve relevant medical knowledge, and eliminate incorrect options based on contraindications or inconsistencies."
+  },
+  "verifier": {
+    "100": "Verify the reasoning for logical consistency, medical accuracy, and alignment with clinical guidelines while flagging unsupported assumptions or incorrect exclusions of options.",
+    "101": "Verify the reasoning step-by-step for medical accuracy, logical consistency, and alignment with clinical guidelines, flagging any gaps, contradictions, or unsupported assumptions.",
+    "102": "Verify the reasoning for logical gaps, incorrect assumptions, overlooked medical contraindications, or alternative explanations that align with clinical guidelines and embryological principles.",
+    "103": "Verify the reasoning by decomposing the question into explicit clinical steps, mapping each step to the correct medical principle, and confirming no logical gaps, contradictions, or unsupported assumptions exist in the chain.",
+    "104": "Verify the reasoning for medical accuracy, logical consistency, and adherence to clinical guidelines, flagging any errors in diagnosis, treatment selection, or embryological correlation."
+  },
+  "answerer": {
+    "100": "Format your final answer as the correct option letter followed by the exact correct answer in parentheses.",
+    "101": "Format the final answer as the exact correct option letter followed by the full correct answer text in parentheses.",
+    "102": "Format the final answer as the exact correct option letter (A, B, C, or D) only, without additional text or explanation.",
+    "103": "Resolve conflicts by selecting the most clinically accurate and guideline-aligned answer from sub-task results, ensuring strict adherence to the required output format without deviation.",
+    "104": "Compare all proposed answers for factual consistency, clinical guideline alignment, and logical coherence with the question\u2019s context, resolving conflicts by prioritizing evidence-based correctness and eliminating options violating medical best practices."
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "System Instruction: Verify each step of reasoning by cross-checking retrieved information against the question's requirements and ensure all assumptions are validated with evidence.",
+    "101": "Identify key entities or concepts in the question, retrieve and compare relevant information, synthesize across sources, and understand contextual relationships to arrive at the correct answer.",
+    "102": "As a domain expert, systematically identify key entities in the question, retrieve and compare relevant information, synthesize data across sources, and understand contextual relationships to deduce the correct answer.",
+    "103": "Analyze the question to determine the complexity of reasoning required and select the appropriate agent to handle multi-hop reasoning, retrieval, comparison, and synthesis tasks.",
+    "104": "Analyze the question to determine the complexity of multi-hop reasoning required and select the appropriate specialized agent to retrieve, compare, and synthesize information for an accurate answer.",
+    "105": "Decompose the question into distinct entities or concepts, retrieve relevant information for each, and synthesize the data to form a coherent answer.",
+    "106": "Decompose the problem into sub-tasks by identifying key entities, retrieving relevant information, verifying assumptions, and synthesizing data to ensure accurate multi-hop reasoning."
+  },
+  "verifier": {
+    "100": "Critique the reasoning by identifying any logical gaps, incorrect assumptions, or missing connections between the provided information and the conclusion.",
+    "101": "Critique the reasoning by ensuring the model accurately identifies key entities, retrieves and compares relevant information, synthesizes data across sources, and understands contextual relationships to arrive at the correct answer.",
+    "102": "Critique the reasoning by identifying any logical errors, incorrect assumptions, or missing connections in the multi-hop reasoning process.",
+    "103": "Critique the reasoning by identifying any overlooked connections or assumptions that could lead to errors in the multi-hop reasoning process.",
+    "104": "Critique the reasoning by ensuring the model strictly adheres to identifying relevant entities, retrieving and comparing information, synthesizing across sources, and understanding contextual relationships, while maintaining the required output format."
+  },
+  "answerer": {
+    "100": "Provide the final answer in a single, concise sentence directly addressing the question, ensuring clarity and precision.",
+    "101": "Format the final output as a single, concise answer directly addressing the question.",
+    "102": "Format the final output as a single, precise answer without additional context or explanation.",
+    "103": "Compare the evidence supporting each answer, prioritize the most reliable and relevant information, and synthesize a coherent conclusion.",
+    "104": "Ensure all conflicting answers are cross-verified against the original context and assumptions are validated for consistency and accuracy."
+  }
+}

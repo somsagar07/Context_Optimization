@@ -1,0 +1,15 @@
+{
+  "model_id": "meta-llama/llama-3.1-70b-instruct",
+  "model_metadata": {
+    "display_name": "Llama 3.1 70B Instruct",
+    "family": "Meta",
+    "estimated_params": "70B",
+    "type": "instruct",
+    "cost_tier": "medium",
+    "capabilities": "Open-source, high quality, strong reasoning"
+  },
+  "api_calls": 0,
+  "api_errors": 0,
+  "dataset": "gaia",
+  "generation_time": 1767819207.2704835
+}

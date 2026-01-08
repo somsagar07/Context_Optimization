@@ -1,0 +1,48 @@
+{
+  "model_id": "openai/gpt-5",
+  "dataset": "medqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.0,
+      "strategy_coverage": 0.0,
+      "semantic_diversity": 0.0
+    },
+    "verifier": {
+      "uniqueness": 0.0,
+      "strategy_coverage": 0.0,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.0,
+      "strategy_coverage": 0.0,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.0,
+      "strategy_coverage": 0.0,
+      "semantic_diversity": 0.0
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 0.0,
+      "specificity": 0.0,
+      "clarity": 0.0
+    },
+    "verifier": {
+      "coherence": 0.0,
+      "specificity": 0.0,
+      "clarity": 0.0
+    },
+    "answerer": {
+      "coherence": 0.0,
+      "specificity": 0.0,
+      "clarity": 0.0
+    },
+    "overall": {
+      "coherence": 0.0,
+      "specificity": 0.0,
+      "clarity": 0.0
+    }
+  }
+}

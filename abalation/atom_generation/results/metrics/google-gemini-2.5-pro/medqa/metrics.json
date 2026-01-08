@@ -1,0 +1,48 @@
+{
+  "model_id": "google/gemini-2.5-pro",
+  "dataset": "medqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.15964478254318237,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.047281134873628616
+    },
+    "verifier": {
+      "uniqueness": 0.08571130037307739,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.1575690507888794,
+      "strategy_coverage": 0.0,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.16459238529205322,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.2899174988269806
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.21102371386119298,
+      "clarity": 1.6428571428571428
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.153985333442688,
+      "clarity": 2.3
+    },
+    "answerer": {
+      "coherence": 4.6,
+      "specificity": 0.19137566089630126,
+      "clarity": 4.6
+    },
+    "overall": {
+      "coherence": 5.235294117647059,
+      "specificity": 0.18846888051313512,
+      "clarity": 2.7058823529411766
+    }
+  }
+}

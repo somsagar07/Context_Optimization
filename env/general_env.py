@@ -24,7 +24,7 @@ class GeneralAgentEnv(gym.Env):
         4: Agent2 Budget [0=Low, 1=Mid, 2=High]
         5: Answerer Budget [0=Low, 1=Mid, 2=High]
     
-    Observation: Question embedding from LLM hidden states
+    Observation: Question embedding from MetaCLIP-H14 (1024D)
     
     NOTE: This is a single-step environment (contextual bandit).
     All actions are selected at once, no temporal credit assignment.

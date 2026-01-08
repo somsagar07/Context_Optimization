@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Provide the dataset for analysis.",
+    "101": "Identify the key information and patterns in the provided dataset, then outline the reasoning patterns required to solve the problem, and finally, provide a two-sentence summary of the analysis and the key takeaways.",
+    "102": "Identify the key information and patterns in the provided dataset, then outline the reasoning patterns required to solve the problem based on the identified information.",
+    "103": "For a 'router' agent, analyze the question complexity and select the right approach/agent based on the presence of specific keywords such as Nature journal, Scientific Reports, plasmons, plasmonics, nano-compound, book title, James Beard Award, New Mexican staple, Metropolitan Museum of Art, and accession number.",
+    "104": "For a 'router' agent, analyze the question complexity by identifying key components, determining relevant information, and selecting the right approach or agent based on the presence of specific keywords, entities, or constraints.",
+    "105": "Decompose the problem into sub-tasks or parallel threads by identifying key components, understanding the task, researching the dataset, filtering the dataset, analyzing the filtered results, and identifying the correct answer.",
+    "106": "Decompose the problem into sub-tasks or parallel threads by identifying key components, understanding the task, researching the dataset, filtering the dataset, analyzing the filtered results, and identifying the correct answer."
+  },
+  "verifier": {
+    "100": "Verify that the reasoning process accurately identifies and extracts the relevant information from the input, without making assumptions or introducing external knowledge.",
+    "101": "Verify that the reasoning process accurately identifies the specific information requested from the given text, without making assumptions or relying on external knowledge not present in the input.",
+    "102": "Write a system instruction that encourages a verifier agent to critique and find errors in reasoning by considering novel problem-solving approaches and lateral thinking.",
+    "103": "Verify the logical decomposition of the input by breaking it down into a series of well-defined, formal steps, and check for errors in reasoning and assumptions.",
+    "104": "Provide a dataset or a specific problem to analyze, and I will follow the step-by-step process to solve it, using Python for complex calculations and data filtering, and formatting the final conclusion exactly as: Final Answer: <your_answer>."
+  },
+  "answerer": {
+    "100": "Format the final output to include specific instructions for formatting numbers and prefixes as per the given examples.",
+    "101": "Format the final output as a single sentence, without quotes or prefixes, and include any necessary numerical values in plain text.",
+    "102": "Format the final output as a single sentence, without quotes or prefixes, and include any necessary formatting such as writing numbers in plain text.",
+    "103": "When encountering conflicting answers or sub-task results, the aggregator agent should prioritize the answer that is most directly supported by the input data and resolve any ambiguities through strict logical decomposition and formal mathematical calculations.",
+    "104": "When encountering conflicting answers or sub-task results, the aggregator agent should reconcile them by identifying the most novel and contextually relevant solution that maximizes the diversity of perspectives and minimizes contradictions."
+  }
+}

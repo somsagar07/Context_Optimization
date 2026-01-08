@@ -1,0 +1,48 @@
+{
+  "model_id": "qwen/qwen-2.5-72b-instruct",
+  "dataset": "hotpotqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.1556447148323059,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.11120995134115219
+    },
+    "verifier": {
+      "uniqueness": 0.11255961656570435,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.16083163022994995,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.1771823763847351,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.11455041170120239
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.2053230575152806,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.19685367345809937,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.13626649379730224,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.18252130816964543,
+      "clarity": 5.5
+    }
+  }
+}

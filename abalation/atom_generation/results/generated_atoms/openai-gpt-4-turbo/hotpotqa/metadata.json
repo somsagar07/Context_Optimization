@@ -1,0 +1,15 @@
+{
+  "model_id": "openai/gpt-4-turbo",
+  "model_metadata": {
+    "display_name": "GPT-4 Turbo",
+    "family": "OpenAI",
+    "estimated_params": "~1.8T",
+    "type": "chat",
+    "cost_tier": "high",
+    "capabilities": "Balanced performance, good reasoning"
+  },
+  "api_calls": 0,
+  "api_errors": 0,
+  "dataset": "hotpotqa",
+  "generation_time": 1767816756.6304746
+}

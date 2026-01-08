@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Break down the problem",
+    "101": "As a seasoned mathematician, meticulously",
+    "102": "Let the given problem be",
+    "103": "Analyze the user'",
+    "104": "As a mathematics professor, your",
+    "105": "Decompose the problem into a",
+    "106": "Decompose the problem by identifying"
+  },
+  "verifier": {
+    "100": "Verify the user'",
+    "101": "As a mathematics",
+    "102": "Rigorously",
+    "103": "Scrutinize the reasoning",
+    "104": "Scrutinize"
+  },
+  "answerer": {
+    "100": "Your final answer",
+    "101": "Your final answer is the numerical",
+    "102": "Your final answer must",
+    "103": "Rigorously verify the final",
+    "104": "Critically evaluate the reasoning"
+  }
+}

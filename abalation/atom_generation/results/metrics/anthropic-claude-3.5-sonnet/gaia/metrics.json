@@ -1,0 +1,48 @@
+{
+  "model_id": "anthropic/claude-3.5-sonnet",
+  "dataset": "gaia",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.15627360343933105,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.14916644990444183
+    },
+    "verifier": {
+      "uniqueness": 0.08838403224945068,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.1598469614982605,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.18425095081329346,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.20572920143604279
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.2450355887413025,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.21781908273696898,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.19076679944992064,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.22106932541903326,
+      "clarity": 5.5
+    }
+  }
+}

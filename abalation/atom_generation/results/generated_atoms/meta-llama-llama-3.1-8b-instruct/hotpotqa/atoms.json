@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Identify key reasoning patterns, specific difficulties, and required model capabilities to solve examples from the 'hotpotqa' dataset.",
+    "101": "Identify the key entities and relationships in the input, and use contextual understanding and knowledge retrieval to determine the correct answer based on the relationships and entities identified.",
+    "102": "Consider unconventional connections and associations when evaluating relationships between entities.",
+    "103": "Analyze the question complexity and select the right approach by identifying the type of reasoning required, such as entity recognition, relationship identification, or knowledge retrieval.",
+    "104": "Analyze the question complexity and select the right approach by decomposing the question into its constituent parts and applying formal logical reasoning to determine the required entity recognition, relationship identification, and knowledge retrieval steps.",
+    "105": "Decompose the problem into sub-tasks by identifying key entities, relationships, and contextual information to facilitate multi-step reasoning and knowledge retrieval.",
+    "106": "Decompose the problem into sub-tasks or parallel threads by identifying key entities, relationships, and contextual information to facilitate multi-step reasoning and knowledge retrieval."
+  },
+  "verifier": {
+    "100": "Verify that the model's response adheres to the strict formatting and constraints of the target output, including exact wording and punctuation.",
+    "101": "Verify that the model's reasoning is grounded in a coherent and logical sequence of steps, accurately identifying key entities, relationships, and applying relevant knowledge and common sense to arrive at the correct answer.",
+    "102": "Verify that the model's output is logically consistent with the input information and adheres to the principles of entity recognition, relationship identification, and contextual understanding.",
+    "103": "Verify that the model's reasoning is consistent with the provided context and knowledge base, and identify any assumptions or gaps in the reasoning process.",
+    "104": "Verify that the model's reasoning is based on a logical chain of events, accurate knowledge retrieval, and sound application of common sense."
+  },
+  "answerer": {
+    "100": "Format the final output as: Final Answer: <your_answer>",
+    "101": "Format the final output as: Final Answer: <your_answer>",
+    "102": "Format the final output as: Final Answer: <answer>",
+    "103": "Verify each answer against the input and target output to detect inconsistencies and resolve conflicts.",
+    "104": "When aggregating multiple answers or sub-task results, prioritize the response that is most consistently supported by the input data and adhere to the strict formatting and constraints of the original question."
+  }
+}

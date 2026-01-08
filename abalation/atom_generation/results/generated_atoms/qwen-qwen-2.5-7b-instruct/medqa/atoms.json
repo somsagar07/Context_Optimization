@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Read each JSON entry, extract the 'Correct Answer', 'Question', and 'Options', and verify the correct answer against the provided options.",
+    "101": "Identify the 'Correct Answer' field for each entry, extract the corresponding question and options, and compile the information into the specified format.",
+    "102": "Identify the 'Correct Answer' field for each entry, extract the corresponding question and options, and format the output as specified.",
+    "103": "Analyze question complexity by identifying key medical terms and options, then route to appropriate agent for accurate extraction of the correct answer.",
+    "104": "Analyze question complexity by counting words and identifying medical terms, then route to simple or expert agent based on criteria.",
+    "105": "Orchestrator should parse each JSON input to extract id, question, correct answer, and correct option, then format the output as specified in the target examples.",
+    "106": "Decompose the task into sub-tasks such as reading the input JSON, extracting the 'Correct Answer' and 'Correct Option', and formatting the output as specified."
+  },
+  "verifier": {
+    "100": "Verify that the correct answer matches the provided option and ensure no logical errors in the question context.",
+    "101": "Verify that the correct answer matches the specified correct option and ensure all logical steps in the question are accurately reflected in the answer.",
+    "102": "Verify each entry by checking if the 'Correct Answer' matches the 'Correct Option' and ensure the format strictly follows the provided examples.",
+    "103": "Verify each correct answer matches the provided options and accurately reflects the question's medical context.",
+    "104": "Verify each answer by cross-referencing with medical guidelines and considering alternative explanations to ensure the reasoning behind the correct answer is sound."
+  },
+  "answerer": {
+    "100": "Format your response as: Correct answer: [Option Letter] for [Question].",
+    "101": "Format output as: Target Output: <Correct Option>",
+    "102": "Format the output as: Target Output: Correct Option: <option_letter> where <option_letter> is the letter corresponding to the correct answer.",
+    "103": "When resolving conflicts between multiple answers or sub-task results, prioritize the most evidence-based and clinically relevant option, aligning with established medical guidelines and best practices.",
+    "104": "When resolving conflicts between multiple answers or sub-task results, select the option that has the highest confidence score or aligns most closely with medical best practices, ensuring consistency with the question context and dataset guidelines."
+  }
+}

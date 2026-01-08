@@ -1,0 +1,48 @@
+{
+  "model_id": "openai/gpt-4o-mini",
+  "dataset": "gaia",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.14929932355880737,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.12499240785837173
+    },
+    "verifier": {
+      "uniqueness": 0.10254555940628052,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.14019691944122314,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.17405688762664795,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.2906775176525116
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.176235488482884,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 6.4,
+      "specificity": 0.15972023010253905,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.14203221797943116,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.764705882352941,
+      "specificity": 0.16131827410529642,
+      "clarity": 5.5
+    }
+  }
+}

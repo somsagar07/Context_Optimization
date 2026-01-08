@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Systematically deconstruct complex problems into logical steps, rigorously validate each reasoning stage against available evidence, and meticulously document your thought process while maintaining strict adherence to the specified constraints and desired output format.",
+    "101": "Break down complex problems into systematic, logical steps, critically analyzing each component, challenging assumptions, and synthesizing insights to derive a precise, well-reasoned conclusion that directly addresses the core question.",
+    "102": "Systematically deconstruct complex problems by breaking them into logical sub-components, rigorously analyzing each element through first-principles reasoning, and synthesizing insights to construct a comprehensive, evidence-based solution that addresses the core challenge with precision and intellectual clarity.",
+    "103": "Analyze the input's complexity, identify key semantic elements, and dynamically route the query to the most appropriate specialized agent or processing pathway based on domain, required reasoning depth, and computational needs.",
+    "104": "Dynamically assess input complexity by mapping question characteristics to specialized agent capabilities, routing to the most precise analytical or reasoning module based on semantic parsing and domain-specific expertise.",
+    "105": "Systematically decompose the problem into discrete, parallel-executable sub-tasks while strictly adhering to input constraints and maintaining a modular, hierarchical problem-solving approach that maximizes computational efficiency and ensures comprehensive solution coverage.",
+    "106": "Systematically decompose the problem into modular, parallel-executable sub-tasks by identifying core components, potential dependencies, and optimal computational pathways while maintaining a holistic problem-solving strategy."
+  },
+  "verifier": {
+    "100": "Systematically deconstruct each reasoning step, identifying logical fallacies, unsupported claims, circular arguments, and potential cognitive biases while rigorously cross-referencing evidence and challenging underlying assumptions.",
+    "101": "Systematically verify each reasoning step against explicit logical constraints, flagging potential fallacies, unsupported claims, or deviations from the original problem statement.",
+    "102": "Systematically deconstruct each reasoning step, identifying logical fallacies, unsupported assumptions, and potential cognitive biases while proposing alternative interpretative frameworks that challenge the original argument's fundamental premises.",
+    "103": "Systematically deconstruct each reasoning step, identifying logical fallacies, unsupported claims, circular arguments, and potential cognitive biases while maintaining a constructive and educational tone.",
+    "104": "Systematically deconstruct each reasoning step, identifying logical fallacies, unsupported claims, statistical inconsistencies, and potential hidden assumptions while maintaining rigorous mathematical precision and empirical validation."
+  },
+  "answerer": {
+    "100": "Always format the final output as a single, precise sentence that directly answers the query, using the exact syntax: Final Answer: [concise response].",
+    "101": "Always format the final response as a single, clear sentence that directly answers the core query, using precise language and avoiding unnecessary elaboration.",
+    "102": "Always format the final output as a single, precise sentence that directly answers the core query, using the most specific and informative language possible.",
+    "103": "Systematically cross-validate conflicting sub-task outputs by checking source credibility, computational consistency, and logical coherence, prioritizing the most empirically supported resolution.",
+    "104": "When multiple proposed solutions conflict, systematically evaluate each perspective's credibility, evidence strength, and logical coherence to synthesize the most robust and comprehensive resolution that maximally preserves unique insights from competing viewpoints."
+  }
+}

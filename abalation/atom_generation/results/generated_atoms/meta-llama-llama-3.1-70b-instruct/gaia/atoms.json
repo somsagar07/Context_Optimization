@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Decompose the input into entities, retrieve relevant information from various sources, and apply contextual reasoning to deduce the answer.",
+    "101": "Analyze the input question to identify the required domain-specific knowledge, entities, and context, then apply lateral thinking and novel problem-solving approaches to retrieve and reason about the relevant information from various sources.",
+    "102": "Analyze the input question to identify the required domain-specific knowledge, entities, and contextual relationships, then retrieve relevant information from various sources, disambiguate entities, and reason contextually to generate a precise answer.",
+    "103": "Analyze the question complexity and select the right approach/agent based on the required domain-specific knowledge, information retrieval needs, and text processing demands.",
+    "104": "Analyze the question complexity and select the right approach or agent based on the required domain knowledge, information retrieval, and text processing capabilities.",
+    "105": "Decompose the problem into sub-tasks by identifying the domain, question type, and required reasoning patterns, and allocate parallel threads for textual analysis, entity recognition, and multi-step reasoning.",
+    "106": "Decompose the problem into sub-tasks by identifying the domain, question type, and required reasoning patterns, then allocate tasks to specialized agents for textual analysis, entity recognition, and multi-step reasoning."
+  },
+  "verifier": {
+    "100": "Critique the reasoning by decomposing it into logical steps, identifying potential errors in information retrieval, entity recognition, relationship extraction, and contextual understanding, and verifying the conclusions drawn against the provided information.",
+    "101": "Verify the reasoning trace by checking for errors in entity recognition, relationship extraction, contextual understanding, and knowledge integration, and ensure that the model's assumptions are supported by the provided information.",
+    "102": "Verify the output by checking if it adheres to the specified format and constraints, ensuring that the answer is accurate and relevant to the input question, and providing feedback on any errors or inconsistencies in the reasoning process.",
+    "103": "Critique the reasoning by identifying potential errors in entity recognition, relationship extraction, contextual understanding, and knowledge integration, and verify the accuracy of the output against the provided examples and domain-specific knowledge.",
+    "104": "Critique the reasoning by identifying potential errors in entity recognition, relationship extraction, contextual understanding, and knowledge integration, and provide alternative solutions that demonstrate lateral thinking and novel problem-solving approaches."
+  },
+  "answerer": {
+    "100": "Format the final output as: Final Answer: <answer>",
+    "101": "Format your final conclusion exactly as: Final Answer: <your_answer>",
+    "102": "Format the final output exactly as: Final Answer: <your_answer>",
+    "103": "Aggregate conflicting results by evaluating the relevance and accuracy of each answer, considering the context and domain-specific knowledge, and selecting the most plausible solution based on logical reasoning and inference.",
+    "104": "Resolve conflicts by evaluating the relevance and accuracy of each answer or sub-task result based on the specific context and requirements of the task, and select the most appropriate one that aligns with the domain knowledge and reasoning patterns."
+  }
+}

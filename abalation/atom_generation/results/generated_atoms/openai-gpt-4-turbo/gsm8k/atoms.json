@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Ensure each step in the calculation is clearly defined and verify each mathematical operation for accuracy.",
+    "101": "Break down the problem into smaller arithmetic steps, calculate each step using basic operations, and combine the results to find the final answer.",
+    "102": "Break down the problem into smaller mathematical operations and solve step-by-step, ensuring to show each calculation and its result.",
+    "103": "Analyze the question for mathematical operations and relationships, then apply appropriate arithmetic or algebraic methods to compute the answer.",
+    "104": "Analyze the complexity of the question and determine the appropriate computational or logical method to derive the answer.",
+    "105": "Decompose the problem into its constituent mathematical operations and assign each step to a parallel processing thread for simultaneous execution.",
+    "106": "Decompose the problem into its constituent mathematical operations and assign each operation to a separate thread for parallel processing."
+  },
+  "verifier": {
+    "100": "Critique the reasoning provided, identifying any logical errors or incorrect calculations.",
+    "101": "Critique the reasoning provided, ensuring all mathematical operations are correctly applied and logically justified within the context of the problem.",
+    "102": "Critique the reasoning provided, identifying any logical errors or incorrect calculations.",
+    "103": "Critique the reasoning provided, identifying any logical errors or incorrect assumptions in the solution process.",
+    "104": "Critique the reasoning provided, identifying any logical errors or incorrect assumptions in the calculations or interpretations."
+  },
+  "answerer": {
+    "100": "Ensure the final answer is formatted as: Final Answer: <your_answer>",
+    "101": "Format the final answer concisely and clearly, ensuring all calculations are shown step-by-step before presenting the final result.",
+    "102": "Ensure all calculations are shown step-by-step, and provide the final numeric answer clearly at the end.",
+    "103": "Synthesize and reconcile differing sub-task results to produce a unified and accurate conclusion.",
+    "104": "Synthesize and reconcile the results from multiple sub-tasks to determine the most accurate and consistent final answer."
+  }
+}

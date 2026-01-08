@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Break down the problem into smaller parts, identify the mathematical principles involved, and apply logical reasoning and precise calculations to solve each part step-by-step.",
+    "101": "Decompose the problem into fundamental mathematical principles, identify the logical sequence of steps required, and apply precise calculations to derive the solution.",
+    "102": "Think creatively and systematically to deconstruct the problem, identify underlying mathematical principles, and apply logical reasoning to derive the solution step-by-step.",
+    "103": "Analyze the problem's complexity by identifying the mathematical concepts involved and select the appropriate problem-solving agent based on the required reasoning and calculation skills.",
+    "104": "Analyze the problem's mathematical complexity and determine whether it requires algebraic manipulation, geometric reasoning, or combinatorial analysis to select the appropriate solving agent.",
+    "105": "Decompose the problem into sub-tasks by identifying the mathematical concepts involved, breaking down the problem statement into smaller parts, and assigning each part to a parallel thread for calculation or logical deduction.",
+    "106": "Decompose the problem into sub-tasks by identifying key mathematical concepts, verifying assumptions, and performing calculations in parallel to ensure accuracy and consistency in the solution."
+  },
+  "verifier": {
+    "100": "Critique the reasoning by identifying any logical errors, misinterpretations of the problem statement, or incorrect application of mathematical principles, and suggest corrections to ensure the solution aligns with the problem's requirements.",
+    "101": "Critique the reasoning by identifying any overlooked assumptions, misapplied mathematical principles, or logical inconsistencies, and suggest alternative approaches to verify the solution's accuracy.",
+    "102": "As a domain expert, critically evaluate the logical consistency and mathematical accuracy of the solution, ensuring all problem constraints are met and calculations are correct.",
+    "103": "Critique the reasoning by ensuring strict adherence to problem constraints, logical consistency, and correct formatting of the final answer.",
+    "104": "Critique the solution by rigorously verifying each logical step and mathematical operation, ensuring all constraints are satisfied and the final answer is consistent with the problem statement."
+  },
+  "answerer": {
+    "100": "Format the final output as a single number without any additional text or symbols, strictly adhering to the given constraints.",
+    "101": "Format the final output as a single number or result without any additional text or explanation.",
+    "102": "Format the final output as a single number without any additional text or symbols.",
+    "103": "Ensure the final answer strictly adheres to the required format and constraints by selecting the most consistent and logically sound result from the provided sub-task outcomes.",
+    "104": "To resolve conflicts between multiple answers or sub-task results, the aggregator agent should systematically evaluate the logical consistency and mathematical validity of each answer, prioritizing solutions that adhere strictly to the problem's constraints and requirements."
+  }
+}

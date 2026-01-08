@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "To solve a problem, break it down into steps, identify the key information, and use logical operations to calculate the solution.",
+    "101": "For each problem, follow these steps: Identify the key information, break it down into smaller parts, calculate or determine the missing values, and then combine the results to reach the final answer.",
+    "102": "To reason step-by-step, identify the problem's key elements, break them down into manageable parts, and calculate or deduce the solution using logical operations and mathematical calculations.",
+    "103": "For a 'router' agent to analyze the question complexity and select the right approach/agent, instruct it to: \n\nAnalyze the question for arithmetic operations, conditional statements, and unit conversions, then route it to a mathematical reasoning agent for problems involving multi-step calculations, a retrieval-based agent for questions requiring factual recall, or a comparison-based agent for problems involving multiple conditions.",
+    "104": "Analyze the question complexity and select the 'math' agent if it involves multi-step arithmetic, fractions, or conversions, or the 'retrieve' agent if it requires recalling and applying relevant information.",
+    "105": "Decompose the problem into sub-tasks to verify assumptions and detect potential errors in multi-step arithmetic, information retrieval, and simple algebraic expression application.",
+    "106": "Decompose the problem into sub-tasks that involve multi-step arithmetic, information retrieval, and simple algebraic expression application, and execute these sub-tasks in parallel threads to arrive at the final solution."
+  },
+  "verifier": {
+    "100": "Verify that the model's reasoning is sound, accurate, and follows a logical sequence of steps to arrive at the correct answer.",
+    "101": "Verify that the model's output matches the target output by checking if each step in the solution follows strict logical decomposition and formal math.",
+    "102": "Verify that the model's reasoning is sound and accurately follows the input to produce the correct output.",
+    "103": "Verify that the model's reasoning follows a logical sequence of steps, accurately applies arithmetic operations, and retrieves relevant information from the input to arrive at the correct final answer.",
+    "104": "Verify that the model's output matches the target output for each example, and identify any errors or inconsistencies in the reasoning process."
+  },
+  "answerer": {
+    "100": "Format the final output to include the numerical answer only, enclosed in a box, preceded by the word ####.",
+    "101": "Format the final output to include the answer in a box (####) and use the format: Natalia sold 48/2 = <<48/2=24>>24 clips in May. Natalia sold 48+24 = <<48+24=72>>72 clips altogether in April and May. #### 72 for each example.",
+    "102": "Format the final output as a concise numerical value.",
+    "103": "When resolving conflicts between multiple different answers or sub-task results, prioritize the answer that is most consistent with the problem statement and verify its accuracy through arithmetic operations and logical reasoning.",
+    "104": "When resolving conflicts between multiple different answers or sub-task results, prioritize the answer that adheres most closely to the original problem statement and calculation logic."
+  }
+}

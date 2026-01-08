@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Decompose the problem into rigorous logical steps, apply precise mathematical reasoning to each sub-problem, enforce all constraints explicitly, and synthesize results through accurate calculations to derive the final answer.",
+    "101": "Break down the problem into precise sub-tasks, rigorously verify constraints at each step, and synthesize results through creative cross-domain reasoning before finalizing the answer.",
+    "102": "Decompose the problem into precise mathematical steps, rigorously apply domain-specific principles, enforce all constraints, and synthesize results through accurate calculations to derive the final answer.",
+    "103": "Analyze the problem's mathematical domain (number theory, geometry, combinatorics, or algebra), decompose it into sub-tasks, enforce all constraints, and select the specialized agent with the precise tools required for multi-step reasoning and exact calculation.",
+    "104": "Analyze the problem's domain, constraints, and required multi-step reasoning to route it to the agent specialized in number theory, geometry, or combinatorics with precision in constraint validation and error-free calculations.",
+    "105": "Decompose the problem into domain-specific sub-tasks (number theory, geometry, combinatorics), validate all constraints and assumptions at each step, and cross-verify intermediate results before synthesizing the final answer.",
+    "106": "Decompose the problem into parallel threads for domain-specific analysis (number theory, geometry, combinatorics), validate constraints, and synthesize sub-solutions through iterative refinement while exploring unconventional approaches to uncover hidden patterns or edge cases."
+  },
+  "verifier": {
+    "100": "Verify the solution by rigorously checking each step for logical consistency, constraint adherence, and arithmetic precision, ensuring the final answer strictly matches the required format and problem conditions.",
+    "101": "Verify the solution by rigorously checking each logical step, domain-specific calculations, constraint adherence, and arithmetic precision for errors or oversights.",
+    "102": "Verify the solution by rigorously decomposing the problem into logical steps, validating each mathematical operation, constraint, and intermediate result for correctness, and ensuring the final answer adheres to all given conditions.",
+    "103": "Verify each step of the reasoning for logical consistency, mathematical accuracy, constraint adherence, and correct application of domain-specific principles while flagging any unjustified assumptions or calculation errors.",
+    "104": "Verify each step of the solution for logical consistency, mathematical accuracy, constraint adherence, and completeness while ensuring no assumptions or calculations are unsupported or incorrect."
+  },
+  "answerer": {
+    "100": "Final Answer: Output only the numerical answer as a single integer with no additional text or formatting.",
+    "101": "Always output the final numerical answer only, with no additional text or formatting.",
+    "102": "Format the final answer as a single numerical value without any additional text or explanation.",
+    "103": "Resolve all conflicting sub-task results by strictly adhering to the problem constraints and formatting the final answer as a single numerical value without explanation.",
+    "104": "Resolve conflicts by selecting the mathematically validated result that aligns with rigorous domain-specific reasoning and verified calculations."
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "model_id": "mistralai/mistral-large",
+  "dataset": "aime25",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.12982338666915894,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.11746888607740402
+    },
+    "verifier": {
+      "uniqueness": 0.10760581493377686,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.17140084505081177,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.18750429153442383,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.15537871420383453
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.22053187234061106,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.21388791799545287,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.15771665573120117,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.20010270441279693,
+      "clarity": 5.5
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Identify key entities and relationships within the text, extract relevant information, and formulate the answer precisely without adding or altering any details.",
+    "101": "Read the input context carefully, identify the specific entities and relationships required to answer the question, and provide the exact answer as stated without additional or altered details, ensuring the response matches the format and constraints of previous examples.",
+    "102": "Comprehend the full context, identify key entities and relationships, and extract the specific information required to formulate an accurate and concise answer without adding or altering any details.",
+    "103": "Analyze the input to determine complexity, identify key entities and facts, then select the appropriate agent or approach ensuring precise and formatted output.",
+    "104": "Analyze the question to determine its complexity and the type of information required, then select the most appropriate agent to handle the task.",
+    "105": "Decompose the problem by first identifying the source and year, then extracting key entities and relationships, and finally pinpointing the exact information required to formulate the answer.",
+    "106": "Decompose the problem into identifying the source and year, then extract the relevant information from the provided context to formulate the precise answer."
+  },
+  "verifier": {
+    "100": "Verify that the response logically follows from the input by checking for accurate entity recognition, precise information extraction, and adherence to the question's constraints.",
+    "101": "Verify all facts, named entities, and dates are accurately extracted and no extraneous information is included.",
+    "102": "Verify the reasoning by considering alternative scenarios and checking if the same conclusion can be reached through different logical paths.",
+    "103": "Ensure the critique focuses on logical consistency and accuracy of extracted information without introducing assumptions or extraneous details.",
+    "104": "Ensure responses strictly adhere to the specified format and logic, checking for accurate information extraction and proper sentence structure without introducing any assumptions or extraneous details."
+  },
+  "answerer": {
+    "100": "Format your response as: Final Answer: <your_answer>.",
+    "101": "Understand the query, extract key information, and provide the exact answer as specified without additional commentary.",
+    "102": "Identify key entities and relationships, then formulate the answer in a single concise sentence without unnecessary words.",
+    "103": "When resolving conflicts between multiple answers, prioritize the most specific and directly relevant information, and cross-reference with the original context if necessary.",
+    "104": "When multiple answers conflict, verify each against the original context and select the one most supported by the text."
+  }
+}

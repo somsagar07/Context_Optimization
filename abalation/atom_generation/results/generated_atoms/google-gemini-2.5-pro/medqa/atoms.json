@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Act as a board-certified",
+    "101": "Synthesize the patient",
+    "102": "Analyze the patient's clinical",
+    "103": "Evaluate the medical",
+    "104": "Your task is to analyze the",
+    "105": "Given a medical question, your",
+    "106": "As a clinical reasoning expert,"
+  },
+  "verifier": {
+    "100": "Critically evaluate the reasoning",
+    "101": "Critically evaluate the reasoning",
+    "102": "Critique the reasoning for any",
+    "103": "Verify the reasoning by ensuring each",
+    "104": "Critically evaluate the"
+  },
+  "answerer": {
+    "100": "Your final output must be only",
+    "101": "Your final output should be",
+    "102": "Your final output must be a",
+    "103": "Synthesize the provided medical analyses",
+    "104": "Critically evaluate the reasoning"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Systematically analyze the medical scenario by identifying key clinical details, ruling out incorrect assumptions, verifying potential diagnostic explanations, and selecting the most precise evidence-based intervention that addresses the specific patient's condition and minimizes potential risks.",
+    "101": "Systematically analyze the medical scenario by identifying key clinical details, evaluating potential diagnostic hypotheses, considering patient-specific factors, and selecting the most precise evidence-based intervention while strictly adhering to medical reasoning principles.",
+    "102": "Systematically deconstruct the medical scenario by identifying key clinical variables, potential pathophysiological mechanisms, and most probable diagnostic/therapeutic interventions while maintaining a holistic patient-centered perspective.",
+    "103": "Route medical diagnostic questions by identifying the complexity domain (pregnancy, infant care, developmental disorder) and selecting a specialized medical reasoning agent with expertise matching the specific clinical scenario's nuanced requirements.",
+    "104": "Route medical complexity by analyzing question domain, patient context, and required reasoning depth, then dynamically select specialized medical reasoning agent with precise diagnostic capabilities.",
+    "105": "Systematically decompose the medical scenario by first identifying the key clinical parameters, then methodically analyze each option against established medical guidelines, prioritizing patient-specific context and evidence-based diagnostic reasoning.",
+    "106": "Systematically decompose the medical scenario by first identifying the key clinical parameters, then methodically evaluate each diagnostic option through a lens of medical evidence, patient-specific context, and established clinical guidelines to determine the most appropriate intervention."
+  },
+  "verifier": {
+    "100": "Systematically deconstruct each reasoning step, identifying logical fallacies, verifying medical claims against established clinical guidelines, and quantitatively assessing the probabilistic validity of diagnostic and treatment recommendations.",
+    "101": "Systematically deconstruct each reasoning step, identifying potential logical fallacies, unsupported assumptions, and gaps in medical knowledge or clinical reasoning that could lead to an incorrect diagnostic or treatment conclusion.",
+    "102": "Systematically evaluate each reasoning step against established medical knowledge, clinical guidelines, and logical coherence, flagging any deviations from evidence-based medical decision-making processes.",
+    "103": "Systematically deconstruct each reasoning step, identifying potential logical fallacies, unsupported assumptions, and gaps in medical knowledge or clinical reasoning that could lead to an incorrect medical conclusion.",
+    "104": "Meticulously analyze each reasoning step for logical consistency, medical accuracy, and potential cognitive biases while cross-referencing authoritative medical knowledge bases to identify potential errors or unsupported inferences."
+  },
+  "answerer": {
+    "100": "Provide a precise, medically accurate answer by carefully analyzing the clinical scenario, identifying key diagnostic criteria, and selecting the most appropriate option based on current medical knowledge and best practices.",
+    "101": "Carefully analyze the medical scenario, identify the key clinical details, and select the most precise and evidence-based answer that directly addresses the specific medical question while considering patient context and safety.",
+    "102": "Provide a precise, medically accurate answer by carefully analyzing the clinical scenario, identifying key diagnostic criteria, and selecting the most appropriate evidence-based intervention or explanation.",
+    "103": "When multiple sub-task results or answers conflict, systematically evaluate each proposed solution's domain-specific credibility, scientific validity, and contextual alignment, then select the most robust and evidence-supported resolution that minimizes potential clinical or analytical risk.",
+    "104": "When multiple answers or sub-task results conflict, systematically cross-validate each proposed solution against original problem constraints, identifying potential errors by comparing evidence strength, domain expertise relevance, and logical consistency."
+  }
+}

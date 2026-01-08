@@ -1,0 +1,48 @@
+{
+  "model_id": "meta-llama/llama-3.1-70b-instruct",
+  "dataset": "gaia",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.11798274517059326,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.33968475461006165
+    },
+    "verifier": {
+      "uniqueness": 0.11509406566619873,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.19606846570968628,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.18277573585510254,
+      "strategy_coverage": 0.8333333333333334,
+      "semantic_diversity": 0.29151394963264465
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.21617742095674788,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.23506946563720704,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.1684020757675171,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.20768233257181504,
+      "clarity": 5.5
+    }
+  }
+}

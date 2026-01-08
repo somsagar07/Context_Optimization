@@ -1,0 +1,48 @@
+{
+  "model_id": "qwen/qwen-2.5-72b-instruct",
+  "dataset": "medqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.13398027420043945,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.22322966158390045
+    },
+    "verifier": {
+      "uniqueness": 0.09322059154510498,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.19061362743377686,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.18922948837280273,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.21434403955936432
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.21548807621002197,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.21184619665145873,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.17163606882095336,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.20151928593130672,
+      "clarity": 5.5
+    }
+  }
+}

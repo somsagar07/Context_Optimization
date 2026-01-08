@@ -1,0 +1,48 @@
+{
+  "model_id": "openai/gpt-5.2",
+  "dataset": "gaia",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.15052425861358643,
+      "strategy_coverage": 0.6666666666666666,
+      "semantic_diversity": 0.07361011952161789
+    },
+    "verifier": {
+      "uniqueness": 0.13495224714279175,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.22464609146118164,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.18616753816604614,
+      "strategy_coverage": 0.8333333333333334,
+      "semantic_diversity": 0.10234987735748291
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 8.714285714285714,
+      "specificity": 0.2736524088042123,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 9.0,
+      "specificity": 0.25134575366973877,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 7.75,
+      "specificity": 0.22541506588459015,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 8.5625,
+      "specificity": 0.2546222433447838,
+      "clarity": 5.5
+    }
+  }
+}

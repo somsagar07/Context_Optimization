@@ -1,0 +1,48 @@
+{
+  "model_id": "openai/gpt-5.2",
+  "dataset": "aime25",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.11310803890228271,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.11611248552799225
+    },
+    "verifier": {
+      "uniqueness": 0.06755048036575317,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.24890202283859253,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.15398281812667847,
+      "strategy_coverage": 0.8333333333333334,
+      "semantic_diversity": 0.1808692216873169
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 8.714285714285714,
+      "specificity": 0.2222624591418675,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 9.0,
+      "specificity": 0.22308226823806762,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 8.75,
+      "specificity": 0.24493812024593353,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 8.8125,
+      "specificity": 0.22818756476044655,
+      "clarity": 5.5
+    }
+  }
+}

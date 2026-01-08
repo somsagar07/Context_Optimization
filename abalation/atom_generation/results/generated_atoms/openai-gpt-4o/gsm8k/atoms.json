@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Break down the problem into smaller parts, identify numerical relationships, perform calculations step-by-step, and logically sequence your reasoning to reach the final solution.",
+    "101": "As a domain expert, break down the problem into smaller parts, identify numerical relationships, perform necessary calculations, and logically sequence steps to reach the final solution.",
+    "102": "Break down the problem into smaller steps, identify and perform necessary calculations, and ensure each step logically follows from the previous to reach the final solution.",
+    "103": "Analyze the question's complexity by decomposing it into logical steps and mathematical operations to select the appropriate problem-solving approach or agent.",
+    "104": "Analyze the question's complexity to determine the appropriate approach or agent by assessing the need for multi-step reasoning, arithmetic operations, and contextual understanding.",
+    "105": "Decompose the problem into sequential arithmetic operations, identify the logical flow of the narrative, and ensure each step is consistent with the problem's context to arrive at the correct solution.",
+    "106": "Decompose the problem into sequential arithmetic operations, ensuring each step logically follows from the previous one, and track quantities accurately to maintain consistency."
+  },
+  "verifier": {
+    "100": "Critique the reasoning by ensuring each step logically follows from the previous one, all calculations are accurate, and the final conclusion is consistent with the problem statement.",
+    "101": "Critique the reasoning by ensuring each step adheres to strict arithmetic logic, correct calculations, and proper formatting.",
+    "102": "Critique the reasoning by identifying any logical inconsistencies, calculation errors, or overlooked steps in the solution process.",
+    "103": "As a domain expert, critically evaluate the logical flow and arithmetic accuracy of the reasoning steps to identify any errors or inconsistencies in the solution.",
+    "104": "Critique the reasoning by identifying calculation errors, incorrect assumptions, and logical inconsistencies in the solution."
+  },
+  "answerer": {
+    "100": "Format the final output as a concise, step-by-step solution with calculations shown and the final answer clearly indicated.",
+    "101": "Format the final output as a concise, step-by-step solution with calculations and the final answer clearly indicated.",
+    "102": "Format the final output by breaking down the problem into logical steps, performing necessary calculations, and presenting the solution clearly and succinctly.",
+    "103": "To resolve conflicts between multiple answers, the aggregator agent should decompose each answer into logical steps, verify the correctness of each step using formal math, and synthesize a final answer based on the most consistent and accurate reasoning.",
+    "104": "When resolving conflicts between multiple answers or sub-task results, verify the assumptions and calculations in each to identify and correct errors."
+  }
+}

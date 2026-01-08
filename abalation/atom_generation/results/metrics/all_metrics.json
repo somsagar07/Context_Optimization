@@ -1,0 +1,3100 @@
+{
+  "openai/gpt-4o-mini": {
+    "gsm8k": {
+      "model_id": "openai/gpt-4o-mini",
+      "dataset": "gsm8k",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.09604907035827637,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.40250614285469055
+        },
+        "verifier": {
+          "uniqueness": 0.06439560651779175,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.17315369844436646,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.15081357955932617,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.2687370777130127
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.16774213314056396,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.19388803243637084,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.152578866481781,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.1709723192102769,
+          "clarity": 5.5
+        }
+      }
+    },
+    "hotpotqa": {
+      "model_id": "openai/gpt-4o-mini",
+      "dataset": "hotpotqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.12967288494110107,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.35542044043540955
+        },
+        "verifier": {
+          "uniqueness": 0.06488293409347534,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.10803747177124023,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.15519410371780396,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.35025763511657715
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.20621237584522792,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.16664830446243287,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.12749465703964233,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.17142361402511597,
+          "clarity": 5.5
+        }
+      }
+    },
+    "gaia": {
+      "model_id": "openai/gpt-4o-mini",
+      "dataset": "gaia",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.14929932355880737,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.12499240785837173
+        },
+        "verifier": {
+          "uniqueness": 0.10254555940628052,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.14019691944122314,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.17405688762664795,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.2906775176525116
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.176235488482884,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 6.4,
+          "specificity": 0.15972023010253905,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.14203221797943116,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.764705882352941,
+          "specificity": 0.16131827410529642,
+          "clarity": 5.5
+        }
+      }
+    },
+    "medqa": {
+      "model_id": "openai/gpt-4o-mini",
+      "dataset": "medqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1081128716468811,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.22496774792671204
+        },
+        "verifier": {
+          "uniqueness": 0.04752051830291748,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.1722337007522583,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.16482192277908325,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.32399964332580566
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.227566659450531,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.18551138639450074,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.14632097482681275,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.19130167189766378,
+          "clarity": 5.5
+        }
+      }
+    },
+    "aime25": {
+      "model_id": "openai/gpt-4o-mini",
+      "dataset": "aime25",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.10038673877716064,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.1722804307937622
+        },
+        "verifier": {
+          "uniqueness": 0.085773766040802,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.1486215591430664,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.16159218549728394,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.2533195912837982
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.17184025049209595,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.17413114309310912,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.16166939735412597,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.16952261504004984,
+          "clarity": 5.5
+        }
+      }
+    }
+  },
+  "openai/gpt-4o": {
+    "gsm8k": {
+      "model_id": "openai/gpt-4o",
+      "dataset": "gsm8k",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.13012748956680298,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.11514250189065933
+        },
+        "verifier": {
+          "uniqueness": 0.10020411014556885,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.1567305326461792,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.15191978216171265,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.1838138997554779
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 6.142857142857143,
+          "specificity": 0.16689899138041905,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.17523703575134278,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.16794488430023194,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.764705882352941,
+          "specificity": 0.16965897293651805,
+          "clarity": 5.5
+        }
+      }
+    },
+    "hotpotqa": {
+      "model_id": "openai/gpt-4o",
+      "dataset": "hotpotqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.14372998476028442,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.187508687376976
+        },
+        "verifier": {
+          "uniqueness": 0.11648732423782349,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.12784159183502197,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.16495108604431152,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.1841844916343689
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.22022849321365356,
+          "clarity": 5.857142857142857
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.1949392795562744,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.12245075702667237,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.18403233149472406,
+          "clarity": 5.647058823529412
+        }
+      }
+    },
+    "gaia": {
+      "model_id": "openai/gpt-4o",
+      "dataset": "gaia",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1903846263885498,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.23698851466178894
+        },
+        "verifier": {
+          "uniqueness": 0.101082444190979,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.19269877672195435,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.19782739877700806,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.16482342779636383
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 6.142857142857143,
+          "specificity": 0.2185530321938651,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.20031763315200807,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.15180186033248902,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.764705882352941,
+          "specificity": 0.1935569819282083,
+          "clarity": 5.5
+        }
+      }
+    },
+    "medqa": {
+      "model_id": "openai/gpt-4o",
+      "dataset": "medqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.10643714666366577,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0883515253663063
+        },
+        "verifier": {
+          "uniqueness": 0.12380295991897583,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.18452578783035278,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.19422435760498047,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.30238839983940125
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.22112579005105154,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.18404022455215455,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.16170151233673097,
+          "clarity": 6.4
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.192740542047164,
+          "clarity": 5.764705882352941
+        }
+      }
+    },
+    "aime25": {
+      "model_id": "openai/gpt-4o",
+      "dataset": "aime25",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.09765416383743286,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.10310185700654984
+        },
+        "verifier": {
+          "uniqueness": 0.11304044723510742,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.18853700160980225,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.1729692816734314,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.19097045063972473
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.17275891133717128,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.18210713863372802,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.19068400859832763,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.1807804773835575,
+          "clarity": 5.5
+        }
+      }
+    }
+  },
+  "openai/gpt-4-turbo": {
+    "gsm8k": {
+      "model_id": "openai/gpt-4-turbo",
+      "dataset": "gsm8k",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.15129190683364868,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.27016720175743103
+        },
+        "verifier": {
+          "uniqueness": 0.05465281009674072,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.15792572498321533,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.16502684354782104,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.2828395366668701
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.17095009769712174,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.16461122035980225,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.1346025824546814,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.15839527635013356,
+          "clarity": 5.5
+        }
+      }
+    },
+    "hotpotqa": {
+      "model_id": "openai/gpt-4-turbo",
+      "dataset": "hotpotqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1348057985305786,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.16385947167873383
+        },
+        "verifier": {
+          "uniqueness": 0.046682536602020264,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.13070595264434814,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.14967137575149536,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.32455769181251526
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.16955193451472692,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.16786314249038697,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.14540293216705322,
+          "clarity": 6.0
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.16195258322884054,
+          "clarity": 5.647058823529412
+        }
+      }
+    },
+    "gaia": {
+      "model_id": "openai/gpt-4-turbo",
+      "dataset": "gaia",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1789342164993286,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.2754949927330017
+        },
+        "verifier": {
+          "uniqueness": 0.16009891033172607,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.12007790803909302,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.18090426921844482,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.21537888050079346
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.21042406558990479,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.18800513744354247,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.13382502794265747,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.18130113447413726,
+          "clarity": 5.5
+        }
+      }
+    },
+    "medqa": {
+      "model_id": "openai/gpt-4-turbo",
+      "dataset": "medqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.12374550104141235,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.39463239908218384
+        },
+        "verifier": {
+          "uniqueness": 0.044664978981018066,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.16440248489379883,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.18093961477279663,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.40772533416748047
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 6.0,
+          "specificity": 0.24133101531437465,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.18323862552642822,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.14902889728546143,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.705882352941177,
+          "specificity": 0.19709733654471004,
+          "clarity": 5.5
+        }
+      }
+    },
+    "aime25": {
+      "model_id": "openai/gpt-4-turbo",
+      "dataset": "aime25",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.15701276063919067,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.17804840207099915
+        },
+        "verifier": {
+          "uniqueness": 0.08833426237106323,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.1931699514389038,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.1685284972190857,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.1645842045545578
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.19250931910106114,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.16715211868286134,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.17427910566329957,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.17968949149636662,
+          "clarity": 5.5
+        }
+      }
+    }
+  },
+  "anthropic/claude-3.5-haiku": {
+    "gsm8k": {
+      "model_id": "anthropic/claude-3.5-haiku",
+      "dataset": "gsm8k",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.09456253051757812,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.10364130884408951
+        },
+        "verifier": {
+          "uniqueness": 0.07322961091995239,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.19239121675491333,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.15014421939849854,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.22798945009708405
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.23740375893456594,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.2538424491882324,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.22003499269485474,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.23713020717396455,
+          "clarity": 5.5
+        }
+      }
+    },
+    "hotpotqa": {
+      "model_id": "anthropic/claude-3.5-haiku",
+      "dataset": "hotpotqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.08870458602905273,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.13722190260887146
+        },
+        "verifier": {
+          "uniqueness": 0.049892425537109375,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.20167601108551025,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.16739851236343384,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.25260448455810547
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.2621862973485674,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.24912552833557128,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.22733331918716432,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.24809401876786175,
+          "clarity": 5.5
+        }
+      }
+    },
+    "gaia": {
+      "model_id": "anthropic/claude-3.5-haiku",
+      "dataset": "gaia",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.12493187189102173,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.13717854022979736
+        },
+        "verifier": {
+          "uniqueness": 0.0742945671081543,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.1918325424194336,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.17378127574920654,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.23703238368034363
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.2130161268370492,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.2336815595626831,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.18342416286468505,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.21039067647036383,
+          "clarity": 5.5
+        }
+      }
+    },
+    "medqa": {
+      "model_id": "anthropic/claude-3.5-haiku",
+      "dataset": "medqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.10995447635650635,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.14444437623023987
+        },
+        "verifier": {
+          "uniqueness": 0.07651680707931519,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.15710866451263428,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.13611668348312378,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.22089619934558868
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.27285864523478914,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.22517520189285278,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.2599852681159973,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.25504781568751617,
+          "clarity": 5.5
+        }
+      }
+    },
+    "aime25": {
+      "model_id": "anthropic/claude-3.5-haiku",
+      "dataset": "aime25",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1113121509552002,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.034727152436971664
+        },
+        "verifier": {
+          "uniqueness": 0.06857699155807495,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.18435794115066528,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.1534062623977661,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.19070352613925934
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 6.0,
+          "specificity": 0.25219554560525076,
+          "clarity": 6.0
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.25163333415985106,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.2299376368522644,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.705882352941177,
+          "specificity": 0.24548374554690192,
+          "clarity": 5.705882352941177
+        }
+      }
+    }
+  },
+  "anthropic/claude-3.5-sonnet": {
+    "gsm8k": {
+      "model_id": "anthropic/claude-3.5-sonnet",
+      "dataset": "gsm8k",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1150360107421875,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0992397889494896
+        },
+        "verifier": {
+          "uniqueness": 0.13664978742599487,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.19271647930145264,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.16326546669006348,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.1590583324432373
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.19517606496810913,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.23370407819747924,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.2371147632598877,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.2188427448272705,
+          "clarity": 5.5
+        }
+      }
+    },
+    "hotpotqa": {
+      "model_id": "anthropic/claude-3.5-sonnet",
+      "dataset": "hotpotqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.14980298280715942,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.10871930420398712
+        },
+        "verifier": {
+          "uniqueness": 0.09752142429351807,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.12240523099899292,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.15896743535995483,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.1297719031572342
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.2219672543661935,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.2154605746269226,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.15995242595672607,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.20181386961656458,
+          "clarity": 5.5
+        }
+      }
+    },
+    "gaia": {
+      "model_id": "anthropic/claude-3.5-sonnet",
+      "dataset": "gaia",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.15627360343933105,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.14916644990444183
+        },
+        "verifier": {
+          "uniqueness": 0.08838403224945068,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.1598469614982605,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.18425095081329346,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.20572920143604279
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.2450355887413025,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.21781908273696898,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.19076679944992064,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.22106932541903326,
+          "clarity": 5.5
+        }
+      }
+    },
+    "medqa": {
+      "model_id": "anthropic/claude-3.5-sonnet",
+      "dataset": "medqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.06980496644973755,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.12204955518245697
+        },
+        "verifier": {
+          "uniqueness": 0.12424910068511963,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.1924331784248352,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.1546526551246643,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.3098815679550171
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.2446807622909546,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.2274004578590393,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.20448383092880248,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.2277756929397583,
+          "clarity": 5.5
+        }
+      }
+    },
+    "aime25": {
+      "model_id": "anthropic/claude-3.5-sonnet",
+      "dataset": "aime25",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.13423210382461548,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.08805740624666214
+        },
+        "verifier": {
+          "uniqueness": 0.06954920291900635,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.1613714098930359,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.14923745393753052,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.18265877664089203
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.21087885754449026,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.22806355953216553,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.20562106370925903,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.21438677170697382,
+          "clarity": 5.5
+        }
+      }
+    }
+  },
+  "meta-llama/llama-3.1-8b-instruct": {
+    "gsm8k": {
+      "model_id": "meta-llama/llama-3.1-8b-instruct",
+      "dataset": "gsm8k",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.18062102794647217,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.08558939397335052
+        },
+        "verifier": {
+          "uniqueness": 0.11277639865875244,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.2437199354171753,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.2149273157119751,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.16968372464179993
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.18857334341321672,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.19738349914550782,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.2070486068725586,
+          "clarity": 6.2
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.19659846670487346,
+          "clarity": 5.705882352941177
+        }
+      }
+    },
+    "hotpotqa": {
+      "model_id": "meta-llama/llama-3.1-8b-instruct",
+      "dataset": "hotpotqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1748565435409546,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.2373000681400299
+        },
+        "verifier": {
+          "uniqueness": 0.13512027263641357,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.1523580551147461,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.20860803127288818,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.2213517129421234
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 6.0,
+          "specificity": 0.1959393790790013,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.21232860088348388,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.15880870819091797,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.705882352941177,
+          "specificity": 0.18983895287794225,
+          "clarity": 5.5
+        }
+      }
+    },
+    "gaia": {
+      "model_id": "meta-llama/llama-3.1-8b-instruct",
+      "dataset": "gaia",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.22027254104614258,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.38836315274238586
+        },
+        "verifier": {
+          "uniqueness": 0.18397748470306396,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.212033212184906,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.23703229427337646,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.2981332838535309
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.571428571428571,
+          "specificity": 0.22415060656411306,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.2120736360549927,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.208459210395813,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.529411764705882,
+          "specificity": 0.2159834398942835,
+          "clarity": 5.5
+        }
+      }
+    },
+    "medqa": {
+      "model_id": "meta-llama/llama-3.1-8b-instruct",
+      "dataset": "medqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1741979718208313,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.24375271797180176
+        },
+        "verifier": {
+          "uniqueness": 0.1237492561340332,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.23210686445236206,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.2235090732574463,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.31045761704444885
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.2242679170199803,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.25162515640258787,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.19407395124435425,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.22343358572791605,
+          "clarity": 5.5
+        }
+      }
+    },
+    "aime25": {
+      "model_id": "meta-llama/llama-3.1-8b-instruct",
+      "dataset": "aime25",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.20286953449249268,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.10961314290761948
+        },
+        "verifier": {
+          "uniqueness": 0.13839185237884521,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.2307528257369995,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.2316521406173706,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.23646001517772675
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.20849829060690744,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.1572698712348938,
+          "clarity": 5.6
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.19486886262893677,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.1894224531510297,
+          "clarity": 5.529411764705882
+        }
+      }
+    }
+  },
+  "meta-llama/llama-3.1-70b-instruct": {
+    "gsm8k": {
+      "model_id": "meta-llama/llama-3.1-70b-instruct",
+      "dataset": "gsm8k",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1627589464187622,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.08557561784982681
+        },
+        "verifier": {
+          "uniqueness": 0.12835150957107544,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.1674814224243164,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.18716305494308472,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.27790650725364685
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.20438614913395473,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.19201126098632812,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.17444686889648436,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.19194080549127915,
+          "clarity": 5.5
+        }
+      }
+    },
+    "hotpotqa": {
+      "model_id": "meta-llama/llama-3.1-70b-instruct",
+      "dataset": "hotpotqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.11679184436798096,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.38585805892944336
+        },
+        "verifier": {
+          "uniqueness": 0.1596459150314331,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.202450692653656,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.18921798467636108,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.17976123094558716
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.20853338071278163,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.2207074284553528,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.1584249973297119,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.19737622317145853,
+          "clarity": 5.5
+        }
+      }
+    },
+    "gaia": {
+      "model_id": "meta-llama/llama-3.1-70b-instruct",
+      "dataset": "gaia",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.11798274517059326,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.33968475461006165
+        },
+        "verifier": {
+          "uniqueness": 0.11509406566619873,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.19606846570968628,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.18277573585510254,
+          "strategy_coverage": 0.8333333333333334,
+          "semantic_diversity": 0.29151394963264465
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.21617742095674788,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.23506946563720704,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.1684020757675171,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.20768233257181504,
+          "clarity": 5.5
+        }
+      }
+    },
+    "medqa": {
+      "model_id": "meta-llama/llama-3.1-70b-instruct",
+      "dataset": "medqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.12628072500228882,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.15145233273506165
+        },
+        "verifier": {
+          "uniqueness": 0.06679010391235352,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.1608402132987976,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.17379814386367798,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.2803334593772888
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.21825248003005981,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.19329096078872682,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.14796903133392333,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.19023925416609822,
+          "clarity": 5.5
+        }
+      }
+    },
+    "aime25": {
+      "model_id": "meta-llama/llama-3.1-70b-instruct",
+      "dataset": "aime25",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1265062689781189,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.22819820046424866
+        },
+        "verifier": {
+          "uniqueness": 0.13424015045166016,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.2014601230621338,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.1818132996559143,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.22256284952163696
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 6.0,
+          "specificity": 0.19026923179626465,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.18250138759613038,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 6.2,
+          "specificity": 0.19166702032089233,
+          "clarity": 6.2
+        },
+        "overall": {
+          "coherence": 5.911764705882353,
+          "specificity": 0.18839568600935094,
+          "clarity": 5.705882352941177
+        }
+      }
+    }
+  },
+  "mistralai/mistral-large": {
+    "hotpotqa": {
+      "model_id": "mistralai/mistral-large",
+      "dataset": "hotpotqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.17563921213150024,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.1250530481338501
+        },
+        "verifier": {
+          "uniqueness": 0.09791648387908936,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.18373489379882812,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.18483340740203857,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.22040674090385437
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.2180160539490836,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.2063448667526245,
+          "clarity": 6.2
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.1642128586769104,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.19875888263477998,
+          "clarity": 5.705882352941177
+        }
+      }
+    },
+    "gaia": {
+      "model_id": "mistralai/mistral-large",
+      "dataset": "gaia",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.16601771116256714,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.12477444112300873
+        },
+        "verifier": {
+          "uniqueness": 0.16131430864334106,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.18177354335784912,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.20051509141921997,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.14111125469207764
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.23704794475010463,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.2194149136543274,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.18224955797195436,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.21574458655189066,
+          "clarity": 5.5
+        }
+      }
+    },
+    "medqa": {
+      "model_id": "mistralai/mistral-large",
+      "dataset": "medqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.14057070016860962,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.11170840263366699
+        },
+        "verifier": {
+          "uniqueness": 0.09202402830123901,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.20723867416381836,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.20089071989059448,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.27096110582351685
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.24300244876316615,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.23637207746505737,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.1698017120361328,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.21952271110871258,
+          "clarity": 5.5
+        }
+      }
+    },
+    "aime25": {
+      "model_id": "mistralai/mistral-large",
+      "dataset": "aime25",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.12982338666915894,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.11746888607740402
+        },
+        "verifier": {
+          "uniqueness": 0.10760581493377686,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.17140084505081177,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.18750429153442383,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.15537871420383453
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.22053187234061106,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.21388791799545287,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.15771665573120117,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.20010270441279693,
+          "clarity": 5.5
+        }
+      }
+    }
+  },
+  "google/gemini-2.5-pro": {
+    "gsm8k": {
+      "model_id": "google/gemini-2.5-pro",
+      "dataset": "gsm8k",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1952570080757141,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.32719478011131287
+        },
+        "verifier": {
+          "uniqueness": 0.1914762258529663,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.152032732963562,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.1953105926513672,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.15548337996006012
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 3.0714285714285716,
+          "specificity": 0.2024376392364502,
+          "clarity": 2.9285714285714284
+        },
+        "verifier": {
+          "coherence": 3.7,
+          "specificity": 0.20375076532363892,
+          "clarity": 4.6
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.18340883255004883,
+          "clarity": 2.8
+        },
+        "overall": {
+          "coherence": 3.9705882352941178,
+          "specificity": 0.19722714494256413,
+          "clarity": 3.3823529411764706
+        }
+      }
+    },
+    "hotpotqa": {
+      "model_id": "google/gemini-2.5-pro",
+      "dataset": "hotpotqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.18051308393478394,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.2281147539615631
+        },
+        "verifier": {
+          "uniqueness": 0.15238678455352783,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.12476050853729248,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.18126147985458374,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.2994854152202606
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 3.0714285714285716,
+          "specificity": 0.2143690756389073,
+          "clarity": 4.214285714285714
+        },
+        "verifier": {
+          "coherence": 3.7,
+          "specificity": 0.1752790927886963,
+          "clarity": 3.7
+        },
+        "answerer": {
+          "coherence": 4.6,
+          "specificity": 0.1506616711616516,
+          "clarity": 4.8
+        },
+        "overall": {
+          "coherence": 3.7058823529411766,
+          "specificity": 0.18413454995435827,
+          "clarity": 4.235294117647059
+        }
+      }
+    },
+    "gaia": {
+      "model_id": "google/gemini-2.5-pro",
+      "dataset": "gaia",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.15484273433685303,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.43787240982055664
+        },
+        "verifier": {
+          "uniqueness": 0.20390737056732178,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.16452378034591675,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.19775980710983276,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.328240305185318
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 4.214285714285714,
+          "specificity": 0.18354004621505737,
+          "clarity": 3.5714285714285716
+        },
+        "verifier": {
+          "coherence": 4.1,
+          "specificity": 0.24878451824188233,
+          "clarity": 2.8
+        },
+        "answerer": {
+          "coherence": 4.6,
+          "specificity": 0.1699676752090454,
+          "clarity": 3.7
+        },
+        "overall": {
+          "coherence": 4.294117647058823,
+          "specificity": 0.1987377229858847,
+          "clarity": 3.3823529411764706
+        }
+      }
+    },
+    "medqa": {
+      "model_id": "google/gemini-2.5-pro",
+      "dataset": "medqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.15964478254318237,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.047281134873628616
+        },
+        "verifier": {
+          "uniqueness": 0.08571130037307739,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.1575690507888794,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.16459238529205322,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.2899174988269806
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.21102371386119298,
+          "clarity": 1.6428571428571428
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.153985333442688,
+          "clarity": 2.3
+        },
+        "answerer": {
+          "coherence": 4.6,
+          "specificity": 0.19137566089630126,
+          "clarity": 4.6
+        },
+        "overall": {
+          "coherence": 5.235294117647059,
+          "specificity": 0.18846888051313512,
+          "clarity": 2.7058823529411766
+        }
+      }
+    },
+    "aime25": {
+      "model_id": "google/gemini-2.5-pro",
+      "dataset": "aime25",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.16990715265274048,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.22048456966876984
+        },
+        "verifier": {
+          "uniqueness": 0.20328640937805176,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.14445561170578003,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.19143176078796387,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.20734471082687378
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 3.5714285714285716,
+          "specificity": 0.19171700307301112,
+          "clarity": 2.9285714285714284
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.22908196449279786,
+          "clarity": 3.7
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.17599694728851317,
+          "clarity": 3.9
+        },
+        "overall": {
+          "coherence": 4.705882352941177,
+          "specificity": 0.19808315178927252,
+          "clarity": 3.4411764705882355
+        }
+      }
+    }
+  },
+  "qwen/qwen-2.5-7b-instruct": {
+    "gsm8k": {
+      "model_id": "qwen/qwen-2.5-7b-instruct",
+      "dataset": "gsm8k",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1341535449028015,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.16903582215309143
+        },
+        "verifier": {
+          "uniqueness": 0.11838358640670776,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.19531643390655518,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.17552363872528076,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.20581743121147156
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.18655718224389212,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.1895421862602234,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.15454119443893433,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.17801865760017843,
+          "clarity": 5.5
+        }
+      }
+    },
+    "hotpotqa": {
+      "model_id": "qwen/qwen-2.5-7b-instruct",
+      "dataset": "hotpotqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.15898042917251587,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.160254567861557
+        },
+        "verifier": {
+          "uniqueness": 0.1174163818359375,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.17562323808670044,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.1967971920967102,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.27170538902282715
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.19174976008278982,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.18024709224700927,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.1643647789955139,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.18031221628189087,
+          "clarity": 5.5
+        }
+      }
+    },
+    "gaia": {
+      "model_id": "qwen/qwen-2.5-7b-instruct",
+      "dataset": "gaia",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.15084075927734375,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.12391119450330734
+        },
+        "verifier": {
+          "uniqueness": 0.17009401321411133,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.1675853729248047,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.176224946975708,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.10058838129043579
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.19316830805369786,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 6.2,
+          "specificity": 0.20819178819656373,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.16005924940109253,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.705882352941177,
+          "specificity": 0.18784902025671565,
+          "clarity": 5.5
+        }
+      }
+    },
+    "medqa": {
+      "model_id": "qwen/qwen-2.5-7b-instruct",
+      "dataset": "medqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.17645126581192017,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.2893354594707489
+        },
+        "verifier": {
+          "uniqueness": 0.10264188051223755,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.2614564895629883,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.2063518762588501,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.20893347263336182
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.23876799855913436,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.160184109210968,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.22027417421340942,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.2102157298256369,
+          "clarity": 5.5
+        }
+      }
+    },
+    "aime25": {
+      "model_id": "qwen/qwen-2.5-7b-instruct",
+      "dataset": "aime25",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.11225926876068115,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.05211580544710159
+        },
+        "verifier": {
+          "uniqueness": 0.0968053936958313,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.21552526950836182,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.19231021404266357,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.21951313316822052
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.18497621161597116,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.17127565145492554,
+          "clarity": 6.2
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.21223320960998535,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.1889633992139031,
+          "clarity": 5.705882352941177
+        }
+      }
+    }
+  },
+  "qwen/qwen-2.5-72b-instruct": {
+    "gsm8k": {
+      "model_id": "qwen/qwen-2.5-72b-instruct",
+      "dataset": "gsm8k",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.12765228748321533,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.35554400086402893
+        },
+        "verifier": {
+          "uniqueness": 0.12197637557983398,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.18825894594192505,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.16387593746185303,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.246646910905838
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.16594283069883073,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.19650065898895264,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.17999582290649413,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.17906366025700288,
+          "clarity": 5.5
+        }
+      }
+    },
+    "hotpotqa": {
+      "model_id": "qwen/qwen-2.5-72b-instruct",
+      "dataset": "hotpotqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1556447148323059,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.11120995134115219
+        },
+        "verifier": {
+          "uniqueness": 0.11255961656570435,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.16083163022994995,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.1771823763847351,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.11455041170120239
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.2053230575152806,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.19685367345809937,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.13626649379730224,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.18252130816964543,
+          "clarity": 5.5
+        }
+      }
+    },
+    "gaia": {
+      "model_id": "qwen/qwen-2.5-72b-instruct",
+      "dataset": "gaia",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.1849207878112793,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.18789447844028473
+        },
+        "verifier": {
+          "uniqueness": 0.12673455476760864,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.17302781343460083,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.18732315301895142,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.20496679842472076
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.21844348737171718,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.18706669807434081,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.16538230180740357,
+          "clarity": 5.6
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.19360878888298483,
+          "clarity": 5.529411764705882
+        }
+      }
+    },
+    "medqa": {
+      "model_id": "qwen/qwen-2.5-72b-instruct",
+      "dataset": "medqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.13398027420043945,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.22322966158390045
+        },
+        "verifier": {
+          "uniqueness": 0.09322059154510498,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.19061362743377686,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.18922948837280273,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.21434403955936432
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.21548807621002197,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.21184619665145873,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.17163606882095336,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.20151928593130672,
+          "clarity": 5.5
+        }
+      }
+    },
+    "aime25": {
+      "model_id": "qwen/qwen-2.5-72b-instruct",
+      "dataset": "aime25",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.16375130414962769,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.06242455914616585
+        },
+        "verifier": {
+          "uniqueness": 0.09882992506027222,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.15816068649291992,
+          "strategy_coverage": 0.16666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.18757188320159912,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.1817382425069809
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 5.5,
+          "specificity": 0.18500328063964844,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 5.5,
+          "specificity": 0.1772003173828125,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 5.5,
+          "specificity": 0.14468446969985962,
+          "clarity": 6.4
+        },
+        "overall": {
+          "coherence": 5.5,
+          "specificity": 0.17084981764064117,
+          "clarity": 5.764705882352941
+        }
+      }
+    }
+  },
+  "openai/gpt-5": {
+    "gsm8k": {
+      "model_id": "openai/gpt-5",
+      "dataset": "gsm8k",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "verifier": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "verifier": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "answerer": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "overall": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        }
+      }
+    },
+    "hotpotqa": {
+      "model_id": "openai/gpt-5",
+      "dataset": "hotpotqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "verifier": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "verifier": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "answerer": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "overall": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        }
+      }
+    },
+    "gaia": {
+      "model_id": "openai/gpt-5",
+      "dataset": "gaia",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "verifier": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "verifier": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "answerer": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "overall": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        }
+      }
+    },
+    "medqa": {
+      "model_id": "openai/gpt-5",
+      "dataset": "medqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "verifier": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "verifier": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "answerer": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "overall": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        }
+      }
+    },
+    "aime25": {
+      "model_id": "openai/gpt-5",
+      "dataset": "aime25",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "verifier": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.0,
+          "strategy_coverage": 0.0,
+          "semantic_diversity": 0.0
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "verifier": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "answerer": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        },
+        "overall": {
+          "coherence": 0.0,
+          "specificity": 0.0,
+          "clarity": 0.0
+        }
+      }
+    }
+  },
+  "openai/gpt-5.2": {
+    "gsm8k": {
+      "model_id": "openai/gpt-5.2",
+      "dataset": "gsm8k",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.17259371280670166,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.07942908257246017
+        },
+        "verifier": {
+          "uniqueness": 0.13815271854400635,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.2033352255821228,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.1847224235534668,
+          "strategy_coverage": 0.8333333333333334,
+          "semantic_diversity": 0.08149805665016174
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 8.428571428571429,
+          "specificity": 0.22499042749404907,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 9.2,
+          "specificity": 0.23448952436447143,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 8.8,
+          "specificity": 0.2510010480880737,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 8.764705882352942,
+          "specificity": 0.23543446204241583,
+          "clarity": 5.5
+        }
+      }
+    },
+    "hotpotqa": {
+      "model_id": "openai/gpt-5.2",
+      "dataset": "hotpotqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.12908345460891724,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.0875796303153038
+        },
+        "verifier": {
+          "uniqueness": 0.14319908618927002,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.20971250534057617,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.16915243864059448,
+          "strategy_coverage": 0.8333333333333334,
+          "semantic_diversity": 0.0454401820898056
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 8.857142857142858,
+          "specificity": 0.2727325814110892,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 9.0,
+          "specificity": 0.28337970972061155,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 8.75,
+          "specificity": 0.23510561883449554,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 8.875,
+          "specificity": 0.26665306836366653,
+          "clarity": 5.5
+        }
+      }
+    },
+    "gaia": {
+      "model_id": "openai/gpt-5.2",
+      "dataset": "gaia",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.15052425861358643,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.07361011952161789
+        },
+        "verifier": {
+          "uniqueness": 0.13495224714279175,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.22464609146118164,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.18616753816604614,
+          "strategy_coverage": 0.8333333333333334,
+          "semantic_diversity": 0.10234987735748291
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 8.714285714285714,
+          "specificity": 0.2736524088042123,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 9.0,
+          "specificity": 0.25134575366973877,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 7.75,
+          "specificity": 0.22541506588459015,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 8.5625,
+          "specificity": 0.2546222433447838,
+          "clarity": 5.5
+        }
+      }
+    },
+    "medqa": {
+      "model_id": "openai/gpt-5.2",
+      "dataset": "medqa",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.16115081310272217,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.11009179055690765
+        },
+        "verifier": {
+          "uniqueness": 0.18606531620025635,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.24372398853302002,
+          "strategy_coverage": 0.3333333333333333,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.2377643585205078,
+          "strategy_coverage": 0.6666666666666666,
+          "semantic_diversity": 0.18778668344020844
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 8.857142857142858,
+          "specificity": 0.28622043984276907,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 9.0,
+          "specificity": 0.26428385972976687,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 9.0,
+          "specificity": 0.23535577058792115,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 8.941176470588236,
+          "specificity": 0.2648083076757543,
+          "clarity": 5.5
+        }
+      }
+    },
+    "aime25": {
+      "model_id": "openai/gpt-5.2",
+      "dataset": "aime25",
+      "diversity": {
+        "reasoner": {
+          "uniqueness": 0.11310803890228271,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.11611248552799225
+        },
+        "verifier": {
+          "uniqueness": 0.06755048036575317,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "answerer": {
+          "uniqueness": 0.24890202283859253,
+          "strategy_coverage": 0.5,
+          "semantic_diversity": 0.0
+        },
+        "overall": {
+          "uniqueness": 0.15398281812667847,
+          "strategy_coverage": 0.8333333333333334,
+          "semantic_diversity": 0.1808692216873169
+        }
+      },
+      "quality": {
+        "reasoner": {
+          "coherence": 8.714285714285714,
+          "specificity": 0.2222624591418675,
+          "clarity": 5.5
+        },
+        "verifier": {
+          "coherence": 9.0,
+          "specificity": 0.22308226823806762,
+          "clarity": 5.5
+        },
+        "answerer": {
+          "coherence": 8.75,
+          "specificity": 0.24493812024593353,
+          "clarity": 5.5
+        },
+        "overall": {
+          "coherence": 8.8125,
+          "specificity": 0.22818756476044655,
+          "clarity": 5.5
+        }
+      }
+    }
+  }
+}

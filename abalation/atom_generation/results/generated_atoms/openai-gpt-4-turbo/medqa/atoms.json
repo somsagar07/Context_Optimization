@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Read the medical scenario, analyze the options provided, and select the correct answer based on medical knowledge, ensuring it matches the 'Correct Answer' in the dataset.",
+    "101": "Analyze the medical scenario described, evaluate each option based on medical knowledge, and select the correct answer that best addresses the question.",
+    "102": "Analyze the medical scenario, evaluate each option based on medical knowledge, and verify the selected answer against the provided correct answer.",
+    "103": "Analyze the medical question for complexity and route it to the appropriate agent for detailed analysis and answer selection based on medical knowledge and scenario specifics.",
+    "104": "Analyze the medical question for complexity and route it to the appropriate agent for detailed analysis and answer selection based on medical knowledge and scenario specifics.",
+    "105": "Decompose the task into sub-tasks of understanding the medical question, reviewing options, applying medical knowledge, selecting the correct answer, and verifying the answer against the dataset.",
+    "106": "Instruct the orchestrator agent to parse the medical question, analyze the provided options, apply relevant medical knowledge to select the most appropriate answer, and verify it against the correct answer in the dataset."
+  },
+  "verifier": {
+    "100": "Critically evaluate the reasoning provided for the selected answer, ensuring it aligns with medical evidence and logical consistency.",
+    "101": "Critique the reasoning provided for the selected answer, ensuring it aligns with medical standards and accurately addresses the scenario described in the question.",
+    "102": "Critique the reasoning provided for the selected answer by verifying its alignment with established medical guidelines and factual accuracy.",
+    "103": "Critique the reasoning provided for the selected answer, ensuring it aligns with medical standards and accurately interprets the question and options.",
+    "104": "Critique the reasoning provided for the selected answer, ensuring it aligns with medical standards and identifying any logical inconsistencies or errors."
+  },
+  "answerer": {
+    "100": "Format the final output as: Final Answer: <your_answer>",
+    "101": "Format the final output as: Final Answer: <your_answer>",
+    "102": "Format the final output as: Final Answer: <your_answer>",
+    "103": "Evaluate and integrate the results from multiple sources to determine the most accurate and consistent answer.",
+    "104": "Evaluate and reconcile discrepancies among multiple answers by verifying each against established facts or guidelines, and select the most substantiated outcome."
+  }
+}

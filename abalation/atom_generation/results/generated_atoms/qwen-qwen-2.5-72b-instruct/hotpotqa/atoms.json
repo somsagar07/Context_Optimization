@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Break down the problem into clear, logical steps: identify the key information required, retrieve or calculate the necessary data, and apply logical reasoning to arrive at the final answer.",
+    "101": "To solve these problems, systematically identify and compare relevant historical dates, retrieve specific factual information, and follow the chain of related details to arrive at the correct answer.",
+    "102": "Think step-by-step by first identifying the key pieces of information needed, then retrieving or comparing relevant facts, and finally synthesizing the information to arrive at the correct answer.",
+    "103": "Analyze the question to determine if it requires comparing historical events, retrieving specific factual information, or following a chain of related information, and select the appropriate agent to handle the task.",
+    "104": "Analyze the question to determine if it requires historical comparison, factual retrieval, or a chain of related information, and select the appropriate agent to handle the complexity.",
+    "105": "Decompose the problem into sub-tasks: identify and retrieve relevant information, compare dates or facts, and synthesize the results to determine the final answer.",
+    "106": "Decompose the problem into sub-tasks for error detection and assumption verification, ensuring each step is clearly defined and independently verifiable."
+  },
+  "verifier": {
+    "100": "Critique the reasoning by checking if the model correctly identifies and compares relevant dates, retrieves accurate factual information, and follows the chain of related information to arrive at the correct answer.",
+    "101": "Critique the reasoning by breaking down the problem into logical steps, verifying each piece of information, and ensuring the final conclusion is supported by the provided data.",
+    "102": "Verify the reasoning by checking the accuracy of the facts and the logical connections between them, and identify any assumptions that may be incorrect or unsupported.",
+    "103": "Critique and find errors in reasoning by ensuring the agent adheres to strict formatting, verifies factual accuracy, and checks the logical consistency of the provided information.",
+    "104": "Critique the reasoning by verifying the accuracy of the historical dates, factual information, and the logical connections between related pieces of information."
+  },
+  "answerer": {
+    "100": "Final Answer must be a single sentence that directly answers the question without additional context or explanation.",
+    "101": "Format your final answer as: Final Answer: [Your Answer] ensuring it is clear and concise.",
+    "102": "Final Answer: Format your final conclusion exactly as: Final Answer: <your_answer>",
+    "103": "When resolving conflicts between multiple answers or sub-task results, carefully compare the provided information, verify the accuracy of each answer, and select the most consistent and reliable response based on the available evidence.",
+    "104": "Final Answer: Systematically evaluate and cross-reference all provided answers to identify the most consistent and accurate result based on available data and context."
+  }
+}

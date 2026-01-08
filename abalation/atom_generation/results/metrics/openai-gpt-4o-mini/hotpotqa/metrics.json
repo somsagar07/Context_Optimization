@@ -1,0 +1,48 @@
+{
+  "model_id": "openai/gpt-4o-mini",
+  "dataset": "hotpotqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.12967288494110107,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.35542044043540955
+    },
+    "verifier": {
+      "uniqueness": 0.06488293409347534,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.10803747177124023,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.15519410371780396,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.35025763511657715
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.20621237584522792,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.16664830446243287,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.12749465703964233,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.17142361402511597,
+      "clarity": 5.5
+    }
+  }
+}

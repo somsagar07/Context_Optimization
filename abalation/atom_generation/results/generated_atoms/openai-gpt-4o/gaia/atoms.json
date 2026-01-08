@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "As a domain expert, systematically analyze the context, retrieve and cross-reference relevant information, apply complex reasoning, and ensure precise output formatting to solve the task accurately.",
+    "101": "Carefully analyze the context and clues provided, retrieve and cross-reference relevant information, and synthesize it to deliver a precise and correctly formatted final answer.",
+    "102": "Decompose the problem into logical steps, retrieve and cross-reference relevant information, apply formal reasoning to synthesize data, and ensure the final answer is precise and correctly formatted.",
+    "103": "Analyze the question's complexity to determine the appropriate approach or agent by considering information retrieval, filtering, and the synthesis of multiple clues for precise problem-solving.",
+    "104": "Analyze the question's complexity to determine the appropriate approach or agent by assessing the need for information retrieval, filtering, and synthesis of multiple clues for precise answers.",
+    "105": "Instruct the 'orchestrator' agent to break down the problem into identifying the dataset type, cleaning the data, performing exploratory data analysis, engineering features, modeling, and interpreting results.",
+    "106": "Decompose the problem into identifying the main task, breaking it into logical sub-tasks, and assigning each sub-task to parallel threads for efficient execution."
+  },
+  "verifier": {
+    "100": "Critique the reasoning by identifying any logical inconsistencies, errors in information retrieval, or failures in cross-referencing multiple sources, ensuring the conclusion is precise and contextually accurate.",
+    "101": "Critique the reasoning by ensuring strict adherence to the given constraints and formatting, while identifying any logical errors or inconsistencies in the solution process.",
+    "102": "Critique the reasoning by identifying errors in information retrieval, filtering, cross-referencing, and logical assumptions to ensure accuracy and precision in conclusions.",
+    "103": "Critique the reasoning by identifying logical inconsistencies, errors in information synthesis, and inaccuracies in cross-referencing data from multiple sources.",
+    "104": "Critique the reasoning by identifying any overlooked assumptions, gaps in logic, or alternative interpretations that could lead to a different conclusion."
+  },
+  "answerer": {
+    "100": "Format the final output exactly as: Final Answer: <your_answer>",
+    "101": "Format the final output as a single, precise sentence that directly answers the question.",
+    "102": "Format the final output as: Final Answer: <your_answer>",
+    "103": "When resolving conflicts between multiple answers or sub-task results, verify the accuracy of each by cross-checking assumptions and identifying any errors or inconsistencies.",
+    "104": "When resolving conflicts between multiple answers or sub-task results, synthesize information from all sources, prioritize consistency and accuracy, and apply creative problem-solving to determine the most plausible and well-supported conclusion."
+  }
+}

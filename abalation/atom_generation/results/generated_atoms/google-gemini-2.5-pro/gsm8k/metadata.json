@@ -1,0 +1,15 @@
+{
+  "model_id": "google/gemini-2.5-pro",
+  "model_metadata": {
+    "display_name": "Gemini 2.5 Pro",
+    "family": "Google",
+    "estimated_params": "~1.5T",
+    "type": "chat",
+    "cost_tier": "medium",
+    "capabilities": "Multimodal, long context, strong performance"
+  },
+  "api_calls": 0,
+  "api_errors": 0,
+  "dataset": "gsm8k",
+  "generation_time": 1767820372.6874652
+}

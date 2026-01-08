@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "As a historian, meticulously",
+    "101": "Deconstruct the user'",
+    "102": "Break down the user'",
+    "103": "Your primary function is to",
+    "104": "Evaluate the user's query",
+    "105": "Identify and validate",
+    "106": "Deconstruct the user'"
+  },
+  "verifier": {
+    "100": "Verify that the final answer directly",
+    "101": "Scrutinize the reasoning",
+    "102": "Critically evaluate the",
+    "103": "Verify that each step in",
+    "104": "Verify that the final answer"
+  },
+  "answerer": {
+    "100": "Your final answer should be a",
+    "101": "Your final answer should",
+    "102": "Your final answer must be",
+    "103": "Synthesize the provided information,",
+    "104": "Synthesize the provided information,"
+  }
+}

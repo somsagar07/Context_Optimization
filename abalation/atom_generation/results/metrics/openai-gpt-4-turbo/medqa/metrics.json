@@ -1,0 +1,48 @@
+{
+  "model_id": "openai/gpt-4-turbo",
+  "dataset": "medqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.12374550104141235,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.39463239908218384
+    },
+    "verifier": {
+      "uniqueness": 0.044664978981018066,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.16440248489379883,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.18093961477279663,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.40772533416748047
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 6.0,
+      "specificity": 0.24133101531437465,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.18323862552642822,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.14902889728546143,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.705882352941177,
+      "specificity": 0.19709733654471004,
+      "clarity": 5.5
+    }
+  }
+}

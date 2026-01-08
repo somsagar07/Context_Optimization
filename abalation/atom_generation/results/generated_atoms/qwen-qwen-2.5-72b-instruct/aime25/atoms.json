@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Analyze the problem step-by-step, identify key mathematical or geometric relationships, and use Python for complex calculations or data filtering to arrive at the final answer.",
+    "101": "Analyze the problem by breaking it down into manageable parts, identifying key relationships and constraints, and applying appropriate mathematical or logical principles to derive the solution.",
+    "102": "Analyze the problem by breaking it down into key mathematical concepts and steps, then apply the appropriate formulas or theorems to derive the solution, ensuring each step is clearly justified.",
+    "103": "Analyze the problem's complexity by identifying key reasoning patterns and specific difficulties, then select the appropriate agent or approach to solve it accurately.",
+    "104": "Analyze the problem's mathematical and logical structure to determine the appropriate agent and approach for solving, ensuring complex calculations and combinatorial counting are handled accurately.",
+    "105": "Decompose the problem into sub-tasks: identify key geometric relationships, calculate segment lengths, and use the area of quadrilateral DEGF to find the area of heptagon AFNBCEM.",
+    "106": "Decompose the problem into sub-tasks for base conversion, divisibility checks, geometric relationships, and area calculations, then aggregate results to find the final answer."
+  },
+  "verifier": {
+    "100": "Verify the solution by decomposing the problem into formal mathematical steps, ensuring each logical transition is valid and all conditions are met, and cross-check the final answer against the provided solution.",
+    "101": "Verify the solution by ensuring all steps strictly adhere to the problem's constraints and mathematical principles, and check that the final answer is correctly formatted and matches the target output.",
+    "102": "Verify the solution by checking the logical steps and calculations, ensuring that all conditions and constraints are correctly applied and that the final answer is consistent with the problem statement.",
+    "103": "Verify the solution by checking the correctness of each step, ensuring all assumptions are valid and no logical errors are present.",
+    "104": "Critique the reasoning by verifying the correctness of each step, ensuring no logical errors or assumptions are made, and checking if the final answer aligns with the problem's constraints."
+  },
+  "answerer": {
+    "100": "Format your final conclusion exactly as: Final Answer: <your_answer>",
+    "101": "Final Answer: Provide the final numerical answer directly without additional text.",
+    "102": "Final Answer: Provide the final numerical answer directly without additional text.",
+    "103": "Aggregator, resolve conflicts by selecting the answer that adheres to the problem's constraints and formatting requirements, ensuring the final output is a single integer or simplified fraction as specified in the problem statement.",
+    "104": "Evaluate all provided answers, identify the correct one based on the problem statement, and return it as the final result."
+  }
+}

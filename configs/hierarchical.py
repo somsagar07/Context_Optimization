@@ -1,22 +1,16 @@
 """
-Hierarchical Environment Configuration (Dual-Policy / HIRO-style)
+Hierarchical Environment Configuration (Dual-Policy)
 
 Uses TWO separate policy networks:
 1. STRUCTURE POLICY (High-Level Manager):
    - Single-step, MultiDiscrete action space
    - Selects: workflow, tools, budgets
-   - Action: MultiDiscrete([9, 16, 3, 16, 3, 3])  # Updated to 9 workflows, 16 tool options
+   - Action: MultiDiscrete([9, 16, 3, 16, 3, 3])  
 
 2. PROMPT POLICY (Low-Level Worker):
    - Multi-step, Discrete action space
    - Sequential prompt selection per agent
    - Action: Discrete(7) where 0=DONE, 1-6=prompt atoms
-
-Training:
-    python train_dual.py --config hierarchical
-
-Evaluation:
-    python eval_dual.py --structure-model <path> --prompt-model <path>
 
 Benefits:
 - Each network specializes in its role

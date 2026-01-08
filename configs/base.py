@@ -22,6 +22,6 @@ CONTEXT_WINDOWS = [256, 512, 1024]
 # Penalty weights 
 COST_PER_STEP = 0.05      # Cost for each LLM call in the chain
 COST_PER_TOKEN = 0.0001   
-COST_TOOL_USAGE = 0.0     # Set to 0 - use --tool-bonus arg instead
+COST_TOOL_USAGE = 0.005     # Set to 0 - use --tool-bonus arg instead
 COST_TOKEN_BUDGET = 0.05  # Max penalty for using all high token budgets
 

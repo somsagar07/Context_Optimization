@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Systematically decompose each multi-hop question into atomic facts, then logically chain them together using precise temporal, spatial, or relational operators to derive the final answer.",
+    "101": "Analyze the given question by methodically identifying key entities, establishing their relationships, and connecting multiple pieces of information through logical reasoning steps until you reach a definitive conclusion.",
+    "102": "Carefully break down multi-step questions into logical sub-questions, verify each intermediate conclusion, and systematically connect the pieces of information to arrive at a final answer while actively checking for missing links or assumptions in your reasoning chain.",
+    "103": "Final Answer: Analyze the question's complexity by identifying required knowledge domains, number of reasoning steps, and entity relationships to determine whether to route to a fact-retrieval agent, multi-hop reasoning agent, or specialized domain expert agent.",
+    "104": "Final Answer: Analyze the question's complexity by identifying required reasoning steps (e.g., temporal comparisons, entity relationships, or multi-hop connections) and select the most appropriate specialized agent to handle the specific reasoning pattern needed for accurate answer generation.",
+    "105": "Analyze the input question by identifying key entities, then systematically break down the reasoning path into sequential sub-tasks that trace relationships between these entities until you can determine the final answer.",
+    "106": "Final Answer: Analyze the question to identify key entities, then systematically gather information about each entity while tracking their relationships, and finally combine the collected facts to determine the logical answer through multi-hop reasoning."
+  },
+  "verifier": {
+    "100": "Final Answer: As a verifier, critically examine each step of the reasoning process by identifying unsupported assumptions, checking factual accuracy across multiple sources, and ensuring logical connections between premises lead to valid conclusions.",
+    "101": "Final Answer: Rigorously verify each logical step in the reasoning chain by identifying unsupported claims, temporal inconsistencies, and relationship gaps while ensuring all factual assertions are explicitly supported by the given context.",
+    "102": "Final Answer: Carefully examine each logical step in the reasoning chain, verifying that factual claims are supported by evidence and connections between entities are valid and properly documented.",
+    "103": "As a meticulous logic expert, critically examine each step of the reasoning process, verify factual accuracy across all provided sources, and identify any gaps, assumptions, or inconsistencies in the multi-hop reasoning chain that could lead to incorrect conclusions.",
+    "104": "Critically examine each step of the reasoning chain, verify that all stated facts are supported by evidence, and identify any logical gaps, unsupported assumptions, or inconsistencies in the multi-hop reasoning process."
+  },
+  "answerer": {
+    "100": "Final Answer: After analyzing the evidence and identifying the key facts, provide your answer in the most concise form possible without including any explanations or supporting details.",
+    "101": "Final Answer: After finding the correct answer through multi-step reasoning, provide only the shortest possible response that directly answers the question without including any explanation or supporting details.",
+    "102": "Final Answer: After analyzing all evidence and verifying key facts, provide your answer in a single concise phrase or word without explanation or additional context.",
+    "103": "Final Answer: When faced with multiple answers or sub-results, systematically evaluate each response against the source evidence, assign confidence scores based on supporting data, and select the answer with the strongest factual backing while applying logical operators (AND, OR, NOT) to resolve any contradictions.",
+    "104": "Final Answer: When faced with multiple answers or sub-task results, systematically evaluate each response's credibility, relevance, and supporting evidence, then synthesize the most logically consistent and well-supported conclusion while documenting your reasoning process."
+  }
+}

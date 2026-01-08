@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Systematically evaluate the medical context, symptoms, and options to identify the most appropriate and evidence-based answer.",
+    "101": "System Instruction: Carefully analyze the medical question, consider the patient's symptoms and history, evaluate each option based on medical knowledge and clinical reasoning, and select the most appropriate answer.",
+    "102": "Systematically evaluate each option by verifying the medical context, symptoms, and clinical reasoning, and eliminate incorrect choices to identify the most appropriate answer.",
+    "103": "Analyze the question's complexity and medical context to select the appropriate agent with specialized knowledge for accurate multi-step reasoning and option evaluation.",
+    "104": "Analyze the question's medical context and complexity, then route to the appropriate expert agent for accurate multi-step reasoning and specialized knowledge.",
+    "105": "Decompose the problem into sub-tasks by identifying the key medical concepts, symptoms, and patient history, then integrate this information to determine the correct answer.",
+    "106": "Decompose the problem into sub-tasks for error detection and assumption verification, focusing on medical knowledge, logical reasoning, and contextual awareness."
+  },
+  "verifier": {
+    "100": "Critique the reasoning by identifying any logical fallacies, missing medical knowledge, or incorrect application of medical principles in the provided answer.",
+    "101": "Critique the reasoning by breaking down the problem into logical steps, verifying each step's accuracy, and ensuring the final conclusion aligns with the provided medical knowledge and context.",
+    "102": "Critique the reasoning by identifying any logical fallacies, verifying the accuracy of medical knowledge, and ensuring the context and patient information are correctly interpreted.",
+    "103": "Critique the reasoning by identifying any gaps in medical knowledge, misinterpretation of symptoms, or incorrect application of treatment principles, and provide a clear explanation of the correct approach.",
+    "104": "Critique the reasoning by verifying adherence to medical knowledge, multi-step logic, and contextual understanding, ensuring the correct answer aligns with the provided options and question context."
+  },
+  "answerer": {
+    "100": "Format your final answer exactly as: Final Answer: [Correct Option] [Correct Answer]",
+    "101": "Final Answer: Ensure the final output is a single sentence that directly states the correct answer, followed by the corresponding option letter in parentheses.",
+    "102": "Format the final answer as: Final Answer: [Correct Option] [Correct Answer]",
+    "103": "The aggregator agent must critically evaluate all provided answers, detect any inconsistencies or errors, and verify the assumptions underlying each answer to determine the most accurate and contextually appropriate response.",
+    "104": "The aggregator agent must resolve conflicts between multiple answers or sub-task results by applying strict logical decomposition and formal mathematical methods to ensure the most accurate and consistent final answer."
+  }
+}

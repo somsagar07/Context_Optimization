@@ -1,0 +1,48 @@
+{
+  "model_id": "openai/gpt-4-turbo",
+  "dataset": "gsm8k",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.15129190683364868,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.27016720175743103
+    },
+    "verifier": {
+      "uniqueness": 0.05465281009674072,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.15792572498321533,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.16502684354782104,
+      "strategy_coverage": 0.6666666666666666,
+      "semantic_diversity": 0.2828395366668701
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.17095009769712174,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.16461122035980225,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.1346025824546814,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.15839527635013356,
+      "clarity": 5.5
+    }
+  }
+}

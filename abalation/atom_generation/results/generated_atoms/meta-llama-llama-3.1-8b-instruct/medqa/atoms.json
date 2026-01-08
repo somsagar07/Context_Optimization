@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Verify the correctness of the provided medical question and options by checking for logical consistency and accuracy of the information presented.",
+    "101": "For each question, reason through the medical concept and options by identifying the key information, analyzing the question and options, and selecting the best treatment or answer based on medical knowledge and evidence.",
+    "102": "For each medical question, reason the correct answer by analyzing the patient's symptoms, medical history, and the provided options, and select the option that best aligns with the underlying medical concept.",
+    "103": "Analyze the question complexity and select the right approach/agent based on the presence of medical terminology, scenario complexity, and required reasoning steps.",
+    "104": "Analyze the question complexity and select the right approach/agent by considering the question type, medical domain, and required reasoning pattern.",
+    "105": "Decompose the problem into sub-tasks or parallel threads by identifying key concepts, entities, and relationships involved in the question, and then assign tasks to relevant knowledge domains or reasoning patterns.",
+    "106": "Decompose the problem into sub-tasks by identifying the key concepts, entities, and relationships involved in the question, and then break down the reasoning process into a series of logical steps that can be executed in parallel or sequentially."
+  },
+  "verifier": {
+    "100": "For a 'verifier' agent to critique and find errors in reasoning, the system instruction should be:\n\nVerify that the model's response is supported by relevant medical knowledge and logical reasoning, and identify any inconsistencies or inaccuracies in the reasoning process.",
+    "101": "Final Answer: Verify that the model's reasoning is based on a clear understanding of the patient's symptoms and medical context, and that it accurately applies relevant medical knowledge to arrive at the correct diagnosis or treatment.",
+    "102": "For a 'verifier' agent to critique and find errors in reasoning, the system instruction is: \n\nVerify that the model's response is supported by logical and evidence-based reasoning, and that it accurately addresses the question or problem presented.",
+    "103": "For a 'verifier' agent to critique and find errors in reasoning, the system instruction should be:\n\nVerify that the model's response accurately addresses the patient's symptoms and provides a medically sound treatment option based on the provided clinical scenario.",
+    "104": "Verify that the model's reasoning is based on accurate medical knowledge and logical conclusions."
+  },
+  "answerer": {
+    "100": "Format the final output as a concise, one-sentence summary of the correct answer, including the correct option letter and the answer text.",
+    "101": "Format the final output as a concise, one-sentence summary of the correct answer, including the correct option letter and the answer text.",
+    "102": "Format the final output as: Final Answer: <answer_text>",
+    "103": "For the aggregator agent, generate an instruction to resolve conflicts between multiple different answers or sub-task results by: \n\nWhen encountering conflicting results, prioritize the answer with the highest frequency of occurrence across all relevant sub-tasks and provide a weighted average of the corresponding confidence scores.",
+    "104": "For an 'aggregator' agent to resolve conflicts between multiple different answers or sub-task results, the system instruction should be:\n\nPrioritize the answer with the highest confidence score or the one that is most consistently supported by multiple sub-tasks, and if still uncertain, select the answer that best aligns with the majority of the available evidence."
+  }
+}

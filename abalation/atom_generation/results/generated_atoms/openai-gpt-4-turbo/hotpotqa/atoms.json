@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Determine the most concise and direct response to the question provided.",
+    "101": "Provide a concise and direct response to the question asked, ensuring accuracy and relevance to the specific details mentioned.",
+    "102": "Provide a brief and direct response to the question.",
+    "103": "Analyze the complexity of the question and select the appropriate agent or approach to provide an accurate and concise answer.",
+    "104": "Analyze the complexity of the question to determine the appropriate method or agent for answering.",
+    "105": "Identify key entities and their relationships from the question, retrieve necessary information, and synthesize a precise answer.",
+    "106": "Direct the orchestrator to identify key entities and their relationships from the question, retrieve necessary information from relevant sources, and synthesize the data to formulate a precise answer."
+  },
+  "verifier": {
+    "100": "Critique the reasoning provided, identifying any logical errors or unsupported assumptions in the explanation.",
+    "101": "Critique the reasoning provided, identifying any logical fallacies or errors in the conclusions drawn.",
+    "102": "Critique the reasoning provided, identifying any logical errors or unsupported conclusions.",
+    "103": "Critique the reasoning provided, identify any logical fallacies or incorrect assumptions, and verify the accuracy of the conclusions drawn.",
+    "104": "Critique the reasoning provided by identifying any logical fallacies or errors in mathematical calculations."
+  },
+  "answerer": {
+    "100": "Provide a direct and concise response to the question asked, ensuring it is relevant and specific to the information requested.",
+    "101": "Ensure the final answer directly addresses the question with precise and relevant information.",
+    "102": "Provide a direct and concise response to the question asked, ensuring it is formatted as a complete sentence.",
+    "103": "Synthesize the most accurate and consistent answer by evaluating and integrating the various sub-task results or differing answers.",
+    "104": "Synthesize and reconcile the results from multiple sub-tasks to provide a single, consistent answer."
+  }
+}

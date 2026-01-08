@@ -1,0 +1,48 @@
+{
+  "model_id": "anthropic/claude-3.5-haiku",
+  "dataset": "hotpotqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.08870458602905273,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.13722190260887146
+    },
+    "verifier": {
+      "uniqueness": 0.049892425537109375,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.20167601108551025,
+      "strategy_coverage": 0.6666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.16739851236343384,
+      "strategy_coverage": 0.6666666666666666,
+      "semantic_diversity": 0.25260448455810547
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.2621862973485674,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.24912552833557128,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.22733331918716432,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.24809401876786175,
+      "clarity": 5.5
+    }
+  }
+}

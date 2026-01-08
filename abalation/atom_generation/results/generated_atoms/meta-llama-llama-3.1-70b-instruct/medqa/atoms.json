@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Analyze the question text and options to identify the correct answer based on medical knowledge and reasoning patterns.",
+    "101": "Analyze the question text and options to identify the correct answer by retrieving relevant medical knowledge, comprehending complex terminology, and eliminating incorrect options.",
+    "102": "Analyze the question text and options to identify the correct answer by applying medical knowledge and logical reasoning to eliminate incorrect options.",
+    "103": "Analyze question complexity and select the right approach or agent based on the presence of medical terminology, patient symptoms, and required reasoning patterns.",
+    "104": "Analyze question complexity and select the right approach/agent based on logical decomposition and formal math.",
+    "105": "Decompose the problem into sub-tasks by identifying the question type, extracting relevant medical concepts, analyzing the options, and determining the correct answer based on medical knowledge and critical thinking.",
+    "106": "Decompose the problem into sub-tasks by extracting the question, options, and correct answer from the input data, and then analyze the question to identify the required reasoning patterns and medical knowledge."
+  },
+  "verifier": {
+    "100": "Critique the reasoning by identifying potential errors in medical knowledge application, critical thinking, and option elimination, and provide alternative solutions that demonstrate lateral thinking and novel problem-solving approaches.",
+    "101": "Critique the provided medical question and answer, verifying the correctness of the answer choice and ensuring that the reasoning pattern adheres to strict medical knowledge and critical thinking constraints, and format the output as Final Answer: [answer choice].",
+    "102": "Critique the reasoning by decomposing the question into logical steps, evaluating the correctness of each step based on medical knowledge and critical thinking, and identifying any errors or ambiguities in the reasoning process.",
+    "103": "Critique the reasoning by evaluating the model's ability to apply medical knowledge, critical thinking, and option elimination to arrive at the correct answer, and identify any errors or biases in its decision-making process.",
+    "104": "Critique the reasoning by verifying the assumptions made in the question and evaluating the logical coherence of the answer options, checking for errors in medical knowledge application, critical thinking, and option elimination."
+  },
+  "answerer": {
+    "100": "Format the final output as Final Answer: [answer] where [answer] is the correct answer to the medical question.",
+    "101": "Format the final output as Final Answer: [answer text] where [answer text] is the correct answer to the medical question.",
+    "102": "Format the final output as Final Answer: [answer] exactly.",
+    "103": "Aggregate answers by selecting the response that adheres to the provided format and constraints, prioritizing the answer that directly addresses the question and provides a clear and concise solution.",
+    "104": "Verify assumptions and detect errors by comparing multiple answers or sub-task results, and aggregate the results to produce a single, accurate output."
+  }
+}

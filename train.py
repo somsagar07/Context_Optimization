@@ -69,6 +69,10 @@ def parse_args():
     parser.add_argument("--api-model", type=str, default=None,
                        help="OpenRouter model ID (e.g., 'openai/gpt-4o', 'anthropic/claude-3.5-sonnet'). Defaults to OPENROUTER_MODEL env var")
     
+    # HuggingFace model configuration
+    parser.add_argument("--hf-model", type=str, default=None,
+                       help="HuggingFace model name (e.g., 'Qwen/Qwen2.5-7B-Instruct'). Defaults to LLM_MODEL_NAME from config")
+    
     # Logging
     parser.add_argument("--log-every", type=int, default=50, help="Log frequency")
     parser.add_argument("--save-every", type=int, default=2000, help="Checkpoint frequency")
@@ -123,9 +127,9 @@ def main():
     
     # Create trainer
     if args.algorithm == "ppo":
-        trainer = PPOTrainer(cfg, use_action_masking=args.mask, use_api=args.api, api_model=args.api_model)
+        trainer = PPOTrainer(cfg, use_action_masking=args.mask, use_api=args.api, api_model=args.api_model, hf_model=args.hf_model)
     else:
-        trainer = GRPOTrainer(cfg, use_action_masking=args.mask, use_api=args.api, api_model=args.api_model)
+        trainer = GRPOTrainer(cfg, use_action_masking=args.mask, use_api=args.api, api_model=args.api_model, hf_model=args.hf_model)
     
     # Load pretrained models if provided (e.g., from SFT)
     if args.pretrain_structure or args.pretrain_prompt:

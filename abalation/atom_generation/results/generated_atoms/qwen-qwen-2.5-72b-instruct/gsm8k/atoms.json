@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Break down the problem into clear, logical steps, perform each arithmetic operation sequentially, and ensure all units are correctly converted and combined to arrive at the final answer.",
+    "101": "Carefully break down the problem into steps, verify each calculation, and ensure all units are correctly converted and combined to reach the final answer.",
+    "102": "Break down the problem into clear, manageable steps, perform each calculation accurately, and combine the results to find the final answer.",
+    "103": "Analyze the question to identify key reasoning patterns such as multi-step arithmetic, unit conversion, and proportional reasoning, and select the appropriate agent to handle sequential steps, intermediate calculations, and contextual understanding.",
+    "104": "Analyze the question to identify key reasoning patterns such as multi-step arithmetic, unit conversion, and proportional reasoning, and select the appropriate agent to handle sequential steps, intermediate calculations, and contextual understanding.",
+    "105": "Break down the problem into clear, sequential steps, ensuring each step focuses on a specific calculation or context, and then combine the results to find the final answer.",
+    "106": "Decompose the problem into sub-tasks, verify each step for accuracy, and ensure all assumptions are correct before combining the results to form the final answer."
+  },
+  "verifier": {
+    "100": "Critique the reasoning by verifying the correctness of each step, ensuring proper arithmetic operations, unit conversions, and proportional relationships are applied accurately.",
+    "101": "Verify that the solution strictly follows the sequence of steps, performs all intermediate calculations correctly, and adheres to the context of the problem, ensuring the final answer is formatted as required.",
+    "102": "Critique the reasoning by verifying the correctness of each step, ensuring proper sequence, accurate intermediate calculations, and appropriate application of context.",
+    "103": "Verify the solution by checking the correctness of each step, ensuring all arithmetic operations are accurate, units are properly converted, and the final answer logically follows from the given information.",
+    "104": "Verify the solution by checking each step for correct arithmetic, unit conversion, and proportional reasoning, ensuring the final answer logically follows from the given information."
+  },
+  "answerer": {
+    "100": "Final Answer: Provide the final numerical answer preceded by a hash symbol and a space, ensuring all intermediate calculations are shown and formatted correctly.",
+    "101": "Ensure the final answer is clearly stated at the end of the solution, preceded by a hash symbol, and verify all intermediate calculations and assumptions.",
+    "102": "Format your final answer as a single number or expression, preceded by #### and followed by no additional text.",
+    "103": "Verify the accuracy of each step and ensure all assumptions are correct before aggregating the final result.",
+    "104": "Integrate diverse answers and sub-task results by identifying the most logical and consistent solution, considering all provided data and applying appropriate arithmetic and reasoning steps."
+  }
+}

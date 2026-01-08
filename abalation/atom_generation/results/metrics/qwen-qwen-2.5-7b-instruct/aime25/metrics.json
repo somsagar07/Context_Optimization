@@ -1,0 +1,48 @@
+{
+  "model_id": "qwen/qwen-2.5-7b-instruct",
+  "dataset": "aime25",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.11225926876068115,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.05211580544710159
+    },
+    "verifier": {
+      "uniqueness": 0.0968053936958313,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.21552526950836182,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.19231021404266357,
+      "strategy_coverage": 0.6666666666666666,
+      "semantic_diversity": 0.21951313316822052
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.18497621161597116,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.17127565145492554,
+      "clarity": 6.2
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.21223320960998535,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.1889633992139031,
+      "clarity": 5.705882352941177
+    }
+  }
+}

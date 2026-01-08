@@ -1,0 +1,48 @@
+{
+  "model_id": "meta-llama/llama-3.1-70b-instruct",
+  "dataset": "hotpotqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.11679184436798096,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.38585805892944336
+    },
+    "verifier": {
+      "uniqueness": 0.1596459150314331,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.202450692653656,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.18921798467636108,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.17976123094558716
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.20853338071278163,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.2207074284553528,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.1584249973297119,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.19737622317145853,
+      "clarity": 5.5
+    }
+  }
+}

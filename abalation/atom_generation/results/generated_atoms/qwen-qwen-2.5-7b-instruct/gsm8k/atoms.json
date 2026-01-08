@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Identify the question, extract all numerical values and their relationships, determine the necessary arithmetic operations, and calculate step-by-step while keeping the context in mind.",
+    "101": "Understand the problem, identify all numerical values and units, determine the sequence of operations needed, perform calculations step-by-step, and verify the solution fits the context of the question.",
+    "102": "Break down the problem into smaller parts, identify all numerical values and their relationships, perform necessary arithmetic operations, and combine results to reach the final answer.",
+    "103": "Analyze the input to determine if it requires basic arithmetic, unit conversion, or combining multiple pieces of information, and select the appropriate agent or approach accordingly.",
+    "104": "Analyze the input to determine if it requires basic arithmetic operations, unit conversions, or combining multiple pieces of information, then select the appropriate agent or approach for solving the problem.",
+    "105": "Decompose the problem into identifying the total amount needed or sold, breaking down any fractions or ratios, converting units if necessary, and performing the final calculation to find the answer.",
+    "106": "Decompose the problem into identifying the total amount or value by breaking down given relationships, performing arithmetic operations, and converting units if necessary, then verify each step for accuracy."
+  },
+  "verifier": {
+    "100": "Verify each step of the solution by decomposing the problem into its arithmetic and logical components, ensuring all calculations and conversions are correctly applied and that the final answer logically follows from the given information.",
+    "101": "Verify the solution by checking all arithmetic operations, ensuring logical steps are followed, and confirming units are consistent throughout the problem.",
+    "102": "Verify if the solution logically follows from the problem statement by checking all arithmetic operations, unit conversions, and logical steps without introducing any assumptions not supported by the given information.",
+    "103": "Verify the solution by checking if the logic and arithmetic are sound, considering alternative methods, and ensuring all steps logically lead to the final answer.",
+    "104": "Verify all arithmetic operations, unit conversions, and logical steps match the problem statement and check for consistent application of mathematical rules and logical reasoning."
+  },
+  "answerer": {
+    "100": "Format the final answer using the formula: [Calculation Result] = <<Calculation>>Final Answer: [Result].",
+    "101": "Analyze the problem, extract key values and relationships, perform calculations step-by-step, and format the final answer clearly as: #### <final_value>.",
+    "102": "Format the final answer with the equation and result clearly shown, ending with the amount in a single line.",
+    "103": "When aggregating results, cross-check each step against the problem statement and verify all numerical values and operations for consistency and accuracy.",
+    "104": "When aggregating results, consider all provided answers, apply logical reasoning to resolve any contradictions, and select the most consistent solution, even if it requires re-evaluating initial assumptions."
+  }
+}

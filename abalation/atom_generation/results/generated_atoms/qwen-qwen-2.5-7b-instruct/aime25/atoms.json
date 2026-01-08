@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Decompose the problem into its fundamental components, identify the relevant mathematical principles, apply logical reasoning to establish relationships between variables, and use systematic calculations to derive the solution, ensuring each step is formally justified.",
+    "101": "Reason through each problem by breaking it down into manageable parts, applying relevant mathematical principles creatively, and considering unique properties or transformations that might simplify the solution.",
+    "102": "Analyze the problem statement, identify key mathematical concepts, apply relevant formulas or theorems, perform necessary calculations, and ensure the solution meets all given constraints before providing the final answer.",
+    "103": "Analyze the problem's mathematical domain and complexity, then select an appropriate agent or approach that leverages specialized knowledge or general problem-solving skills for efficient solution derivation.",
+    "104": "Analyze the problem statement to determine the mathematical concepts involved, estimate the complexity based on the number of steps and calculations required, and select an appropriate agent or approach to solve the problem accurately.",
+    "105": "Decompose each problem into sub-tasks focusing on identifying key mathematical concepts, constraints, and relationships, then parallelize solution exploration for efficient problem-solving.",
+    "106": "Decompose the problem into identifying key mathematical concepts, extracting numerical data, and planning the steps needed to solve, then parallelize sub-tasks for calculations and reasoning where applicable."
+  },
+  "verifier": {
+    "100": "Verify the solution by rigorously decomposing the problem into its fundamental components, applying correct mathematical principles, and ensuring logical consistency throughout the reasoning process.",
+    "101": "Verify all given assumptions and calculations in the solution, ensuring logical consistency with the problem statement and checking for any arithmetic or conceptual errors.",
+    "102": "Verify the solution by ensuring all given conditions in the problem are met, checking for logical consistency, and validating the numerical answer through appropriate calculations or logical deductions.",
+    "103": "Verify the solution by ensuring all given conditions in the problem are met and the answer logically follows from the calculations or reasoning provided.",
+    "104": "Verify each solution by exploring alternative problem-solving methods and questioning the uniqueness and optimality of the given approach."
+  },
+  "answerer": {
+    "100": "Format the output as: <ID>: <Answer>",
+    "101": "Format the output as: [ID] - [Answer] where ID is the problem ID and Answer is the solution to the problem.",
+    "102": "Format the output as: <ID>: <Answer>.",
+    "103": "When resolving conflicts between multiple answers for the same sub-task, cross-verify each answer with the problem constraints and calculate the average if they differ, favoring the one that most consistently satisfies all given conditions.",
+    "104": "When resolving conflicts between multiple answers for the same task, select the answer supported by the majority of reliable methods or calculations, and if equally supported, choose the simpler or more logically consistent one."
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Think step-by",
+    "101": "Break down the problem into a",
+    "102": "Break down the problem into",
+    "103": "Analyze the user's",
+    "104": "Analyze the user's query",
+    "105": "Break the user",
+    "106": "As a mathematician"
+  },
+  "verifier": {
+    "100": "Verify that the reasoning",
+    "101": "Scrutinize the",
+    "102": "Critically evaluate the",
+    "103": "As a meticulous mathematician",
+    "104": "R"
+  },
+  "answerer": {
+    "100": "Your final answer should be a",
+    "101": "After providing a",
+    "102": "After providing a step",
+    "103": "When presented with multiple conflicting",
+    "104": "Review the different solutions, and"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "model_id": "meta-llama/llama-3.1-70b-instruct",
+  "dataset": "aime25",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.1265062689781189,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.22819820046424866
+    },
+    "verifier": {
+      "uniqueness": 0.13424015045166016,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.2014601230621338,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.1818132996559143,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.22256284952163696
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 6.0,
+      "specificity": 0.19026923179626465,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.18250138759613038,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 6.2,
+      "specificity": 0.19166702032089233,
+      "clarity": 6.2
+    },
+    "overall": {
+      "coherence": 5.911764705882353,
+      "specificity": 0.18839568600935094,
+      "clarity": 5.705882352941177
+    }
+  }
+}

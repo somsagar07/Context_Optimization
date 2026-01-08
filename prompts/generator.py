@@ -114,12 +114,30 @@ class AtomGenerator:
                 f"Output ONLY the instruction sentence. Do not include quotes or prefixes."
             )
             
-            atom_text = self.worker.answer_direct("Generate instruction", prompt_suffix=meta_prompt)
-            atom_text = atom_text.replace('"', '').replace("System instruction:", "").strip()
+            # Retry logic for failed or empty generations
+            max_retries = 3
+            atom_text = None
+            for attempt in range(max_retries):
+                try:
+                    response = self.worker.answer_direct("Generate instruction", prompt_suffix=meta_prompt)
+                    if response:
+                        atom_text = response.replace('"', '').replace("System instruction:", "").strip()
+                        if atom_text:  # Valid non-empty atom
+                            break
+                    if attempt < max_retries - 1:
+                        print(f"  ⚠ Empty response for {role} atom {i+1}, retrying ({attempt+1}/{max_retries})...")
+                except Exception as e:
+                    if attempt < max_retries - 1:
+                        print(f"  ⚠ Error generating {role} atom {i+1}: {e}, retrying ({attempt+1}/{max_retries})...")
+                    else:
+                        print(f"  ✗ Failed to generate {role} atom {i+1} after {max_retries} attempts: {e}")
             
             # Start keys at 100 to avoid conflict with default atoms 0-6
-            key = 100 + i 
-            atoms[key] = atom_text
+            key = 100 + i
+            if atom_text:
+                atoms[key] = atom_text
+            else:
+                print(f"  ✗ Skipping {role} atom {i+1} (empty after {max_retries} attempts)")
             
         return atoms
 
@@ -140,15 +158,17 @@ class AtomGenerator:
         for concept, count in concepts:
             atoms = self.generate_atoms_for_role(dataset_name, concept, count)
             for _, text in atoms.items():
-                reasoner[current_idx] = text
-                current_idx += 1
+                if text and text.strip():  # Only add non-empty atoms
+                    reasoner[current_idx] = text
+                    current_idx += 1
         
         verifier = {}
         current_idx = 100
         atoms = self.generate_atoms_for_role(dataset_name, "verifier", 5)
         for _, text in atoms.items():
-            verifier[current_idx] = text
-            current_idx += 1
+            if text and text.strip():  # Only add non-empty atoms
+                verifier[current_idx] = text
+                current_idx += 1
         
         answerer = {}
         current_idx = 100
@@ -156,8 +176,9 @@ class AtomGenerator:
         for concept, count in concepts:
             atoms = self.generate_atoms_for_role(dataset_name, concept, count)
             for _, text in atoms.items():
-                answerer[current_idx] = text
-                current_idx += 1
+                if text and text.strip():  # Only add non-empty atoms
+                    answerer[current_idx] = text
+                    current_idx += 1
         
         return {
             "reasoner": reasoner,

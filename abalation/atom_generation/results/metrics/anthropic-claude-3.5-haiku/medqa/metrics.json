@@ -1,0 +1,48 @@
+{
+  "model_id": "anthropic/claude-3.5-haiku",
+  "dataset": "medqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.10995447635650635,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.14444437623023987
+    },
+    "verifier": {
+      "uniqueness": 0.07651680707931519,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.15710866451263428,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.13611668348312378,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.22089619934558868
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.27285864523478914,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.22517520189285278,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.2599852681159973,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.25504781568751617,
+      "clarity": 5.5
+    }
+  }
+}

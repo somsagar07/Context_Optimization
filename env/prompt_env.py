@@ -59,7 +59,7 @@ class PromptEnv(gym.Env):
         "answerer": {0: 64, 1: 128, 2: 256}
     }
     
-    def __init__(self, cfg=None, is_eval=False, use_api=False, api_model=None):
+    def __init__(self, cfg=None, is_eval=False, use_api=False, api_model=None, hf_model=None):
         super().__init__()
         
         # Store config
@@ -85,15 +85,16 @@ class PromptEnv(gym.Env):
             self.worker = OpenRouterWorker(model_name=api_model)
             self.get_workflow_func = get_openrouter_workflow
         else:
-            self.worker = LLMWorker()
+            self.worker = LLMWorker(model_name=hf_model)
             self.get_workflow_func = get_workflow
         self.tools = ToolRegistry()
         self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
         # Observation space components
+        # Question embedding is 1024D from MetaCLIP-H14
         hidden_size = self.worker.model.config.hidden_size
         obs_size = (
-            hidden_size +                       # Question embedding
+            hidden_size +                       # Question embedding (1024D)
             6 +                                 # Structure decisions (normalized)
             3 +                                 # Prompt stage one-hot
             self.MAX_PROMPTS_PER_AGENT +        # Prompt step one-hot

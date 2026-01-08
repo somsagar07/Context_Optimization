@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Adhere strictly to the problem's constraints and format your solution precisely as required.",
+    "101": "Carefully verify each step of your solution to ensure accuracy and check all assumptions for consistency with the problem's conditions.",
+    "102": "Analyze the problem step-by-step, apply relevant mathematical principles, and compute the solution accurately.",
+    "103": "Analyze the complexity of the mathematical problem, determine the necessary mathematical concepts and techniques, and route the task to the appropriate specialized agent for solution development.",
+    "104": "Analyze the complexity of the mathematical problem, determine the necessary mathematical skills, and route to the appropriate solving agent or method.",
+    "105": "Decompose the problem into mathematical analysis, strategy formulation, execution steps, and verification sub-tasks, assigning each to a specialized agent for parallel processing.",
+    "106": "Decompose the problem into mathematical concept identification, strategy formulation, execution steps, and verification tasks, assigning each to a different thread for parallel processing."
+  },
+  "verifier": {
+    "100": "Verify the solution by ensuring the mathematical reasoning aligns with the problem's constraints and the answer adheres to the specified format.",
+    "101": "Critically evaluate the reasoning and methodology used to solve the problem, ensuring all mathematical principles and logical steps are correctly applied and justified.",
+    "102": "Critique the provided solution by verifying the mathematical calculations and logical reasoning used to arrive at the answer.",
+    "103": "Critique the reasoning provided for the solution, ensuring all mathematical principles and logical steps are correctly applied and justified.",
+    "104": "Critically evaluate the logical structure and mathematical accuracy of the solution provided, ensuring all steps adhere to formal mathematical principles and correct reasoning."
+  },
+  "answerer": {
+    "100": "Provide the numerical answer directly without any additional text or explanation.",
+    "101": "Provide the numerical solution to the problem without any additional text or explanation.",
+    "102": "Answer concisely.",
+    "103": "Evaluate the validity of each sub-task result by cross-verifying with established methods and assumptions, and resolve discrepancies through a consensus-based approach.",
+    "104": "Evaluate the validity of each sub-task result and select the most accurate answer based on logical consistency and adherence to mathematical principles."
+  }
+}

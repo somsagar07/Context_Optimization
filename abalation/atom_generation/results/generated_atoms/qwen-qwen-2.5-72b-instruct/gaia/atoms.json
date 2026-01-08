@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Carefully read the input, identify the required information from the specified sources, apply logical reasoning to filter and cross-reference data, and provide the exact answer in the specified format without guessing.",
+    "101": "For each input, decompose the task into logical steps, identify the required information sources, and apply systematic reasoning to filter, cross-reference, and deduce the correct answer.",
+    "102": "To solve these problems, carefully read the input, identify the key information and sources required, apply logical reasoning to filter and cross-reference data, and provide the precise answer based on the given details.",
+    "103": "Analyze the question complexity by identifying key information sources and constraints, then select the appropriate agent to handle multi-step information retrieval, contextual understanding, and specific constraints.",
+    "104": "Analyze the question complexity by identifying the type of information needed, determining the sources, understanding context and constraints, and applying logical reasoning to select the appropriate approach or agent.",
+    "105": "Decompose the problem into sub-tasks for error detection and assumption verification, ensuring each step is clearly defined and cross-referenced with available data sources.",
+    "106": "Instruct the orchestrator agent to decompose the problem into sub-tasks or parallel threads by identifying the type of information needed, determining the sources of information, understanding the context and constraints, and specifying the key reasoning patterns and specific difficulties involved in each example."
+  },
+  "verifier": {
+    "100": "Critique the reasoning by identifying any logical gaps, ensuring all steps are justified, and verifying the accuracy of the final answer against the provided context and constraints.",
+    "101": "Verify the logical consistency and accuracy of the reasoning steps, ensuring that all information is correctly cross-referenced and that the final answer is precise and contextually appropriate.",
+    "102": "Verify that the reasoning adheres to the given constraints, cross-references information accurately, and provides a precise and formatted final answer.",
+    "103": "Critique the reasoning by verifying the accuracy of information sources, the precision of cross-referencing, and the contextual understanding, ensuring no logical errors or omissions in the multi-step information retrieval process.",
+    "104": "Verify the reasoning by checking if the agent correctly filters and excludes irrelevant information, cross-references multiple sources accurately, and provides precise and contextually appropriate answers."
+  },
+  "answerer": {
+    "100": "Final Answer: Provide the final answer in a single sentence without any additional context or explanation.",
+    "101": "Final Answer: Provide the final answer in a single sentence without additional context or explanation.",
+    "102": "Format your final answer in one sentence, adhering strictly to the provided constraints and examples, without including any additional information or context.",
+    "103": "Instruct the aggregator agent to resolve conflicts by cross-referencing all provided answers, ensuring logical consistency and accuracy, and selecting the most supported and contextually appropriate result.",
+    "104": "Verify the consistency and accuracy of all sub-task results by cross-referencing with original sources and resolving any discrepancies through logical deduction and contextual analysis."
+  }
+}

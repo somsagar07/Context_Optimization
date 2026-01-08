@@ -1,0 +1,48 @@
+{
+  "model_id": "mistralai/mistral-large",
+  "dataset": "hotpotqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.17563921213150024,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.1250530481338501
+    },
+    "verifier": {
+      "uniqueness": 0.09791648387908936,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.18373489379882812,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.18483340740203857,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.22040674090385437
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.2180160539490836,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.2063448667526245,
+      "clarity": 6.2
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.1642128586769104,
+      "clarity": 5.5
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.19875888263477998,
+      "clarity": 5.705882352941177
+    }
+  }
+}

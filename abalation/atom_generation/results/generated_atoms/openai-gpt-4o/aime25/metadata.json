@@ -1,0 +1,15 @@
+{
+  "model_id": "openai/gpt-4o",
+  "model_metadata": {
+    "display_name": "GPT-4o",
+    "family": "OpenAI",
+    "estimated_params": "~1.8T",
+    "type": "chat",
+    "cost_tier": "high",
+    "capabilities": "High quality, multimodal, strong reasoning"
+  },
+  "api_calls": 0,
+  "api_errors": 0,
+  "dataset": "aime25",
+  "generation_time": 1767816617.851437
+}

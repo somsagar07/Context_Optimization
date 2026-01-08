@@ -1,0 +1,48 @@
+{
+  "model_id": "openai/gpt-4o",
+  "dataset": "medqa",
+  "diversity": {
+    "reasoner": {
+      "uniqueness": 0.10643714666366577,
+      "strategy_coverage": 0.16666666666666666,
+      "semantic_diversity": 0.0883515253663063
+    },
+    "verifier": {
+      "uniqueness": 0.12380295991897583,
+      "strategy_coverage": 0.3333333333333333,
+      "semantic_diversity": 0.0
+    },
+    "answerer": {
+      "uniqueness": 0.18452578783035278,
+      "strategy_coverage": 0.5,
+      "semantic_diversity": 0.0
+    },
+    "overall": {
+      "uniqueness": 0.19422435760498047,
+      "strategy_coverage": 0.6666666666666666,
+      "semantic_diversity": 0.30238839983940125
+    }
+  },
+  "quality": {
+    "reasoner": {
+      "coherence": 5.5,
+      "specificity": 0.22112579005105154,
+      "clarity": 5.5
+    },
+    "verifier": {
+      "coherence": 5.5,
+      "specificity": 0.18404022455215455,
+      "clarity": 5.5
+    },
+    "answerer": {
+      "coherence": 5.5,
+      "specificity": 0.16170151233673097,
+      "clarity": 6.4
+    },
+    "overall": {
+      "coherence": 5.5,
+      "specificity": 0.192740542047164,
+      "clarity": 5.764705882352941
+    }
+  }
+}

@@ -24,8 +24,8 @@ class GRPOTrainer(BaseTrainer):
     
     algorithm = Algorithm.GRPO
     
-    def __init__(self, cfg, device="cuda" if torch.cuda.is_available() else "cpu", use_action_masking=False, use_api=False, api_model=None):
-        super().__init__(cfg, device, use_action_masking=use_action_masking, use_api=use_api, api_model=api_model)
+    def __init__(self, cfg, device="cuda" if torch.cuda.is_available() else "cpu", use_action_masking=False, use_api=False, api_model=None, hf_model=None):
+        super().__init__(cfg, device, use_action_masking=use_action_masking, use_api=use_api, api_model=api_model, hf_model=hf_model)
         
         print(f"Initializing GRPO (critic-free)...")
         print(f"  Structure: obs={self.struct_obs_dim}, actions={self.struct_action_dims}")

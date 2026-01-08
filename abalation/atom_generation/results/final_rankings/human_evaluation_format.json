@@ -1,0 +1,1123 @@
+[
+  {
+    "model_id": "openai/gpt-5.2",
+    "model_name": "GPT-5.2",
+    "model_family": "OpenAI",
+    "dataset": "aime25",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.15398281812667847,
+        "coverage": 0.8333333333333334,
+        "semantic": 0.1808692216873169
+      },
+      "quality": {
+        "coherence": 8.8125,
+        "specificity": 0.22818756476044655,
+        "clarity": 5.5
+      },
+      "combined": 0.48764556270506654
+    }
+  },
+  {
+    "model_id": "openai/gpt-5.2",
+    "model_name": "GPT-5.2",
+    "model_family": "OpenAI",
+    "dataset": "medqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.2377643585205078,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.18778668344020844
+      },
+      "quality": {
+        "coherence": 8.941176470588236,
+        "specificity": 0.2648083076757543,
+        "clarity": 5.5
+      },
+      "combined": 0.4874142187638999
+    }
+  },
+  {
+    "model_id": "openai/gpt-5.2",
+    "model_name": "GPT-5.2",
+    "model_family": "OpenAI",
+    "dataset": "gaia",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.18616753816604614,
+        "coverage": 0.8333333333333334,
+        "semantic": 0.10234987735748291
+      },
+      "quality": {
+        "coherence": 8.5625,
+        "specificity": 0.2546222433447838,
+        "clarity": 5.5
+      },
+      "combined": 0.48175454851653843
+    }
+  },
+  {
+    "model_id": "openai/gpt-5.2",
+    "model_name": "GPT-5.2",
+    "model_family": "OpenAI",
+    "dataset": "hotpotqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.16915243864059448,
+        "coverage": 0.8333333333333334,
+        "semantic": 0.0454401820898056
+      },
+      "quality": {
+        "coherence": 8.875,
+        "specificity": 0.26665306836366653,
+        "clarity": 5.5
+      },
+      "combined": 0.4805540742145644
+    }
+  },
+  {
+    "model_id": "openai/gpt-5.2",
+    "model_name": "GPT-5.2",
+    "model_family": "OpenAI",
+    "dataset": "gsm8k",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.1847224235534668,
+        "coverage": 0.8333333333333334,
+        "semantic": 0.08149805665016174
+      },
+      "quality": {
+        "coherence": 8.764705882352942,
+        "specificity": 0.23543446204241583,
+        "clarity": 5.5
+      },
+      "combined": 0.47898818519380365
+    }
+  },
+  {
+    "model_id": "meta-llama/llama-3.1-70b-instruct",
+    "model_name": "Llama 3.1 70B Instruct",
+    "model_family": "Meta",
+    "dataset": "gaia",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.18277573585510254,
+        "coverage": 0.8333333333333334,
+        "semantic": 0.29151394963264465
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.20768233257181504,
+        "clarity": 5.5
+      },
+      "combined": 0.4358862023571738
+    }
+  },
+  {
+    "model_id": "meta-llama/llama-3.1-8b-instruct",
+    "model_name": "Llama 3.1 8B Instruct",
+    "model_family": "Meta",
+    "dataset": "gaia",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.23703229427337646,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.2981332838535309
+      },
+      "quality": {
+        "coherence": 5.529411764705882,
+        "specificity": 0.2159834398942835,
+        "clarity": 5.5
+      },
+      "combined": 0.4240292225787842
+    }
+  },
+  {
+    "model_id": "openai/gpt-4o",
+    "model_name": "GPT-4o",
+    "model_family": "OpenAI",
+    "dataset": "medqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.19422435760498047,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.30238839983940125
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.192740542047164,
+        "clarity": 5.764705882352941
+      },
+      "combined": 0.41894614927129803
+    }
+  },
+  {
+    "model_id": "anthropic/claude-3.5-haiku",
+    "model_name": "Claude 3.5 Haiku",
+    "model_family": "Anthropic",
+    "dataset": "hotpotqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.16739851236343384,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.25260448455810547
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.24809401876786175,
+        "clarity": 5.5
+      },
+      "combined": 0.4145080922319998
+    }
+  },
+  {
+    "model_id": "anthropic/claude-3.5-haiku",
+    "model_name": "Claude 3.5 Haiku",
+    "model_family": "Anthropic",
+    "dataset": "aime25",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.1534062623977661,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.19070352613925934
+      },
+      "quality": {
+        "coherence": 5.705882352941177,
+        "specificity": 0.24548374554690192,
+        "clarity": 5.705882352941177
+      },
+      "combined": 0.4121022372541864
+    }
+  },
+  {
+    "model_id": "meta-llama/llama-3.1-8b-instruct",
+    "model_name": "Llama 3.1 8B Instruct",
+    "model_family": "Meta",
+    "dataset": "aime25",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.2316521406173706,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.23646001517772675
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.1894224531510297,
+        "clarity": 5.529411764705882
+      },
+      "combined": 0.4097765689192254
+    }
+  },
+  {
+    "model_id": "openai/gpt-4-turbo",
+    "model_name": "GPT-4 Turbo",
+    "model_family": "OpenAI",
+    "dataset": "medqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.18093961477279663,
+        "coverage": 0.5,
+        "semantic": 0.40772533416748047
+      },
+      "quality": {
+        "coherence": 5.705882352941177,
+        "specificity": 0.19709733654471004,
+        "clarity": 5.5
+      },
+      "combined": 0.40869244089313583
+    }
+  },
+  {
+    "model_id": "meta-llama/llama-3.1-70b-instruct",
+    "model_name": "Llama 3.1 70B Instruct",
+    "model_family": "Meta",
+    "dataset": "medqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.17379814386367798,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.2803334593772888
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.19023925416609822,
+        "clarity": 5.5
+      },
+      "combined": 0.4074876201542374
+    }
+  },
+  {
+    "model_id": "qwen/qwen-2.5-7b-instruct",
+    "model_name": "Qwen 2.5 7B Instruct",
+    "model_family": "Qwen",
+    "dataset": "medqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.2063518762588501,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.20893347263336182
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.2102157298256369,
+        "clarity": 5.5
+      },
+      "combined": 0.40630341470631115
+    }
+  },
+  {
+    "model_id": "qwen/qwen-2.5-7b-instruct",
+    "model_name": "Qwen 2.5 7B Instruct",
+    "model_family": "Qwen",
+    "dataset": "aime25",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.19231021404266357,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.21951313316822052
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.1889633992139031,
+        "clarity": 5.705882352941177
+      },
+      "combined": 0.40570899541861094
+    }
+  },
+  {
+    "model_id": "meta-llama/llama-3.1-8b-instruct",
+    "model_name": "Llama 3.1 8B Instruct",
+    "model_family": "Meta",
+    "dataset": "medqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.2235090732574463,
+        "coverage": 0.5,
+        "semantic": 0.31045761704444885
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.22343358572791605,
+        "clarity": 5.5
+      },
+      "combined": 0.4025489425191693
+    }
+  },
+  {
+    "model_id": "openai/gpt-4o",
+    "model_name": "GPT-4o",
+    "model_family": "OpenAI",
+    "dataset": "gaia",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.19782739877700806,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.16482342779636383
+      },
+      "quality": {
+        "coherence": 5.764705882352941,
+        "specificity": 0.1935569819282083,
+        "clarity": 5.5
+      },
+      "combined": 0.4012478464647056
+    }
+  },
+  {
+    "model_id": "openai/gpt-4-turbo",
+    "model_name": "GPT-4 Turbo",
+    "model_family": "OpenAI",
+    "dataset": "gsm8k",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.16502684354782104,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.2828395366668701
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.15839527635013356,
+        "clarity": 5.5
+      },
+      "combined": 0.4002834615208744
+    }
+  },
+  {
+    "model_id": "qwen/qwen-2.5-72b-instruct",
+    "model_name": "Qwen 2.5 72B Instruct",
+    "model_family": "Qwen",
+    "dataset": "gsm8k",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.16387593746185303,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.246646910905838
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.17906366025700288,
+        "clarity": 5.5
+      },
+      "combined": 0.39943800072264823
+    }
+  },
+  {
+    "model_id": "mistralai/mistral-large",
+    "model_name": "Mistral Large",
+    "model_family": "Mistral",
+    "dataset": "gaia",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.20051509141921997,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.14111125469207764
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.21574458655189066,
+        "clarity": 5.5
+      },
+      "combined": 0.39758798568077336
+    }
+  },
+  {
+    "model_id": "qwen/qwen-2.5-7b-instruct",
+    "model_name": "Qwen 2.5 7B Instruct",
+    "model_family": "Qwen",
+    "dataset": "gsm8k",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.17552363872528076,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.20581743121147156
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.17801865760017843,
+        "clarity": 5.5
+      },
+      "combined": 0.39533809640049156
+    }
+  },
+  {
+    "model_id": "anthropic/claude-3.5-sonnet",
+    "model_name": "Claude 3.5 Sonnet",
+    "model_family": "Anthropic",
+    "dataset": "medqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.1546526551246643,
+        "coverage": 0.5,
+        "semantic": 0.3098815679550171
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.2277756929397583,
+        "clarity": 5.5
+      },
+      "combined": 0.3941597016652425
+    }
+  },
+  {
+    "model_id": "openai/gpt-4o",
+    "model_name": "GPT-4o",
+    "model_family": "OpenAI",
+    "dataset": "gsm8k",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.15191978216171265,
+        "coverage": 0.6666666666666666,
+        "semantic": 0.1838138997554779
+      },
+      "quality": {
+        "coherence": 5.764705882352941,
+        "specificity": 0.16965897293651805,
+        "clarity": 5.5
+      },
+      "combined": 0.3928792920455434
+    }
+  },
+  {
+    "model_id": "meta-llama/llama-3.1-70b-instruct",
+    "model_name": "Llama 3.1 70B Instruct",
+    "model_family": "Meta",
+    "dataset": "aime25",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.1818132996559143,
+        "coverage": 0.5,
+        "semantic": 0.22256284952163696
+      },
+      "quality": {
+        "coherence": 5.911764705882353,
+        "specificity": 0.18839568600935094,
+        "clarity": 5.705882352941177
+      },
+      "combined": 0.3906155649353476
+    }
+  },
+  {
+    "model_id": "openai/gpt-4o-mini",
+    "model_name": "GPT-4o Mini",
+    "model_family": "OpenAI",
+    "dataset": "medqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.16482192277908325,
+        "coverage": 0.5,
+        "semantic": 0.32399964332580566
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.19130167189766378,
+        "clarity": 5.5
+      },
+      "combined": 0.39010320986018465
+    }
+  },
+  {
+    "model_id": "openai/gpt-4o-mini",
+    "model_name": "GPT-4o Mini",
+    "model_family": "OpenAI",
+    "dataset": "hotpotqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.15519410371780396,
+        "coverage": 0.5,
+        "semantic": 0.35025763511657715
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.17142361402511597,
+        "clarity": 5.5
+      },
+      "combined": 0.38834495464960733
+    }
+  },
+  {
+    "model_id": "meta-llama/llama-3.1-70b-instruct",
+    "model_name": "Llama 3.1 70B Instruct",
+    "model_family": "Meta",
+    "dataset": "gsm8k",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.18716305494308472,
+        "coverage": 0.5,
+        "semantic": 0.27790650725364685
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.19194080549127915,
+        "clarity": 5.5
+      },
+      "combined": 0.38706410272448677
+    }
+  },
+  {
+    "model_id": "openai/gpt-4o-mini",
+    "model_name": "GPT-4o Mini",
+    "model_family": "OpenAI",
+    "dataset": "gaia",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.17405688762664795,
+        "coverage": 0.5,
+        "semantic": 0.2906775176525116
+      },
+      "quality": {
+        "coherence": 5.764705882352941,
+        "specificity": 0.16131827410529642,
+        "clarity": 5.5
+      },
+      "combined": 0.3861890265053394
+    }
+  },
+  {
+    "model_id": "meta-llama/llama-3.1-8b-instruct",
+    "model_name": "Llama 3.1 8B Instruct",
+    "model_family": "Meta",
+    "dataset": "hotpotqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.20860803127288818,
+        "coverage": 0.5,
+        "semantic": 0.2213517129421234
+      },
+      "quality": {
+        "coherence": 5.705882352941177,
+        "specificity": 0.18983895287794225,
+        "clarity": 5.5
+      },
+      "combined": 0.38608007019641355
+    }
+  },
+  {
+    "model_id": "qwen/qwen-2.5-7b-instruct",
+    "model_name": "Qwen 2.5 7B Instruct",
+    "model_family": "Qwen",
+    "dataset": "hotpotqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.1967971920967102,
+        "coverage": 0.5,
+        "semantic": 0.27170538902282715
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.18031221628189087,
+        "clarity": 5.5
+      },
+      "combined": 0.3851961207389831
+    }
+  },
+  {
+    "model_id": "anthropic/claude-3.5-haiku",
+    "model_name": "Claude 3.5 Haiku",
+    "model_family": "Anthropic",
+    "dataset": "gsm8k",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.15014421939849854,
+        "coverage": 0.5,
+        "semantic": 0.22798945009708405
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.23713020717396455,
+        "clarity": 5.5
+      },
+      "combined": 0.3845105307008706
+    }
+  },
+  {
+    "model_id": "anthropic/claude-3.5-haiku",
+    "model_name": "Claude 3.5 Haiku",
+    "model_family": "Anthropic",
+    "dataset": "gaia",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.17378127574920654,
+        "coverage": 0.5,
+        "semantic": 0.23703238368034363
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.21039067647036383,
+        "clarity": 5.5
+      },
+      "combined": 0.38351995655134613
+    }
+  },
+  {
+    "model_id": "anthropic/claude-3.5-sonnet",
+    "model_name": "Claude 3.5 Sonnet",
+    "model_family": "Anthropic",
+    "dataset": "gaia",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.18425095081329346,
+        "coverage": 0.5,
+        "semantic": 0.20572920143604279
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.22106932541903326,
+        "clarity": 5.5
+      },
+      "combined": 0.38287788538371814
+    }
+  },
+  {
+    "model_id": "meta-llama/llama-3.1-8b-instruct",
+    "model_name": "Llama 3.1 8B Instruct",
+    "model_family": "Meta",
+    "dataset": "gsm8k",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.2149273157119751,
+        "coverage": 0.5,
+        "semantic": 0.16968372464179993
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.19659846670487346,
+        "clarity": 5.705882352941177
+      },
+      "combined": 0.3813854791136349
+    }
+  },
+  {
+    "model_id": "qwen/qwen-2.5-72b-instruct",
+    "model_name": "Qwen 2.5 72B Instruct",
+    "model_family": "Qwen",
+    "dataset": "medqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.18922948837280273,
+        "coverage": 0.5,
+        "semantic": 0.21434403955936432
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.20151928593130672,
+        "clarity": 5.5
+      },
+      "combined": 0.38078032757721697
+    }
+  },
+  {
+    "model_id": "qwen/qwen-2.5-72b-instruct",
+    "model_name": "Qwen 2.5 72B Instruct",
+    "model_family": "Qwen",
+    "dataset": "gaia",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.18732315301895142,
+        "coverage": 0.5,
+        "semantic": 0.20496679842472076
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.19360878888298483,
+        "clarity": 5.529411764705882
+      },
+      "combined": 0.37828198659653756
+    }
+  },
+  {
+    "model_id": "openai/gpt-4o-mini",
+    "model_name": "GPT-4o Mini",
+    "model_family": "OpenAI",
+    "dataset": "gsm8k",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.15081357955932617,
+        "coverage": 0.5,
+        "semantic": 0.2687370777130127
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.1709723192102769,
+        "clarity": 5.5
+      },
+      "combined": 0.37680121814503387
+    }
+  },
+  {
+    "model_id": "openai/gpt-4o-mini",
+    "model_name": "GPT-4o Mini",
+    "model_family": "OpenAI",
+    "dataset": "aime25",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.16159218549728394,
+        "coverage": 0.5,
+        "semantic": 0.2533195912837982
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.16952261504004984,
+        "clarity": 5.5
+      },
+      "combined": 0.37589275991215426
+    }
+  },
+  {
+    "model_id": "openai/gpt-4-turbo",
+    "model_name": "GPT-4 Turbo",
+    "model_family": "OpenAI",
+    "dataset": "gaia",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.18090426921844482,
+        "coverage": 0.5,
+        "semantic": 0.21537888050079346
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.18130113447413726,
+        "clarity": 5.5
+      },
+      "combined": 0.3757646468573926
+    }
+  },
+  {
+    "model_id": "qwen/qwen-2.5-72b-instruct",
+    "model_name": "Qwen 2.5 72B Instruct",
+    "model_family": "Qwen",
+    "dataset": "aime25",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.18757188320159912,
+        "coverage": 0.5,
+        "semantic": 0.1817382425069809
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.17084981764064117,
+        "clarity": 5.764705882352941
+      },
+      "combined": 0.37537209793633103
+    }
+  },
+  {
+    "model_id": "meta-llama/llama-3.1-70b-instruct",
+    "model_name": "Llama 3.1 70B Instruct",
+    "model_family": "Meta",
+    "dataset": "hotpotqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.18921798467636108,
+        "coverage": 0.5,
+        "semantic": 0.17976123094558716
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.19737622317145853,
+        "clarity": 5.5
+      },
+      "combined": 0.37533914005055147
+    }
+  },
+  {
+    "model_id": "openai/gpt-4o",
+    "model_name": "GPT-4o",
+    "model_family": "OpenAI",
+    "dataset": "hotpotqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.16495108604431152,
+        "coverage": 0.5,
+        "semantic": 0.1841844916343689
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.18403233149472406,
+        "clarity": 5.647058823529412
+      },
+      "combined": 0.37296571979335713
+    }
+  },
+  {
+    "model_id": "mistralai/mistral-large",
+    "model_name": "Mistral Large",
+    "model_family": "Mistral",
+    "dataset": "aime25",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.18750429153442383,
+        "coverage": 0.5,
+        "semantic": 0.15537871420383453
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.20010270441279693,
+        "clarity": 5.5
+      },
+      "combined": 0.3724049416476605
+    }
+  },
+  {
+    "model_id": "mistralai/mistral-large",
+    "model_name": "Mistral Large",
+    "model_family": "Mistral",
+    "dataset": "medqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.20089071989059448,
+        "coverage": 0.3333333333333333,
+        "semantic": 0.27096110582351685
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.21952271110871258,
+        "clarity": 5.5
+      },
+      "combined": 0.37126256342806846
+    }
+  },
+  {
+    "model_id": "openai/gpt-4-turbo",
+    "model_name": "GPT-4 Turbo",
+    "model_family": "OpenAI",
+    "dataset": "aime25",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.1685284972190857,
+        "coverage": 0.5,
+        "semantic": 0.1645842045545578
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.17968949149636662,
+        "clarity": 5.5
+      },
+      "combined": 0.3670195918690924
+    }
+  },
+  {
+    "model_id": "qwen/qwen-2.5-7b-instruct",
+    "model_name": "Qwen 2.5 7B Instruct",
+    "model_family": "Qwen",
+    "dataset": "gaia",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.176224946975708,
+        "coverage": 0.5,
+        "semantic": 0.10058838129043579
+      },
+      "quality": {
+        "coherence": 5.705882352941177,
+        "specificity": 0.18784902025671565,
+        "clarity": 5.5
+      },
+      "combined": 0.3652625615456525
+    }
+  },
+  {
+    "model_id": "anthropic/claude-3.5-haiku",
+    "model_name": "Claude 3.5 Haiku",
+    "model_family": "Anthropic",
+    "dataset": "medqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.13611668348312378,
+        "coverage": 0.3333333333333333,
+        "semantic": 0.22089619934558868
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.25504781568751617,
+        "clarity": 5.5
+      },
+      "combined": 0.3630557252924427
+    }
+  },
+  {
+    "model_id": "openai/gpt-4-turbo",
+    "model_name": "GPT-4 Turbo",
+    "model_family": "OpenAI",
+    "dataset": "hotpotqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.14967137575149536,
+        "coverage": 0.3333333333333333,
+        "semantic": 0.32455769181251526
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.16195258322884054,
+        "clarity": 5.647058823529412
+      },
+      "combined": 0.3630066799026689
+    }
+  },
+  {
+    "model_id": "qwen/qwen-2.5-72b-instruct",
+    "model_name": "Qwen 2.5 72B Instruct",
+    "model_family": "Qwen",
+    "dataset": "hotpotqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.1771823763847351,
+        "coverage": 0.5,
+        "semantic": 0.11455041170120239
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.18252130816964543,
+        "clarity": 5.5
+      },
+      "combined": 0.36206863337872075
+    }
+  },
+  {
+    "model_id": "anthropic/claude-3.5-sonnet",
+    "model_name": "Claude 3.5 Sonnet",
+    "model_family": "Anthropic",
+    "dataset": "aime25",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.14923745393753052,
+        "coverage": 0.3333333333333333,
+        "semantic": 0.18265877664089203
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.21438677170697382,
+        "clarity": 5.5
+      },
+      "combined": 0.3515746295296289
+    }
+  },
+  {
+    "model_id": "anthropic/claude-3.5-sonnet",
+    "model_name": "Claude 3.5 Sonnet",
+    "model_family": "Anthropic",
+    "dataset": "gsm8k",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.16326546669006348,
+        "coverage": 0.3333333333333333,
+        "semantic": 0.1590583324432373
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.2188427448272705,
+        "clarity": 5.5
+      },
+      "combined": 0.3511894999610053
+    }
+  },
+  {
+    "model_id": "openai/gpt-4o",
+    "model_name": "GPT-4o",
+    "model_family": "OpenAI",
+    "dataset": "aime25",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.1729692816734314,
+        "coverage": 0.3333333333333333,
+        "semantic": 0.19097045063972473
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.1807804773835575,
+        "clarity": 5.5
+      },
+      "combined": 0.34912583756291005
+    }
+  },
+  {
+    "model_id": "anthropic/claude-3.5-sonnet",
+    "model_name": "Claude 3.5 Sonnet",
+    "model_family": "Anthropic",
+    "dataset": "hotpotqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.15896743535995483,
+        "coverage": 0.3333333333333333,
+        "semantic": 0.1297719031572342
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.20181386961656458,
+        "clarity": 5.5
+      },
+      "combined": 0.3433057968367159
+    }
+  },
+  {
+    "model_id": "mistralai/mistral-large",
+    "model_name": "Mistral Large",
+    "model_family": "Mistral",
+    "dataset": "hotpotqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.18483340740203857,
+        "coverage": 0.16666666666666666,
+        "semantic": 0.22040674090385437
+      },
+      "quality": {
+        "coherence": 5.5,
+        "specificity": 0.19875888263477998,
+        "clarity": 5.705882352941177
+      },
+      "combined": 0.3401236655821208
+    }
+  },
+  {
+    "model_id": "google/gemini-2.5-pro",
+    "model_name": "Gemini 2.5 Pro",
+    "model_family": "Google",
+    "dataset": "gaia",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.19775980710983276,
+        "coverage": 0.5,
+        "semantic": 0.328240305185318
+      },
+      "quality": {
+        "coherence": 4.294117647058823,
+        "specificity": 0.1987377229858847,
+        "clarity": 3.3823529411764706
+      },
+      "combined": 0.3300769713345696
+    }
+  },
+  {
+    "model_id": "google/gemini-2.5-pro",
+    "model_name": "Gemini 2.5 Pro",
+    "model_family": "Google",
+    "dataset": "hotpotqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.18126147985458374,
+        "coverage": 0.5,
+        "semantic": 0.2994854152202606
+      },
+      "quality": {
+        "coherence": 3.7058823529411766,
+        "specificity": 0.18413454995435827,
+        "clarity": 4.235294117647059
+      },
+      "combined": 0.3264166920792823
+    }
+  },
+  {
+    "model_id": "google/gemini-2.5-pro",
+    "model_name": "Gemini 2.5 Pro",
+    "model_family": "Google",
+    "dataset": "medqa",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.16459238529205322,
+        "coverage": 0.5,
+        "semantic": 0.2899174988269806
+      },
+      "quality": {
+        "coherence": 5.235294117647059,
+        "specificity": 0.18846888051313512,
+        "clarity": 2.7058823529411766
+      },
+      "combined": 0.32378529006359624
+    }
+  },
+  {
+    "model_id": "google/gemini-2.5-pro",
+    "model_name": "Gemini 2.5 Pro",
+    "model_family": "Google",
+    "dataset": "aime25",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.19143176078796387,
+        "coverage": 0.3333333333333333,
+        "semantic": 0.20734471082687378
+      },
+      "quality": {
+        "coherence": 4.705882352941177,
+        "specificity": 0.19808315178927252,
+        "clarity": 3.4411764705882355
+      },
+      "combined": 0.3001724474881989
+    }
+  },
+  {
+    "model_id": "google/gemini-2.5-pro",
+    "model_name": "Gemini 2.5 Pro",
+    "model_family": "Google",
+    "dataset": "gsm8k",
+    "scores": {
+      "diversity": {
+        "uniqueness": 0.1953105926513672,
+        "coverage": 0.3333333333333333,
+        "semantic": 0.15548337996006012
+      },
+      "quality": {
+        "coherence": 3.9705882352941178,
+        "specificity": 0.19722714494256413,
+        "clarity": 3.3823529411764706
+      },
+      "combined": 0.27772122664389265
+    }
+  }
+]

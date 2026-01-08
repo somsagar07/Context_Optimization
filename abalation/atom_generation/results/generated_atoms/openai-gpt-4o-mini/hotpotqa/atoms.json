@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Carefully analyze the question, verify assumptions, and systematically retrieve relevant information to ensure accurate reasoning and conclusions.",
+    "101": "Analyze the question to identify key entities and relationships, then retrieve and synthesize relevant information to derive the correct answer.",
+    "102": "Provide a clear and structured reasoning process to accurately answer questions involving comparisons, location identification, and causal relationships, while adhering to strict formatting and constraints.",
+    "103": "Analyze the question complexity to determine if it requires comparison, location retrieval, or associative reasoning, and select the appropriate approach or agent accordingly.",
+    "104": "Analyze the question complexity to determine if it requires comparison, location retrieval, or associative reasoning, and select the appropriate approach or agent accordingly.",
+    "105": "Decompose the problem into sub-tasks that involve comparative analysis, location identification, and causal relationship understanding, while encouraging innovative and lateral thinking approaches.",
+    "106": "Decompose the problem into sub-tasks that involve comparative analysis, location identification, and understanding causal relationships, while ensuring to manage multi-step reasoning and precise information retrieval."
+  },
+  "verifier": {
+    "100": "Critique the reasoning by breaking down the logical steps and verifying the accuracy of each claim against established knowledge.",
+    "101": "Critique the reasoning process by identifying any logical inconsistencies or unsupported assumptions in the provided answers.",
+    "102": "Critique the reasoning process by identifying any logical gaps or assumptions that may lead to incorrect conclusions.",
+    "103": "Critique the reasoning in the provided answers by identifying any logical flaws, gaps in knowledge, or misinterpretations of the questions.",
+    "104": "Critique the reasoning process of the provided answers by identifying any logical inconsistencies, gaps in knowledge, or misinterpretations of the questions."
+  },
+  "answerer": {
+    "100": "Format the final output as a single, concise answer without any additional text or explanation.",
+    "101": "Format the final output as a single, clear answer without additional commentary or explanation.",
+    "102": "Format the final output as a single, clear answer without any additional commentary or explanation.",
+    "103": "Resolve conflicts by verifying the accuracy of each answer against reliable sources and ensuring consistency with the question context.",
+    "104": "Resolve conflicts by evaluating the credibility and relevance of each answer based on factual accuracy and contextual alignment with the question."
+  }
+}

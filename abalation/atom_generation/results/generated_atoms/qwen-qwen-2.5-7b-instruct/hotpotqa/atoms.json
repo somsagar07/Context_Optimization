@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Identify key entities and their relationships within the context, then follow the logical steps required to derive the answer from the given information.",
+    "101": "Identify key entities and their relationships within the context, then apply logical reasoning to derive the answer through a series of connected steps.",
+    "102": "Identify key entities and their relationships, verify temporal and spatial consistency, and cross-check assumptions with provided context before concluding.",
+    "103": "Analyze the question for multi-step inference, required knowledge domains, and contextual understanding needed; route to appropriate specialized agent accordingly.",
+    "104": "Analyze question complexity by decomposing into logical steps and identify required knowledge type (factual, contextual, inferential) to select appropriate agent for processing.",
+    "105": "Decompose the question into identifying key entities, extracting relevant context, and verifying the relationship between entities across the provided passage.",
+    "106": "Decompose each question into its core components and explore all possible connections within the passage, then parallelize sub-tasks focusing on entity recognition, date extraction, location identification, and relationship mapping."
+  },
+  "verifier": {
+    "100": "Verify that the answer logically follows from the passage by checking all facts, dates, and names against the text and ensure multi-step reasoning is correctly applied.",
+    "101": "Verify that the answer precisely matches the information provided in the passage, adheres to proper formatting, and avoids any logical errors or misinterpretations.",
+    "102": "Verify that the answer logically follows from the passage by checking facts, dates, and names, ensuring no logical leaps or misinterpretations.",
+    "103": "Verify each step of the reasoning process by breaking down the question into logical components, checking if the context is correctly understood, ensuring all relevant information is considered, and confirming the final answer logically follows from the given data.",
+    "104": "Verify that the answer logically follows from the passage by checking facts, dates, and relationships for accuracy and consistency."
+  },
+  "answerer": {
+    "100": "Format your answer as: [Question] [Answer].",
+    "101": "Format your answer as: Target Output: <your_answer>",
+    "102": "Format your answer as: [Question]. [Your concise answer].",
+    "103": "When aggregating multiple answers, verify each against the original context and cross-reference to resolve any contradictions; select the most supported and logically consistent response.",
+    "104": "When aggregating multiple answers, consider each result's context and reliability, then select the most logically consistent and evidence-backed response, integrating insights from all sources where applicable."
+  }
+}

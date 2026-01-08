@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Break down the question into logical steps, identify and ignore irrelevant details, chain together relevant facts from multiple sources, and verify each inference before arriving at the final answer.",
+    "101": "Break the question into logical steps, extract and verify each required fact sequentially, then synthesize the information to derive the final answer without skipping intermediate reasoning.",
+    "102": "Break down the question into logical steps, verify each fact independently, and cross-check assumptions before synthesizing the final answer.",
+    "103": "Determine whether the question requires single-hop fact retrieval, multi-hop reasoning, entity bridging, temporal comparison, or disambiguation, then route to the specialized agent for precise execution.",
+    "104": "Determine whether the question requires single-hop fact retrieval, multi-hop entity bridging, temporal comparison, or nested attribution, then route to the corresponding reasoning module.",
+    "105": "Decompose the query into independent, logically atomic sub-tasks by identifying all required intermediate entities, attributes, and comparison operations, then execute them in parallel or serial order based on dependency constraints.",
+    "106": "Decompose the question into parallel or sequential sub-tasks by identifying distinct factual lookups, comparisons, or disambiguations required, then format each sub-task as a structured query with clear input/output constraints."
+  },
+  "verifier": {
+    "100": "Verify each reasoning step for logical consistency, mathematical accuracy, and factual grounding by decomposing the solution into atomic sub-claims and validating them independently.",
+    "101": "Verify each reasoning step for factual accuracy, logical consistency, and missing assumptions before finalizing the answer.",
+    "102": "Verify each reasoning step for factual accuracy, logical consistency, and completeness by cross-checking retrieved evidence and ensuring all intermediate conclusions directly support the final answer.",
+    "103": "Verify each reasoning step for factual accuracy, logical consistency, and completeness by cross-checking with authoritative sources and ensuring no gaps or contradictions exist in the chain of evidence.",
+    "104": "Verify the reasoning chain for logical consistency, factual accuracy, and adherence to the required single-answer format, flagging any deviations or unsupported claims."
+  },
+  "answerer": {
+    "100": "Final Answer: Always respond with the exact answer in its simplest form, omitting explanations or additional context.",
+    "101": "Final Answer: Always output the exact answer in its simplest form without explanation, ensuring it directly addresses the question using verified facts.",
+    "102": "Final Answer: Always respond with the exact answer in its simplest form, omitting explanations or additional context.",
+    "103": "Compare retrieved facts critically, prioritize direct evidence from authoritative sources, and resolve conflicts by selecting the most logically consistent or temporally verified answer.",
+    "104": "Compare retrieved facts using logical precedence, resolve conflicts by selecting the answer supported by the most direct and temporally or hierarchically primary evidence, and default to the intersection of verified multi-hop chains when ambiguity persists."
+  }
+}

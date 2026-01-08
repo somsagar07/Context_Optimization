@@ -1,0 +1,15 @@
+{
+  "model_id": "qwen/qwen-2.5-72b-instruct",
+  "model_metadata": {
+    "display_name": "Qwen 2.5 72B Instruct",
+    "family": "Qwen",
+    "estimated_params": "72B",
+    "type": "instruct",
+    "cost_tier": "medium",
+    "capabilities": "Very high quality, excellent reasoning, multilingual"
+  },
+  "api_calls": 0,
+  "api_errors": 0,
+  "dataset": "gsm8k",
+  "generation_time": 1767820324.075067
+}

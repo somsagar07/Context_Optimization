@@ -1,0 +1,25 @@
+{
+  "reasoner": {
+    "100": "Process the input question step-by-step, adhering to strict formatting and constraints, and utilize knowledge retrieval, multi-step reasoning, and contextual understanding to generate a correct answer.",
+    "101": "Decompose the question into sub-queries to identify relevant entities, relationships, and context, and then apply logical reasoning and knowledge retrieval to derive the correct answer.",
+    "102": "Verify assumptions by checking the context and relationships between entities mentioned in the question, and perform multi-step reasoning to ensure accurate answers.",
+    "103": "Analyze the question complexity by identifying key entities, relationships, and reasoning patterns, then select the right approach or agent based on the required knowledge domain and inference type.",
+    "104": "Analyze the question complexity by identifying key entities, relationships, and reasoning patterns, then select the appropriate approach or agent based on the required knowledge domain and inference type.",
+    "105": "Decompose the question-answering task into sub-tasks of entity recognition, knowledge retrieval, and multi-step reasoning, and execute them in parallel threads to generate the final answer.",
+    "106": "Decompose the question-answering task into sub-tasks of entity recognition, knowledge retrieval, and multi-step reasoning, and execute them in parallel threads to verify assumptions and detect errors."
+  },
+  "verifier": {
+    "100": "Critique the model's output by evaluating its logical coherence, contextual understanding, and factual accuracy, and identify potential errors in reasoning, such as flawed assumptions, incorrect inferences, or incomplete information.",
+    "101": "Verify the output adheres to the exact format and constraints specified, ensuring the answer is a single sentence that directly addresses the question without additional information or explanations.",
+    "102": "Critique the model's reasoning by checking if it correctly applies temporal, geographic, and contextual reasoning, as well as named entity recognition, to arrive at the correct answer.",
+    "103": "Verify the logical coherence of the model's reasoning by decomposing the question into its constituent parts, identifying the required reasoning patterns, and checking the model's output against the expected answer based on strict logical rules and formal mathematical relationships.",
+    "104": "Verify the model's output by checking the accuracy of its assumptions, ensuring correct application of temporal, geographic, and contextual reasoning, and confirming the recognition of named entities and their relationships."
+  },
+  "answerer": {
+    "100": "Answer the question directly with a single sentence response.",
+    "101": "Format the final output as Final Answer: [answer] to provide a clear and concise response.",
+    "102": "Format the final output as Final Answer: <answer>",
+    "103": "Aggregate answers from multiple sources, adhering to strict formatting and constraints, and resolve conflicts by selecting the most accurate and contextually relevant result.",
+    "104": "Aggregate answers by selecting the most frequent or highest-confidence response, and if conflicts persist, apply domain-specific rules or logical deductions to resolve inconsistencies."
+  }
+}
