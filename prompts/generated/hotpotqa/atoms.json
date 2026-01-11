@@ -1,25 +1,25 @@
 {
     "reasoner": {
-        "100": "Decompose the question into logical steps, extract relevant information from the passage, perform any required inference, and formulate the answer based on the analysis.",
-        "101": "Understand the question, extract key information from the passage, perform any necessary logical steps, and formulate the answer based on the analysis.",
-        "102": "Read the passage carefully, identify key elements of the question, extract relevant information, perform necessary logical steps, and formulate the answer in one sentence.",
-        "103": "Analyze the question for complexity, identifying if it requires simple fact extraction, multi-step inference, or specialized knowledge, then route to the appropriate agent for processing.",
-        "104": "Analyze question complexity by identifying number of steps required, presence of ambiguous language, and specificity needed; select appropriate agent for processing.",
-        "105": "Decompose the question into identifying key entities, extracting relevant contextual information from the passage, and performing any required logical steps to derive the answer, then formulate the response.",
-        "106": "Decompose the question into identifying key entities, extracting relevant contextual information from the passage, and performing any required logical steps to derive the answer, then parallelize these tasks for efficient processing."
+      "100": "Break the question into explicit sub-questions, retrieve the needed facts for each hop, carry intermediate results forward, and apply any required comparison or mapping step-by-step to derive the final answer.",
+      "101": "Retrieve and verify the necessary facts via explicit multi-hop entity linking, keep intermediate results, then perform the required comparison or mapping step to produce a single final answer in the exact requested format without adding extra text.",
+      "102": "Break the problem into explicit hops, retrieve and verify each intermediate entity/fact from reliable context before proceeding, track the chain of evidence, and only then perform the required operation (e.g., comparison or mapping) while checking for assumption or date-ordering errors.",
+      "103": "Decide whether the question is single-hop or multi-hop (needs bridging/entity linking and possibly a comparison like dates/locations), then route it to the appropriate agent (simple lookup vs multi-step reasoning) and require explicit chained evidence before producing the final entity.",
+      "104": "Analyze the question to determine whether it requires multi-hop entity linking, temporal/relational comparison, or single-hop lookup, explicitly flag assumptions/distractors to verify, and route to the appropriate retrieval-and-reasoning approach before answering.",
+      "105": "Decompose the question into parallel fact-finding threads to retrieve and verify each needed intermediate entity/fact from separate sources, cross-check for disambiguation errors, then combine the verified facts with the required comparison/bridge inference to produce the final answer.",
+      "106": "Decompose the question into parallel evidence-retrieval sub-tasks for each required entity/document, extract and verify the needed intermediate facts, then perform the final comparison/bridge inference and output only the final answer in the required format with no extra text."
     },
     "verifier": {
-        "100": "Verify that the answer logically follows from the passage by checking facts, dates, and relationships for accuracy and consistency.",
-        "101": "Verify the answer by considering alternative facts and reasoning paths not taken in the original solution.",
-        "102": "Verify that the answer logically follows from the passage, matches the required format, and is free of factual errors.",
-        "103": "Verify that the answer logically follows from the passage without introducing external knowledge.",
-        "104": "Verify that the answer logically follows from the passage by checking facts, dates, and names, and ensure all steps of reasoning are clearly supported."
+      "100": "Rigorously critique the proposed multi-hop reasoning by checking each link for entity disambiguation errors, missing or unsupported facts, and incorrect final comparison/selection logic, and flag any format or constraint violations while stating what evidence would be needed to verify each step.",
+      "101": "Act as a rigorous verifier that challenges each step of the proposed multi-hop reasoning by cross-checking entity links, resolving ambiguities/coreference, validating intermediate facts against plausible sources, and pinpointing any unsupported leaps or logical/computational errors before accepting the final answer.",
+      "102": "Act as a strict verifier: check each reasoning step for unsupported assumptions, incorrect entity links/coreference, missing evidence for multi-hop claims, and ensure the final comparison/selection follows the question's rule, explicitly flagging any errors or gaps.",
+      "103": "Critique the proposed answer by checking each multi-hop link and entity disambiguation against the question, flag any unsupported assumptions or missing evidence, and verify the final comparison/selection step is correctly applied and consistent with the referenced facts.",
+      "104": "Rigorously verify each multi-hop link by decomposing the argument into explicit atomic claims, checking entity disambiguation and evidence support for every hop, validating any comparisons or calculations, and flagging any unsupported assumptions, missing steps, or logical leaps."
     },
     "answerer": {
-        "100": "Format your answer by directly stating the solution without additional commentary.",
-        "101": "Format your answer as: [Question]. [Your Concise Answer].",
-        "102": "Format your answer as: [Question] [Answer]",
-        "103": "When aggregating conflicting answers, prioritize the most reliable source or the one that best fits the context and logic of the question.",
-        "104": "When aggregating multiple answers, cross-check each response against the original context and verify logical consistency to resolve conflicts."
+      "100": "Output only the final answer entity (or short phrase) on a single line with no explanations, extra text, or formatting, ensuring it exactly matches what the question asks.",
+      "101": "Produce only the final answer as a single short phrase or name (no explanation), after chaining the needed multi-hop facts with correct entity disambiguation and any required comparison.",
+      "102": "Provide only the final answer as a single concise entity or short phrase, after verifying each multi-hop link and disambiguating entities, with no explanations or extra text.",
+      "103": "As the aggregator, reconcile conflicting sub-results by preferring answers that are best supported by explicit multi-hop evidence and required operations (e.g., link following or date comparison), discard unsupported or format-violating candidates, and output exactly one final answer in the specified format with no extra text.",
+      "104": "When merging multiple candidate answers, explicitly trace and verify the full multi-hop reasoning chain for each (resolving entity ambiguities), prefer the answer best supported by consistent evidence and required operations (e.g., date comparison or link-following), and if conflicts remain, seek an alternative derivation or additional corroboration rather than guessing."
     }
-}
+  }
