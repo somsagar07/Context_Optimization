@@ -4,6 +4,7 @@ import numpy as np
 import sys
 import os
 import requests
+import time
 sys.path.append('..')
 from configs.base import LLM_MODEL_NAME, DEVICE
 
@@ -387,17 +388,21 @@ class OpenRouterWorker:
         
         print(f"OpenRouter Worker initialized with model: {self.model_name}")
 
-    def _call_api(self, messages: list, max_tokens: int = 512, temperature: float = 0.0) -> str:
+    def _call_api(self, messages: list, max_tokens: int = 512, temperature: float = 0.0, max_retries: int = 5) -> str:
         """
-        Call OpenRouter API for text generation.
+        Call OpenRouter API for text generation with retry logic and exponential backoff.
         
         Args:
             messages: List of message dicts with "role" and "content"
             max_tokens: Maximum tokens to generate
             temperature: Sampling temperature (0.0 for deterministic)
+            max_retries: Maximum number of retry attempts (default: 5)
             
         Returns:
             Generated text response
+            
+        Raises:
+            Exception: If all retry attempts fail
         """
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -413,33 +418,109 @@ class OpenRouterWorker:
             "temperature": temperature
         }
         
-        try:
-            response = requests.post(
-                self.api_url, 
-                headers=headers, 
-                json=payload, 
-                timeout=120  # 2 minute timeout
-            )
-            response.raise_for_status()
-            result = response.json()
-            
-            if "choices" not in result or len(result["choices"]) == 0:
-                raise ValueError(f"Invalid API response: {result}")
-            
-            return result["choices"][0]["message"]["content"]
-            
-        except requests.exceptions.RequestException as e:
-            print(f"OpenRouter API request error: {e}")
-            if hasattr(e, 'response') and e.response is not None:
-                try:
-                    error_detail = e.response.json()
-                    print(f"Error details: {error_detail}")
-                except:
-                    print(f"Response text: {e.response.text}")
-            raise
-        except Exception as e:
-            print(f"OpenRouter API error: {e}")
-            raise
+        last_exception = None
+        
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(
+                    self.api_url, 
+                    headers=headers, 
+                    json=payload, 
+                    timeout=120  # 2 minute timeout
+                )
+                response.raise_for_status()
+                result = response.json()
+                
+                if "choices" not in result or len(result["choices"]) == 0:
+                    raise ValueError(f"Invalid API response: {result}")
+                
+                return result["choices"][0]["message"]["content"]
+                
+            except requests.exceptions.Timeout as e:
+                last_exception = e
+                if attempt < max_retries - 1:
+                    wait_time = min(2 ** attempt, 60)  # Exponential backoff, max 60s
+                    print(f"API timeout (attempt {attempt + 1}/{max_retries}). Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                else:
+                    print(f"API timeout after {max_retries} attempts")
+                    
+            except requests.exceptions.ConnectionError as e:
+                last_exception = e
+                if attempt < max_retries - 1:
+                    wait_time = min(2 ** attempt, 60)  # Exponential backoff, max 60s
+                    print(f"API connection error (attempt {attempt + 1}/{max_retries}). Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                else:
+                    print(f"API connection error after {max_retries} attempts")
+                    
+            except requests.exceptions.HTTPError as e:
+                # Check for rate limiting (429) or server errors (5xx)
+                status_code = e.response.status_code if hasattr(e, 'response') and e.response else None
+                
+                if status_code == 429:  # Rate limit
+                    last_exception = e
+                    if attempt < max_retries - 1:
+                        # Try to get retry-after header, or use exponential backoff
+                        retry_after = e.response.headers.get('Retry-After')
+                        if retry_after:
+                            wait_time = int(retry_after)
+                        else:
+                            wait_time = min(2 ** (attempt + 2), 120)  # Longer wait for rate limits
+                        print(f"API rate limit (attempt {attempt + 1}/{max_retries}). Waiting {wait_time}s...")
+                        time.sleep(wait_time)
+                    else:
+                        print(f"API rate limit after {max_retries} attempts")
+                elif status_code and 500 <= status_code < 600:  # Server errors
+                    last_exception = e
+                    if attempt < max_retries - 1:
+                        wait_time = min(2 ** attempt, 60)
+                        print(f"API server error {status_code} (attempt {attempt + 1}/{max_retries}). Retrying in {wait_time}s...")
+                        time.sleep(wait_time)
+                    else:
+                        print(f"API server error {status_code} after {max_retries} attempts")
+                else:
+                    # Client errors (4xx except 429) - don't retry
+                    print(f"API client error: {e}")
+                    if hasattr(e, 'response') and e.response is not None:
+                        try:
+                            error_detail = e.response.json()
+                            print(f"Error details: {error_detail}")
+                        except:
+                            print(f"Response text: {e.response.text}")
+                    raise
+                    
+            except requests.exceptions.RequestException as e:
+                last_exception = e
+                if attempt < max_retries - 1:
+                    wait_time = min(2 ** attempt, 60)
+                    print(f"API request error (attempt {attempt + 1}/{max_retries}): {e}. Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                else:
+                    print(f"API request error after {max_retries} attempts: {e}")
+                    
+            except ValueError as e:
+                # Invalid response format - might be transient, retry a few times
+                last_exception = e
+                if attempt < max_retries - 1 and attempt < 2:  # Only retry twice for invalid responses
+                    wait_time = 1
+                    print(f"Invalid API response (attempt {attempt + 1}/{max_retries}). Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                else:
+                    print(f"Invalid API response after retries: {e}")
+                    raise
+                    
+            except Exception as e:
+                # Unexpected errors - log and re-raise immediately
+                print(f"Unexpected API error: {e}")
+                raise
+        
+        # If we've exhausted all retries, raise the last exception
+        if last_exception:
+            print(f"API call failed after {max_retries} attempts. Last error: {last_exception}")
+            raise last_exception
+        else:
+            raise Exception(f"API call failed after {max_retries} attempts with unknown error")
 
     def get_embedding(self, text: str) -> np.ndarray:
         """
