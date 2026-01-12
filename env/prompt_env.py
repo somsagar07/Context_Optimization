@@ -26,6 +26,18 @@ from prompts.library import (
 )
 import re
 
+# Handle tau2 dataset
+from tools.tau2_tool_registry import Tau2ToolRegistry
+try:
+    from tau2_executions_wrapper import Tau2ExecutionWrapper
+except ImportError:
+    # Try importing from parent directory
+    import os
+    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+    from tau2_executions_wrapper import Tau2ExecutionWrapper
+
 class PromptEnv(gym.Env):
     """
     Low-level policy environment for prompt selection.
@@ -87,8 +99,25 @@ class PromptEnv(gym.Env):
         else:
             self.worker = LLMWorker(model_name=hf_model)
             self.get_workflow_func = get_workflow
-        self.tools = ToolRegistry()
+        # self.tools = ToolRegistry()
         self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
+        
+        # Check if this is a tau2 dataset
+        self.is_tau2 = hasattr(self.dataset, 'domain') and self.dataset.name.startswith('tau2_')
+        
+        # Initialize tools based on dataset type
+        if self.is_tau2:
+            self.tools = Tau2ToolRegistry(self.dataset.domain)
+            self.tau2_executor = Tau2ExecutionWrapper(
+                self.dataset.domain,
+                self.worker,
+                self.tools,
+                use_api=use_api
+            )
+        else:
+            # Use the already imported ToolRegistry from line 22
+            self.tools = ToolRegistry()
+            self.tau2_executor = None
         
         # Observation space components
         # Question embedding is 1024D from MetaCLIP-H14
@@ -148,6 +177,10 @@ class PromptEnv(gym.Env):
         self.current_q = question
         self.current_a = answer
         self.question_embedding = embedding
+        
+        # For tau2, store task object if available
+        if self.is_tau2 and isinstance(answer, dict):
+            self.current_task = answer
         
         self.workflow_depth = structure["workflow_depth"]
         self.agent1_tools_idx = structure["agent1_tools_idx"]
@@ -357,12 +390,16 @@ class PromptEnv(gym.Env):
     
     def _decode_tools(self, idx: int) -> list:
         """Decode tool index to list of tool names."""
-        tools = []
-        if idx & 1: tools.append("calculator")
-        if idx & 2: tools.append("web_search")
-        if idx & 4: tools.append("python")
-        if idx & 8: tools.append("ocr_reader")
-        return tools
+        if self.is_tau2 and isinstance(self.tools, Tau2ToolRegistry):
+            return self.tools.decode_tool_index(idx)
+        else:
+            # Original tool decoding
+            tools = []
+            if idx & 1: tools.append("calculator")
+            if idx & 2: tools.append("web_search")
+            if idx & 4: tools.append("python")
+            if idx & 8: tools.append("ocr_reader")
+            return tools
     
     def _process_tool_calls(self, text_response: str, allowed_tools: list) -> tuple:
         """
@@ -420,6 +457,39 @@ class PromptEnv(gym.Env):
     
     def _execute_workflow(self) -> tuple:
         """Execute the configured workflow and return (final_text, info)."""
+        # If tau2, use execution wrapper
+        if self.is_tau2 and self.tau2_executor:
+            # Get task_id from dataset
+            task_obj = getattr(self, 'current_task', None)
+            if task_obj is None:
+                # Fallback: try to get from dataset
+                _, task_obj = self.dataset.get_sample()
+            
+            task_id = task_obj.get('task_id', 'Unknown') if isinstance(task_obj, dict) else 'Unknown'
+            
+            # Execute tau2 conversation
+            pass_k_reward, exec_info = self.tau2_executor.execute_conversation(
+                task_id=task_id,
+                workflow_depth=self.workflow_depth,
+                agent1_tools_idx=self.agent1_tools_idx,
+                agent1_budget_idx=self.agent1_budget_idx,
+                agent2_tools_idx=self.agent2_tools_idx,
+                agent2_budget_idx=self.agent2_budget_idx,
+                answerer_budget_idx=self.answerer_budget_idx,
+                selected_prompts=self.selected_prompts
+            )
+            
+            # Format final text from conversation history
+            conversation_history = exec_info.get("conversation_history", [])
+            final_text = "\n".join([f"{role}: {msg}" for role, msg in conversation_history[-3:]])  # Last 3 turns
+            
+            # Update exec_info with pass_k
+            exec_info["pass_k"] = pass_k_reward
+            exec_info["correct"] = pass_k_reward > 0
+            
+            return final_text, exec_info
+        
+        # Original workflow execution for non-tau2 datasets
         # Build prompt suffixes
         reasoner_suffix = build_prompt_suffix("reasoner", self.selected_prompts["reasoner"])
         verifier_suffix = build_prompt_suffix("verifier", self.selected_prompts["verifier"])

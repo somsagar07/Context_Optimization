@@ -571,6 +571,8 @@ class BaseTrainer(ABC):
         # Set up prompt env
         self.prompt_env.current_q = question
         self.prompt_env.current_a = answer
+        if hasattr(self.prompt_env, 'is_tau2') and self.prompt_env.is_tau2:
+            self.prompt_env.current_task = answer  # Store task object for tau2
         self.prompt_env.question_embedding = self.structure_env.question_embedding.copy()
         self.prompt_env.workflow_depth = workflow_depth
         self.prompt_env.agent1_tools_idx = agent1_tools_idx
@@ -790,4 +792,3 @@ class BaseTrainer(ABC):
         
         print(f"\nSaved: {struct_path}, {prompt_path}")
         return struct_path, prompt_path
-

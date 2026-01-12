@@ -194,6 +194,7 @@ class LLMWorker:
         class FakeConfig:
             def __init__(self, hidden_size):
                 self.hidden_size = hidden_size
+                self.is_encoder_decoder = False
         original_config = self.model.config
         self.model.config = FakeConfig(self.embedding_dim)
 
@@ -384,6 +385,7 @@ class OpenRouterWorker:
         class FakeConfig:
             def __init__(self, hidden_size):
                 self.hidden_size = hidden_size
+                self.is_encoder_decoder = False
         self.model = type('obj', (object,), {'config': FakeConfig(self.embedding_dim)})()
         
         print(f"OpenRouter Worker initialized with model: {self.model_name}")

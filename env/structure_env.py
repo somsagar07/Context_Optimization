@@ -19,6 +19,9 @@ sys.path.append('..')
 from agents_system import LLMWorker, OpenRouterWorker
 from utils import get_dataset_loader
 
+# Handle tau2 dataset
+from tools.tau2_tool_registry import Tau2ToolRegistry
+
 
 class StructureEnv(gym.Env):
     """
@@ -60,11 +63,27 @@ class StructureEnv(gym.Env):
             self.worker = OpenRouterWorker(model_name=api_model)
         else:
             self.worker = LLMWorker(model_name=hf_model)
+            
         self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
+        
+        # Check if this is a tau2 dataset
+        self.is_tau2 = hasattr(self.dataset, 'domain') and self.dataset.name.startswith('tau2_')
+        
+        # Initialize tau2 tool registry if needed
+        self.tau2_tools = None
+        if self.is_tau2:
+            self.tau2_tools = Tau2ToolRegistry(self.dataset.domain)
+            # Get dynamic tool count
+            num_tools = self.tau2_tools.get_tool_count()
+            # Update tool action space: 2^num_tools combinations
+            max_tool_idx = (1 << num_tools) - 1 if num_tools > 0 else 0
+            tool_action_size = max(16, max_tool_idx + 1)  # At least 16 for backward compatibility
+        else:
+            tool_action_size = 16  # Default: 4 tools = 2^4 = 16 combinations
         
         # Structure dimensions: [workflow, agent1_tools, agent1_budget, agent2_tools, agent2_budget, answerer_budget]
         # NOTE: Updated to 9 workflows (3 original + 6 from Anthropic patterns)
-        self.structure_dims = np.array([9, 16, 3, 16, 3, 3])
+        self.structure_dims = np.array([9, tool_action_size, 3, tool_action_size, 3, 3])
         
         # Action space: MultiDiscrete for interpretable structure decisions
         self.action_space = spaces.MultiDiscrete(self.structure_dims)
@@ -99,6 +118,19 @@ class StructureEnv(gym.Env):
         }
         
         return self._get_observation(), info
+
+    def _decode_tools(self, idx: int) -> list:
+        """Decode tool index to list of tool names."""
+        if self.is_tau2 and self.tau2_tools:
+            return self.tau2_tools.decode_tool_index(idx)
+        else:
+            # Original tool decoding
+            tools = []
+            if idx & 1: tools.append("calculator")
+            if idx & 2: tools.append("web_search")
+            if idx & 4: tools.append("python")
+            if idx & 8: tools.append("ocr_reader")
+            return tools
     
     def _get_observation(self):
         """Build observation: question embedding + statistics."""
