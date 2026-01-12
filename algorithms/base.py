@@ -609,12 +609,42 @@ class BaseTrainer(ABC):
         
         # Compute final reward
         correct = info.get("correct", False)
+        tools_used = info.get("tools_used", 0)
+        
+        # Base correctness reward
         final_reward = (1.0 if correct else 0.0) * 5.0 * self.reward_scale
         final_reward += accumulated_reward
         final_reward -= info.get("steps_taken", 1) * self.cfg.COST_PER_STEP
         
-        tools_used = info.get("tools_used", 0)
-        final_reward += tools_used * self.tool_bonus
+        # Check if tools were selected (from structure action)
+        agent1_tools_list = self._decode_tools(agent1_tools_idx)
+        agent2_tools_list = self._decode_tools(agent2_tools_idx)
+        num_tools_selected = len(agent1_tools_list) + len(agent2_tools_list)
+        tools_selected = num_tools_selected > 0
+        
+        # Tool usage reward: encourage tool usage, especially when it leads to correct answers
+        if tools_used > 0:
+            # Base bonus for using tools
+            final_reward += tools_used * self.tool_bonus
+            # Extra bonus if tools were used AND answer is correct (tools helped!)
+            if correct:
+                final_reward += tools_used * 0.2  # Additional 0.2 per tool when correct
+            
+            # Bonus for using a high percentage of selected tools
+            if tools_selected:
+                tool_usage_ratio = tools_used / num_tools_selected
+                if tool_usage_ratio >= 0.5:  # Used at least half of selected tools
+                    final_reward += 0.3 * tool_usage_ratio  # Up to 0.3 bonus for full usage
+        elif tools_selected:
+            # STRONG penalty for selecting tools but not using them
+            # This is the key issue: tools are selected but LLM doesn't use them
+            # Penalty is proportional to number of tools selected (more tools = bigger waste)
+            unused_tools_penalty = 0.5 * num_tools_selected  # 0.5 per unused tool
+            final_reward -= unused_tools_penalty
+            
+            # Additional penalty if answer is wrong (tools would have helped!)
+            if not correct:
+                final_reward -= 0.3 * num_tools_selected  # Extra 0.3 per tool when wrong
         
         max_tokens = 1024 + 512 + 256
         final_reward -= (info.get("total_tokens", 256) / max_tokens) * self.cfg.COST_TOKEN_BUDGET
@@ -747,8 +777,27 @@ class BaseTrainer(ABC):
     def _save_log(self):
         if self.log_path and self.episode_logs:
             rewards = [e["reward"] for e in self.episode_logs]
+            
+            # Determine model information
+            if self.use_api:
+                model_type = "API"
+                model_name = self.api_model or os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")
+            else:
+                model_type = "HuggingFace"
+                if self.hf_model:
+                    model_name = self.hf_model
+                else:
+                    # Fallback to config default
+                    try:
+                        from configs.base import LLM_MODEL_NAME
+                        model_name = LLM_MODEL_NAME
+                    except:
+                        model_name = "unknown"
+            
             summary = {
                 "algorithm": self.algorithm.value.upper(),
+                "model_type": model_type,
+                "model_name": model_name,
                 "total_episodes": len(self.episode_logs),
                 "accuracy": sum(1 for e in self.episode_logs if e["correct"]) / len(self.episode_logs),
                 "avg_reward": float(np.mean(rewards)),

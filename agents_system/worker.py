@@ -191,11 +191,20 @@ class LLMWorker:
         print(f"MetaCLIP-H14 embedder initialized. Embedding dimension: {self.embedding_dim}")
         
         # Update model.config.hidden_size for compatibility with observation spaces
-        class FakeConfig:
-            def __init__(self, hidden_size):
-                self.hidden_size = hidden_size
+        # Preserve original config but update hidden_size to match embedding dimension
+        # This ensures all transformers attributes (like is_encoder_decoder) are preserved
         original_config = self.model.config
-        self.model.config = FakeConfig(self.embedding_dim)
+        # Create a wrapper that preserves all original attributes but overrides hidden_size
+        class ConfigWrapper:
+            def __init__(self, original_config, hidden_size):
+                self._original = original_config
+                self.hidden_size = hidden_size
+            
+            def __getattr__(self, name):
+                # Delegate to original config for any attribute not explicitly set
+                return getattr(self._original, name)
+        
+        self.model.config = ConfigWrapper(original_config, self.embedding_dim)
 
     def get_embedding(self, text: str) -> np.ndarray:
         """Get embedding for text using MetaCLIP-H14 embedder."""
@@ -218,29 +227,37 @@ class LLMWorker:
             max_tokens: Maximum tokens to generate
             prompt_suffix: Additional instructions to add to system prompt (from RL)
         """
-        # Tool descriptions with usage examples
+        # Tool descriptions with usage examples - made more compelling and specific
         TOOL_DESCRIPTIONS = {
             "calculator": (
-                "calculator - Evaluate mathematical expressions.\n"
-                "  Example: TOOL: calculator || QUERY: 125 * 4 + 89"
+                "calculator - CRITICAL for ALL mathematical calculations!\n"
+                "  USE THIS for: arithmetic, percentages, conversions, any math operations\n"
+                "  DO NOT calculate manually - ALWAYS use this tool for math\n"
+                "  Format: TOOL: calculator || QUERY: <expression>\n"
+                "  Example: TOOL: calculator || QUERY: (125 * 4 + 89) / 3"
             ),
             "web_search": (
-                "web_search - Search the web for current information.\n"
-                "  Example: TOOL: web_search || QUERY: population of Tokyo 2024"
+                "web_search - ESSENTIAL for factual questions and current information!\n"
+                "  USE THIS for: ANY question about facts, names, dates, locations, statistics, current events, historical facts, scientific data, or ANY information that might not be in your training data\n"
+                "  WHEN TO USE: If the question asks 'what', 'when', 'where', 'who', 'how many', 'which', or requires specific facts - USE web_search FIRST\n"
+                "  DO NOT guess or rely on training data - web_search gives you ACCURATE, CURRENT information\n"
+                "  Format: TOOL: web_search || QUERY: <your search query>\n"
+                "  Example: TOOL: web_search || QUERY: population of Tokyo in 2024"
             ),
-            # "python": (
-            #     "python - Execute Python code. Use print() to output results. Has access to math module.\n"
-            #     "  Example: TOOL: python || QUERY: print(sum([i**2 for i in range(1, 11)]))"
-            # ),
             "python": (
-                "python - Execute Python code. Use print() to output results. \n"
-                "  Pre-imported libraries: pandas as pd, numpy as np, scipy, cv2, pdfplumber, PIL.Image, sklearn.\n"
-                "  File access: You can read files using open() or pd.read_csv(), etc.\n"
-                "  Example: TOOL: python || QUERY: df = pd.read_csv('file.csv'); print(df.head())"
+                "python - Powerful tool for data processing, file reading, and complex calculations!\n"
+                "  USE THIS for: reading files (CSV, JSON, text), data analysis, complex calculations, image processing, data filtering/sorting\n"
+                "  Pre-imported: pandas (pd), numpy (np), scipy, cv2, pdfplumber, PIL.Image, sklearn\n"
+                "  File access: Use open(), pd.read_csv(), pd.read_json(), etc. to read files\n"
+                "  Format: TOOL: python || QUERY: <your Python code with print()>\n"
+                "  Example: TOOL: python || QUERY: df = pd.read_csv('data.csv'); print(df.describe())"
             ),
             "ocr_reader": (
-                "ocr_reader - Read and extract text from image files.\n"
-                "  Example: TOOL: ocr_reader || QUERY: '/path/to/image.jpg'"
+                "ocr_reader - Extract text from images and scanned documents!\n"
+                "  USE THIS for: reading text from images, PDFs, screenshots, scanned documents\n"
+                "  WHEN TO USE: If you see an image file path or need to read text from an image\n"
+                "  Format: TOOL: ocr_reader || QUERY: '<path/to/image.jpg>'\n"
+                "  Example: TOOL: ocr_reader || QUERY: '/path/to/document.png'"
             )
         }
         
@@ -263,11 +280,32 @@ class LLMWorker:
         
         if active_tools:
             tools_text = "\n".join([TOOL_DESCRIPTIONS[t] for t in active_tools if t in TOOL_DESCRIPTIONS])
+            
+            # Stronger tool usage instructions, especially for web_search
+            tool_usage_instructions = (
+                "IMPORTANT: To use a tool, you MUST write EXACTLY this format: TOOL: <tool_name> || QUERY: <your_query>\n\n"
+                "CRITICAL TOOL USAGE RULES:\n"
+                "1. web_search - USE IT FIRST for factual questions!\n"
+                "   - Questions starting with: 'What is', 'Who is', 'When did', 'Where is', 'How many', 'Which'\n"
+                "   - Questions about: people, places, events, dates, statistics, facts, current information\n"
+                "   - ANY question that asks for specific information - USE web_search BEFORE answering\n"
+                "   - DO NOT guess - web_search gives you REAL, ACCURATE information\n"
+                "   - Example: Question asks 'What is the capital of X?' → USE: TOOL: web_search || QUERY: capital of X\n"
+                "2. calculator - USE IT for ALL math!\n"
+                "   - Any arithmetic, percentages, calculations - USE calculator tool\n"
+                "   - DO NOT calculate in your head or manually\n"
+                "   - Example: Question asks 'What is 25% of 400?' → USE: TOOL: calculator || QUERY: 400 * 0.25\n"
+                "3. python - USE IT for files and complex data!\n"
+                "   - Reading files, data analysis, complex calculations\n"
+                "   - Example: Question mentions a file → USE: TOOL: python || QUERY: df = pd.read_csv('file.csv'); print(...)\n"
+                "4. REMEMBER: Tools are provided because you NEED them. If tools are available, you MUST use them.\n"
+                "   - Not using available tools = WRONG answer\n"
+                "   - Using tools = CORRECT answer\n"
+            )
+            
             sys_prompt += (
                 f"\n\nYou have access to these tools:\n{tools_text}\n\n"
-                "IMPORTANT: To use a tool, you MUST write EXACTLY this format: TOOL: <tool_name> || QUERY: <your_query>\n"
-                "When you need to calculate, verify, or look up information, USE THE TOOLS. Do not try to solve everything yourself.\n"
-                "For mathematical problems, use the calculator or python tool. For data lookups, use web_search."
+                f"{tool_usage_instructions}"
             )
         
         # TODO: Check if we need this as it was not in zip file.
@@ -552,25 +590,37 @@ class OpenRouterWorker:
             max_tokens: Maximum tokens to generate
             prompt_suffix: Additional instructions to add to system prompt (from RL)
         """
-        # Tool descriptions with usage examples (same as LLMWorker)
+        # Tool descriptions with usage examples - made more compelling and specific (same as LLMWorker)
         TOOL_DESCRIPTIONS = {
             "calculator": (
-                "calculator - Evaluate mathematical expressions.\n"
-                "  Example: TOOL: calculator || QUERY: 125 * 4 + 89"
+                "calculator - CRITICAL for ALL mathematical calculations!\n"
+                "  USE THIS for: arithmetic, percentages, conversions, any math operations\n"
+                "  DO NOT calculate manually - ALWAYS use this tool for math\n"
+                "  Format: TOOL: calculator || QUERY: <expression>\n"
+                "  Example: TOOL: calculator || QUERY: (125 * 4 + 89) / 3"
             ),
             "web_search": (
-                "web_search - Search the web for current information.\n"
-                "  Example: TOOL: web_search || QUERY: population of Tokyo 2024"
+                "web_search - ESSENTIAL for factual questions and current information!\n"
+                "  USE THIS for: ANY question about facts, names, dates, locations, statistics, current events, historical facts, scientific data, or ANY information that might not be in your training data\n"
+                "  WHEN TO USE: If the question asks 'what', 'when', 'where', 'who', 'how many', 'which', or requires specific facts - USE web_search FIRST\n"
+                "  DO NOT guess or rely on training data - web_search gives you ACCURATE, CURRENT information\n"
+                "  Format: TOOL: web_search || QUERY: <your search query>\n"
+                "  Example: TOOL: web_search || QUERY: population of Tokyo in 2024"
             ),
             "python": (
-                "python - Execute Python code. Use print() to output results. \n"
-                "  Pre-imported libraries: pandas as pd, numpy as np, scipy, cv2, pdfplumber, PIL.Image, sklearn.\n"
-                "  File access: You can read files using open() or pd.read_csv(), etc.\n"
-                "  Example: TOOL: python || QUERY: df = pd.read_csv('file.csv'); print(df.head())"
+                "python - Powerful tool for data processing, file reading, and complex calculations!\n"
+                "  USE THIS for: reading files (CSV, JSON, text), data analysis, complex calculations, image processing, data filtering/sorting\n"
+                "  Pre-imported: pandas (pd), numpy (np), scipy, cv2, pdfplumber, PIL.Image, sklearn\n"
+                "  File access: Use open(), pd.read_csv(), pd.read_json(), etc. to read files\n"
+                "  Format: TOOL: python || QUERY: <your Python code with print()>\n"
+                "  Example: TOOL: python || QUERY: df = pd.read_csv('data.csv'); print(df.describe())"
             ),
             "ocr_reader": (
-                "ocr_reader - Read and extract text from image files.\n"
-                "  Example: TOOL: ocr_reader || QUERY: '/path/to/image.jpg'"
+                "ocr_reader - Extract text from images and scanned documents!\n"
+                "  USE THIS for: reading text from images, PDFs, screenshots, scanned documents\n"
+                "  WHEN TO USE: If you see an image file path or need to read text from an image\n"
+                "  Format: TOOL: ocr_reader || QUERY: '<path/to/image.jpg>'\n"
+                "  Example: TOOL: ocr_reader || QUERY: '/path/to/document.png'"
             )
         }
         
@@ -591,11 +641,32 @@ class OpenRouterWorker:
         
         if active_tools:
             tools_text = "\n".join([TOOL_DESCRIPTIONS[t] for t in active_tools if t in TOOL_DESCRIPTIONS])
+            
+            # Stronger tool usage instructions, especially for web_search
+            tool_usage_instructions = (
+                "IMPORTANT: To use a tool, you MUST write EXACTLY this format: TOOL: <tool_name> || QUERY: <your_query>\n\n"
+                "CRITICAL TOOL USAGE RULES:\n"
+                "1. web_search - USE IT FIRST for factual questions!\n"
+                "   - Questions starting with: 'What is', 'Who is', 'When did', 'Where is', 'How many', 'Which'\n"
+                "   - Questions about: people, places, events, dates, statistics, facts, current information\n"
+                "   - ANY question that asks for specific information - USE web_search BEFORE answering\n"
+                "   - DO NOT guess - web_search gives you REAL, ACCURATE information\n"
+                "   - Example: Question asks 'What is the capital of X?' → USE: TOOL: web_search || QUERY: capital of X\n"
+                "2. calculator - USE IT for ALL math!\n"
+                "   - Any arithmetic, percentages, calculations - USE calculator tool\n"
+                "   - DO NOT calculate in your head or manually\n"
+                "   - Example: Question asks 'What is 25% of 400?' → USE: TOOL: calculator || QUERY: 400 * 0.25\n"
+                "3. python - USE IT for files and complex data!\n"
+                "   - Reading files, data analysis, complex calculations\n"
+                "   - Example: Question mentions a file → USE: TOOL: python || QUERY: df = pd.read_csv('file.csv'); print(...)\n"
+                "4. REMEMBER: Tools are provided because you NEED them. If tools are available, you MUST use them.\n"
+                "   - Not using available tools = WRONG answer\n"
+                "   - Using tools = CORRECT answer\n"
+            )
+            
             sys_prompt += (
                 f"\n\nYou have access to these tools:\n{tools_text}\n\n"
-                "IMPORTANT: To use a tool, you MUST write EXACTLY this format: TOOL: <tool_name> || QUERY: <your_query>\n"
-                "When you need to calculate, verify, or look up information, USE THE TOOLS. Do not try to solve everything yourself.\n"
-                "For mathematical problems, use the calculator or python tool. For data lookups, use web_search."
+                f"{tool_usage_instructions}"
             )
         else:
             sys_prompt += " Answer using your own knowledge only."

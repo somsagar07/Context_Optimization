@@ -29,7 +29,7 @@ ENV_MODE = "hierarchical"
 STRUCTURE_TOTAL_TIMESTEPS = 10000   # Fewer steps needed (single-step env)
 STRUCTURE_N_STEPS = 128             # Short rollouts
 STRUCTURE_BATCH_SIZE = 32
-STRUCTURE_LEARNING_RATE = 5e-4      # Can be higher for simpler policy
+STRUCTURE_LEARNING_RATE = 3e-4      # Lowered from 5e-4 to reduce loss spikes
 STRUCTURE_GAMMA = 0.0               # No future reward (immediate)
 STRUCTURE_ENT_COEF = 0.03           # Higher entropy for exploration
 
@@ -39,7 +39,7 @@ STRUCTURE_ENT_COEF = 0.03           # Higher entropy for exploration
 PROMPT_TOTAL_TIMESTEPS = 20000      # More steps for sequential learning
 PROMPT_N_STEPS = 512                # Longer rollouts for multi-step
 PROMPT_BATCH_SIZE = 64
-PROMPT_LEARNING_RATE = 1e-4         # Standard for PPO
+PROMPT_LEARNING_RATE = 5e-5         # Lowered from 1e-4 to reduce loss spikes
 PROMPT_GAMMA = 0.95                 # Discount across prompt steps
 PROMPT_ENT_COEF = 0.015             # Moderate exploration
 
