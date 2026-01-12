@@ -472,7 +472,25 @@ class OpenRouterWorker:
                 if "choices" not in result or len(result["choices"]) == 0:
                     raise ValueError(f"Invalid API response: {result}")
                 
-                return result["choices"][0]["message"]["content"]
+                choice = result["choices"][0]
+                if "message" not in choice:
+                    raise ValueError(f"Invalid API response: missing 'message' in choice: {choice}")
+                
+                message = choice["message"]
+                if "content" not in message:
+                    # Check if there's a finish_reason that might explain empty content
+                    finish_reason = choice.get("finish_reason", "unknown")
+                    error_msg = f"Invalid API response: missing 'content' in message. Finish reason: {finish_reason}. Full choice: {choice}"
+                    print(f"WARNING: {error_msg}")
+                    raise ValueError(error_msg)
+                
+                content = message["content"]
+                if content is None:
+                    finish_reason = choice.get("finish_reason", "unknown")
+                    print(f"WARNING: API returned None content. Finish reason: {finish_reason}. Choice: {choice}")
+                    return ""  # Return empty string instead of None
+                
+                return content
                 
             except requests.exceptions.Timeout as e:
                 last_exception = e

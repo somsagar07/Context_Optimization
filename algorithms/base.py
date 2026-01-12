@@ -716,6 +716,7 @@ class BaseTrainer(ABC):
         
         print("\n" + "=" * 70)
         print(f"HIERARCHICAL TRAINING ({algo.upper()})")
+        print(f"Log will be saved to: {self.log_path} (every {save_log_every} episodes)")
         print("=" * 70)
         self._print_config(num_episodes, batch_size, kwargs)
         print("=" * 70 + "\n")
@@ -748,7 +749,8 @@ class BaseTrainer(ABC):
                 # Show tool selection stats
                 recent_episodes = self.episode_logs[-log_every:] if len(self.episode_logs) >= log_every else self.episode_logs
                 tools_selected = sum(1 for e in recent_episodes if e.get("agent1_tools") or e.get("agent2_tools"))
-                print(f"\n[{ep+1}/{num_episodes}] Acc: {acc:.1f}% | Reward: {avg_rew:.3f} | Tools Used: {tools:.2f} | Tools Selected: {tools_selected}/{len(recent_episodes)}")
+                correct_count = sum(1 for e in recent_episodes if e.get("correct", False))
+                print(f"\n[{ep+1}/{num_episodes}] Acc: {acc:.1f}% ({self.correct_count}/{self.episode_count}) | Reward: {avg_rew:.3f} | Tools Used: {tools:.2f} | Tools Selected: {tools_selected}/{len(recent_episodes)} | Recent Correct: {correct_count}/{len(recent_episodes)}")
             
             if (ep + 1) % save_every == 0:
                 self.save_models(f"_ep{ep+1}")
@@ -776,6 +778,7 @@ class BaseTrainer(ABC):
     
     def _save_log(self):
         if self.log_path and self.episode_logs:
+            print(f"\n[LOG] Saving log to {self.log_path} ({len(self.episode_logs)} episodes)...")
             rewards = [e["reward"] for e in self.episode_logs]
             
             # Determine model information

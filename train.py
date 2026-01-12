@@ -76,6 +76,7 @@ def parse_args():
     # Logging
     parser.add_argument("--log-every", type=int, default=50, help="Log frequency")
     parser.add_argument("--save-every", type=int, default=2000, help="Checkpoint frequency")
+    parser.add_argument("--save-log-every", type=int, default=100, help="Save log file frequency (default: 100)")
     
     # Pretrained models (e.g., from SFT)
     parser.add_argument("--pretrain-structure", type=str, default=None,
@@ -159,6 +160,7 @@ def main():
         batch_size=args.batch_size,
         log_every=args.log_every,
         save_every=args.save_every,
+        save_log_every=args.save_log_every,
         # Algorithm params
         gamma=cfg.PROMPT_GAMMA,
         clip_epsilon=args.clip_epsilon,
