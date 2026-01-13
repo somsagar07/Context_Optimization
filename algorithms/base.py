@@ -703,6 +703,24 @@ class BaseTrainer(ABC):
         """Algorithm-specific policy update."""
         pass
     
+    def _get_model_name_for_filename(self):
+        """Get model name for use in filename (sanitized)."""
+        if self.use_api:
+            model_name = self.api_model or os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")
+        else:
+            if self.hf_model:
+                model_name = self.hf_model
+            else:
+                try:
+                    from configs.base import LLM_MODEL_NAME
+                    model_name = LLM_MODEL_NAME
+                except:
+                    model_name = "unknown"
+        
+        # Sanitize model name for filename: replace / with -, replace spaces with _
+        model_name_safe = model_name.replace("/", "-").replace(" ", "_")
+        return model_name_safe
+    
     def train(self, num_episodes: int = 1000, batch_size: int = 32,
               log_every: int = 50, save_every: int = 2000,
               save_log_every: int = 500, **kwargs):
@@ -712,7 +730,8 @@ class BaseTrainer(ABC):
         
         timestamp = int(time.time())
         algo = self.algorithm.value
-        self.log_path = os.path.join(self.log_dir, f"training_log_{algo}_{self.cfg.DATASET_NAME}_{timestamp}.json")
+        model_name = self._get_model_name_for_filename()
+        self.log_path = os.path.join(self.log_dir, f"training_log_{model_name}_{algo}_{self.cfg.DATASET_NAME}_{timestamp}.json")
         
         print("\n" + "=" * 70)
         print(f"HIERARCHICAL TRAINING ({algo.upper()})")
