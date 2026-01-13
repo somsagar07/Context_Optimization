@@ -346,10 +346,10 @@ class MultiDiscretePolicyGRPO(nn.Module):
                     mask = torch.tensor(action_mask[i], dtype=torch.bool, device=logits.device)
                     logits = logits.masked_fill(~mask, float('-inf'))
                 
-            probs = torch.softmax(logits, dim=-1)
-            action = torch.argmax(probs, dim=-1) if deterministic else Categorical(probs).sample()
-            actions.append(action.item())
-            log_probs.append(torch.log(probs.gather(1, action.unsqueeze(-1)) + 1e-8).item())
+                probs = torch.softmax(logits, dim=-1)
+                action = torch.argmax(probs, dim=-1) if deterministic else Categorical(probs).sample()
+                actions.append(action.item())
+                log_probs.append(torch.log(probs.gather(1, action.unsqueeze(-1)) + 1e-8).item())
         
         return np.array(actions), sum(log_probs), 0.0  # No value
     

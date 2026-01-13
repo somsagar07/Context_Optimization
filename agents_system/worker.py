@@ -426,7 +426,7 @@ class OpenRouterWorker:
         
         print(f"OpenRouter Worker initialized with model: {self.model_name}")
 
-    def _call_api(self, messages: list, max_tokens: int = 512, temperature: float = 0.0, max_retries: int = 5) -> str:
+    def _call_api(self, messages: list, max_tokens: int = 512, temperature: float = 0.0, max_retries: int = 10) -> str:
         """
         Call OpenRouter API for text generation with retry logic and exponential backoff.
         
@@ -434,7 +434,7 @@ class OpenRouterWorker:
             messages: List of message dicts with "role" and "content"
             max_tokens: Maximum tokens to generate
             temperature: Sampling temperature (0.0 for deterministic)
-            max_retries: Maximum number of retry attempts (default: 5)
+            max_retries: Maximum number of retry attempts (default: 10, increased for training stability)
             
         Returns:
             Generated text response
@@ -466,6 +466,26 @@ class OpenRouterWorker:
                     json=payload, 
                     timeout=120  # 2 minute timeout
                 )
+                
+                # Check status code before calling raise_for_status to handle edge cases
+                status_code = response.status_code
+                
+                # Handle server errors (5xx) before raise_for_status
+                if 500 <= status_code < 600:
+                    if attempt < max_retries - 1:
+                        wait_time = min(2 ** attempt, 60)  # Exponential backoff, max 60s
+                        print(f"API server error {status_code} (attempt {attempt + 1}/{max_retries}). Retrying in {wait_time}s...")
+                        time.sleep(wait_time)
+                        continue  # Retry immediately
+                    else:
+                        last_exception = requests.exceptions.HTTPError(
+                            f"{status_code} Server Error: {response.reason} for url: {response.url}",
+                            response=response
+                        )
+                        print(f"API server error {status_code} after {max_retries} attempts")
+                        break
+                
+                # Now raise for status to handle other HTTP errors
                 response.raise_for_status()
                 result = response.json()
                 
@@ -512,22 +532,29 @@ class OpenRouterWorker:
                     
             except requests.exceptions.HTTPError as e:
                 # Check for rate limiting (429) or server errors (5xx)
-                status_code = e.response.status_code if hasattr(e, 'response') and e.response else None
+                status_code = None
+                if hasattr(e, 'response') and e.response is not None:
+                    status_code = e.response.status_code
                 
                 if status_code == 429:  # Rate limit
                     last_exception = e
                     if attempt < max_retries - 1:
                         # Try to get retry-after header, or use exponential backoff
-                        retry_after = e.response.headers.get('Retry-After')
+                        retry_after = None
+                        if hasattr(e, 'response') and e.response is not None:
+                            retry_after = e.response.headers.get('Retry-After')
                         if retry_after:
-                            wait_time = int(retry_after)
+                            try:
+                                wait_time = int(retry_after)
+                            except (ValueError, TypeError):
+                                wait_time = min(2 ** (attempt + 2), 120)
                         else:
                             wait_time = min(2 ** (attempt + 2), 120)  # Longer wait for rate limits
                         print(f"API rate limit (attempt {attempt + 1}/{max_retries}). Waiting {wait_time}s...")
                         time.sleep(wait_time)
                     else:
                         print(f"API rate limit after {max_retries} attempts")
-                elif status_code and 500 <= status_code < 600:  # Server errors
+                elif status_code and 500 <= status_code < 600:  # Server errors (shouldn't reach here due to pre-check, but keep as fallback)
                     last_exception = e
                     if attempt < max_retries - 1:
                         wait_time = min(2 ** attempt, 60)
@@ -543,7 +570,10 @@ class OpenRouterWorker:
                             error_detail = e.response.json()
                             print(f"Error details: {error_detail}")
                         except:
-                            print(f"Response text: {e.response.text}")
+                            try:
+                                print(f"Response text: {e.response.text[:500]}")  # Limit text length
+                            except:
+                                print(f"Response status: {e.response.status_code}")
                     raise
                     
             except requests.exceptions.RequestException as e:

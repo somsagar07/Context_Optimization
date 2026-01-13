@@ -295,7 +295,8 @@ def train_prompt_policy_sft(prompt_policy, episodes, prompt_env, epochs=3, lr=5e
             )
             
             # IMPORTANT: Reset prompt environment state for this episode
-            if workflow == 0:
+            # Direct (0) and Parallel-Voting (5) don't need reasoner prompts
+            if workflow == 0 or workflow == 5:
                 prompt_env.prompt_stage = prompt_env.PROMPT_STAGE_ANSWERER
             else:
                 prompt_env.prompt_stage = prompt_env.PROMPT_STAGE_REASONER
@@ -382,7 +383,8 @@ def train_prompt_policy_sft(prompt_policy, episodes, prompt_env, epochs=3, lr=5e
                 num_updates += 1
             
             # Collect and train on reasoner prompt steps
-            if workflow >= 1 and reasoner_prompts:
+            # Workflows that use reasoner: 1, 2, 3, 4, 6, 7, 8 (NOT 0 or 5)
+            if workflow >= 1 and workflow != 5 and reasoner_prompts:
                 prompt_env.prompt_stage = prompt_env.PROMPT_STAGE_REASONER
                 prompt_env.prompt_step = 0
                 for prompt_idx in reasoner_prompts:
@@ -392,7 +394,8 @@ def train_prompt_policy_sft(prompt_policy, episodes, prompt_env, epochs=3, lr=5e
                     prompt_env.prompt_step += 1
             
             # Collect and train on verifier prompt steps
-            if workflow == 2 and verifier_prompts:
+            # Workflows that use verifier: 2, 7 (Reason+Verify+Ans and Evaluator-Optimizer)
+            if workflow in [2, 7] and verifier_prompts:
                 prompt_env.prompt_stage = prompt_env.PROMPT_STAGE_VERIFIER
                 prompt_env.prompt_step = 0
                 for prompt_idx in verifier_prompts:
