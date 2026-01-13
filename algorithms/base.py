@@ -646,7 +646,7 @@ class BaseTrainer(ABC):
             if not correct:
                 final_reward -= 0.3 * num_tools_selected  # Extra 0.3 per tool when wrong
         
-        max_tokens = 1024 + 512 + 256
+        max_tokens = 2048 + 1024 + 512  # reasoner_high + verifier_high + answerer_high
         final_reward -= (info.get("total_tokens", 256) / max_tokens) * self.cfg.COST_TOKEN_BUDGET
         
         # Update metrics

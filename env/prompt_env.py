@@ -52,11 +52,11 @@ class PromptEnv(gym.Env):
     PROMPT_STAGE_VERIFIER = 1
     PROMPT_STAGE_ANSWERER = 2
     
-    # Token budget mappings
+    # Token budget mappings (2x increased from original to prevent truncation)
     TOKEN_BUDGETS = {
-        "reasoner": {0: 256, 1: 512, 2: 1024},
-        "verifier": {0: 128, 1: 256, 2: 512},
-        "answerer": {0: 64, 1: 128, 2: 256}
+        "reasoner": {0: 512, 1: 1024, 2: 2048},
+        "verifier": {0: 256, 1: 512, 2: 1024},
+        "answerer": {0: 128, 1: 256, 2: 512}
     }
     
     def __init__(self, cfg=None, is_eval=False, use_api=False, api_model=None, hf_model=None):

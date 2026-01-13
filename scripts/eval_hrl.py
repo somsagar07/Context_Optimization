@@ -198,7 +198,7 @@ def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20,
         final_reward -= info.get("steps_taken", 1) * cfg.COST_PER_STEP
         final_reward += info.get("tools_used", 0) * tool_bonus
         
-        max_tokens = 1024 + 512 + 256
+        max_tokens = 2048 + 1024 + 512  # reasoner_high + verifier_high + answerer_high
         final_reward -= (info.get("total_tokens", 256) / max_tokens) * cfg.COST_TOKEN_BUDGET
         
         # Record
