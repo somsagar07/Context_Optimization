@@ -3,6 +3,18 @@ Tau2 Tool Registry - Wraps tau2 domain-specific tools.
 Dynamically loads tools from tau2 domains and maps them to indices.
 """
 import os
+os.environ.setdefault("LOGURU_LEVEL", "WARNING")
+# Configure loguru to suppress DEBUG and INFO logs
+try:
+    from loguru import logger
+    # Remove all existing handlers
+    logger.remove()
+    # Add handler that only shows WARNING and above
+    logger.add(lambda msg: None, level="WARNING", filter=lambda record: record["level"].name in ["WARNING", "ERROR", "CRITICAL"])
+except (ImportError, Exception):
+    # loguru not available yet or already configured, continue
+    pass
+
 import gymnasium as gym
 
 class Tau2ToolRegistry:
@@ -172,3 +184,63 @@ class Tau2ToolRegistry:
         if tool_name in self.available_tools:
             return self.available_tools[tool_name](query)
         return f"Error: Tool {tool_name} not found"
+    
+    def get_tool_prompt_descriptions(self) -> dict:
+        """
+        Get tool descriptions in the format expected by LLMWorker prompts.
+        
+        Returns:
+            Dictionary mapping tool names to their prompt descriptions
+        """
+        if not self._initialized:
+            self._init_tools()
+        
+        descriptions = {}
+        
+        # Try to get descriptions from tau2 library if available
+        try:
+            import tau2
+            from tau2.registry import registry
+            
+            env_constructor = registry.get_env_constructor(self.domain)
+            domain_env = env_constructor()
+            
+            if hasattr(domain_env, 'tools'):
+                tool_kit = domain_env.tools
+                
+                # Try to get tools with descriptions
+                if hasattr(tool_kit, 'get_tools'):
+                    tools_dict = tool_kit.get_tools()
+                    # If get_tools returns Tool objects with descriptions
+                    for tool_name in self.tool_names:
+                        if tool_name in tools_dict:
+                            tool_obj = tools_dict[tool_name]
+                            # Check if tool has description attribute
+                            if hasattr(tool_obj, 'description'):
+                                desc = tool_obj.description
+                            elif hasattr(tool_obj, '__doc__') and tool_obj.__doc__:
+                                desc = tool_obj.__doc__.strip()
+                            else:
+                                desc = None
+                            
+                            if desc:
+                                # Format description similar to generic tools
+                                descriptions[tool_name] = (
+                                    f"{tool_name} - {desc}\n"
+                                    f"  Example: TOOL: {tool_name} || QUERY: <your_query>"
+                                )
+        except Exception as e:
+            print(f"Warning: Could not get tool descriptions from tau2 registry: {e}")
+            pass  # Fall back to generic descriptions
+        
+        # Generate generic descriptions for tools without descriptions
+        for tool_name in self.tool_names:
+            if tool_name not in descriptions:
+                # Create a readable description from tool name
+                readable_name = tool_name.replace('_', ' ').title()
+                descriptions[tool_name] = (
+                    f"{tool_name} - {readable_name} for {self.domain} domain.\n"
+                    f"  Example: TOOL: {tool_name} || QUERY: <your_query>"
+                )
+        
+        return descriptions

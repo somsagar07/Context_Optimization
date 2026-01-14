@@ -81,6 +81,9 @@ class StructureEnv(gym.Env):
         else:
             tool_action_size = 16  # Default: 4 tools = 2^4 = 16 combinations
         
+        # Store tool_action_size for use in _get_action_mask
+        self.tool_action_size = tool_action_size
+        
         # Structure dimensions: [workflow, agent1_tools, agent1_budget, agent2_tools, agent2_budget, answerer_budget]
         # NOTE: Updated to 9 workflows (3 original + 6 from Anthropic patterns)
         self.structure_dims = np.array([9, tool_action_size, 3, tool_action_size, 3, 3])
@@ -170,9 +173,9 @@ class StructureEnv(gym.Env):
         # All workflows are valid
         workflow_mask = np.ones(9, dtype=bool)
         
-        # All tool combinations are valid (16 options)
-        agent1_tools_mask = np.ones(16, dtype=bool)
-        agent2_tools_mask = np.ones(16, dtype=bool)
+        # Use actual tool_action_size instead of hardcoded 16
+        agent1_tools_mask = np.ones(self.tool_action_size, dtype=bool)
+        agent2_tools_mask = np.ones(self.tool_action_size, dtype=bool)
         
         # All budgets are valid (3 options)
         agent1_budget_mask = np.ones(3, dtype=bool)
@@ -184,7 +187,7 @@ class StructureEnv(gym.Env):
         if workflow_depth is not None and workflow_depth in [0, 1, 5]:
             # These workflows don't use agent2, so mask agent2_tools and agent2_budget
             # Keep at least one valid action (index 0) to avoid all-masked dimension
-            agent2_tools_mask = np.zeros(16, dtype=bool)
+            agent2_tools_mask = np.zeros(self.tool_action_size, dtype=bool)
             agent2_tools_mask[0] = True  # Keep "no tools" as valid (will be ignored anyway)
             agent2_budget_mask = np.zeros(3, dtype=bool)
             agent2_budget_mask[0] = True  # Keep "Low" as valid (will be ignored anyway)

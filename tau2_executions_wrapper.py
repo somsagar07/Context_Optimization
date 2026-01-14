@@ -2,6 +2,34 @@
 Tau2 Execution Wrapper - Executes full tau2 conversations with HRL configuration.
 """
 import os
+
+# Suppress verbose tau2 logging (tau2 uses loguru, not standard logging)
+os.environ.setdefault("LOGURU_LEVEL", "WARNING")
+# Try to configure loguru before tau2 imports it
+try:
+    from loguru import logger
+    logger.remove()  # Remove default handler
+    logger.add(lambda msg: None, level="WARNING")  # Only show WARNING and above
+except ImportError:
+    pass  # loguru not available yet
+
+# Load .env file FIRST (before tau2 imports that might need API keys)
+try:
+    from dotenv import load_dotenv
+    # Try to load from project root
+    env_path = os.path.join(os.path.dirname(__file__), '.env')
+    if os.path.exists(env_path):
+        load_dotenv(env_path)
+    else:
+        # Try current directory
+        load_dotenv()
+except ImportError:
+    # python-dotenv not installed, skip
+    pass
+except Exception:
+    # Failed to load, continue anyway
+    pass
+
 import gymnasium as gym
 from typing import Dict, List, Tuple, Optional
 from agents_system.workflows import get_workflow, get_openrouter_workflow
@@ -72,6 +100,42 @@ class Tau2ExecutionWrapper:
             self._env_initialized = True
             self._tau2_gym_ready = False
             self.env = None
+    
+    def _extract_user_message(self, obs) -> str:
+        """
+        Extract the last user message from observation.
+        
+        The observation from tau2 gym environment is a list of message objects.
+        We need to find the last message with role='user' and extract its content.
+        
+        Args:
+            obs: Observation from tau2 gym environment (list of message objects or dict)
+            
+        Returns:
+            str: Content of the last user message, or empty string if not found
+        """
+        if not obs:
+            return ""
+        
+        # If obs is a list of message objects
+        if isinstance(obs, list):
+            # Iterate backwards to find the last user message
+            for msg in reversed(obs):
+                # Check if message has role attribute
+                if hasattr(msg, 'role'):
+                    if msg.role == 'user' and hasattr(msg, 'content'):
+                        return msg.content or ""
+                # Also check if it's a dict-like object
+                elif isinstance(msg, dict):
+                    if msg.get('role') == 'user':
+                        return msg.get('content', '')
+        
+        # If obs is a dict, try to get message directly
+        if isinstance(obs, dict):
+            return obs.get('content', '') if obs.get('role') == 'user' else ''
+        
+        # Fallback: try to convert to string
+        return str(obs) if obs else ""
     
     def execute_conversation(
         self,
@@ -160,7 +224,12 @@ class Tau2ExecutionWrapper:
         
         # Reset environment with task
         obs, info = self.env.reset()
-        initial_message = info.get("message", "") if isinstance(info, dict) else ""
+        
+        # Extract initial message from observation (tau2 returns messages in obs)
+        initial_message = self._extract_user_message(obs)
+        # Fallback to info dict if observation extraction failed
+        if not initial_message and isinstance(info, dict):
+            initial_message = info.get("message", "")
         
         # Run conversation loop
         conversation_history = []
@@ -204,15 +273,17 @@ class Tau2ExecutionWrapper:
             done = terminated or truncated
             
             if not done:
-                # Get user response from info
-                if isinstance(info, dict):
+                # Extract user message from observation (tau2 returns messages in obs)
+                user_message = self._extract_user_message(obs)
+                # Fallback to info dict if observation extraction failed
+                if not user_message and isinstance(info, dict):
                     user_message = info.get("message", "")
-                else:
-                    user_message = str(obs) if obs else ""
+                
                 if user_message:
                     current_message = user_message
                     conversation_history.append(("user", user_message))
                 else:
+                    # No user message found, conversation might be done
                     done = True
         
         # Calculate Pass^k reward (k=1 for now, can be extended)

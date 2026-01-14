@@ -24,6 +24,41 @@ class Tau2Dataset(BaseDataset):
         self.tasks = [self._normalize_task(t) for t in raw_tasks]
         print(f"Loaded and normalized {len(self.tasks)} tasks for Tau-2 {domain} (split: {split})")
 
+    def __len__(self):
+        """Return the number of tasks in the dataset."""
+        return len(self.tasks)
+    
+    def __iter__(self):
+        """
+        Make the dataset iterable for prompt generation.
+        Returns items compatible with prompt generator expectations.
+        """
+        for task in self.tasks:
+            # Format for prompt generator (simplified, no internal instructions)
+            question = f"Customer interaction: {task['user_goal']}"
+            
+            # Extract action names from actions list (actions might be dicts or strings)
+            actions = task.get('actions', [])
+            if actions:
+                # If actions are dicts, extract the 'name' field
+                if isinstance(actions[0], dict):
+                    action_names = [a.get('name', str(a)) for a in actions]
+                else:
+                    action_names = [str(a) for a in actions]
+                actions_str = ", ".join(action_names)
+            else:
+                actions_str = "Complete the customer interaction"
+            
+            answer = f"Expected outcome: {actions_str}"
+            
+            yield {
+                'question': question,
+                'answer': answer,
+                'input': question,
+                'output': answer,
+                'task_id': task.get('task_id', 'Unknown')
+            }
+    
     def _find_tau2_data_root(self):
         """Find the tau2_data_root directory (local repository)."""
         # Check TAU2_DATA_DIR environment variable first
@@ -142,24 +177,23 @@ class Tau2Dataset(BaseDataset):
 
     def get_sample(self):
         """
-        Returns (formatted_question, task_object)
-        task_object contains 'task_id' needed for tau2 execution
+        Returns (question, task_object) for tau2.
+        
+        For tau2, the question should be based on the user's stated goal (reason_for_call),
+        NOT the internal scenario instructions. The actual conversation will be handled
+        by the tau2 gym environment which provides the proper initial message.
         """
         idx = random.randint(0, len(self.tasks) - 1)
         task = self.tasks[idx]
         
-        profile_lines = []
-        for k, v in task['user_profile'].items():
-            if v:
-                profile_lines.append(f"{k}: {v}")
-        profile_str = "\n".join(profile_lines)
-        
+        # For tau2, use only the user's stated goal (reason_for_call)
+        # This is what the agent would see in a real scenario
+        # The gym environment will provide the actual initial message during execution
         question = (
-            f"--- Customer Interaction ({self.domain.capitalize()}) ---\n"
-            f"[User Profile]\n{profile_str}\n\n"
-            f"[User Goal]\n{task['user_goal']}\n\n"
-            f"[Instruction]\nInteract with the user simulator to solve this problem."
+            f"Customer interaction in {self.domain.capitalize()} domain.\n"
+            f"User's request: {task['user_goal']}"
         )
+        
         return question, task
 
     def evaluate_correctness(self, prediction: str, ground_truth: dict) -> float:

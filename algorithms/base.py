@@ -203,6 +203,13 @@ class MultiDiscretePolicyPPO(nn.Module):
                 # Apply mask for this dimension
                 if i < len(workflow_mask):
                     mask = torch.tensor(workflow_mask[i], dtype=torch.bool, device=logits.device)
+                    expected_action_dim = logits.shape[-1]
+                    if mask.shape[0] != expected_action_dim:
+                        raise ValueError(
+                            f"Mask size mismatch for action dimension {i}: "
+                            f"mask has size {mask.shape[0]}, but logits action dimension is {expected_action_dim}. "
+                            f"This suggests a mismatch between the action space definition and the mask."
+                        )
                     logits = logits.masked_fill(~mask, float('-inf'))
                 
                 probs = torch.softmax(logits, dim=-1)
@@ -534,12 +541,16 @@ class BaseTrainer(ABC):
     
     def _decode_tools(self, idx: int) -> list:
         """Decode tool bitmask to tool names."""
-        tools = []
-        if idx & 1: tools.append("calculator")
-        if idx & 2: tools.append("web_search")
-        if idx & 4: tools.append("python")
-        if idx & 8: tools.append("ocr_reader")
-        return tools
+        # Use structure environment's decode method if it's tau2 (it knows about tau2 tools)
+        if hasattr(self.structure_env, 'is_tau2') and self.structure_env.is_tau2:
+            return self.structure_env._decode_tools(idx)
+        else:
+            tools = []
+            if idx & 1: tools.append("calculator")
+            if idx & 2: tools.append("web_search")
+            if idx & 4: tools.append("python")
+            if idx & 8: tools.append("ocr_reader")
+            return tools
     
     def run_episode(self, deterministic=False):
         """Run a single hierarchical episode."""

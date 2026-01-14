@@ -108,6 +108,17 @@ class PromptEnv(gym.Env):
         # Initialize tools based on dataset type
         if self.is_tau2:
             self.tools = Tau2ToolRegistry(self.dataset.domain)
+            
+            if isinstance(self.tools, Tau2ToolRegistry):
+                tau2_descriptions = self.tools.get_tool_prompt_descriptions()
+                if tau2_descriptions:
+                    self.worker.additional_tool_descriptions = tau2_descriptions
+                    print(f"✓ Loaded {len(tau2_descriptions)} tau2 tool descriptions for worker")
+                else:
+                    print(f"⚠ Warning: No tool descriptions returned from tau2 registry")
+            
+                # self.worker.additional_tool_descriptions = tau2_descriptions
+            
             self.tau2_executor = Tau2ExecutionWrapper(
                 self.dataset.domain,
                 self.worker,

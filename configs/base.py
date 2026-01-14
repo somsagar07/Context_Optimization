@@ -4,8 +4,8 @@ Base configuration shared across all environment modes.
 import torch
 
 # --- Model Config --- 
-LLM_MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct" 
-# LLM_MODEL_NAME = "Qwen/Qwen2.5-7B-Instruct" 
+# LLM_MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct" 
+LLM_MODEL_NAME = "Qwen/Qwen2.5-7B-Instruct" 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # --- Experiment Config ---

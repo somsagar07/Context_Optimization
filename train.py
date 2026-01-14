@@ -13,6 +13,35 @@ Usage:
 """
 import argparse
 import os
+import sys
+from datetime import datetime
+
+# Suppress verbose tau2 logging
+os.environ.setdefault("LOGURU_LEVEL", "WARNING")
+try:
+    from loguru import logger
+    logger.remove()  # Remove default handler
+    logger.add(lambda msg: None, level="WARNING")  # Only show WARNING and above
+except (ImportError, Exception):
+    pass
+
+# Load .env file FIRST (before any imports that might need env vars)
+try:
+    from dotenv import load_dotenv
+    # Try to load from project root
+    env_path = os.path.join(os.path.dirname(__file__), '.env')
+    if os.path.exists(env_path):
+        load_dotenv(env_path)
+    else:
+        # Try current directory
+        load_dotenv()
+except ImportError:
+    # python-dotenv not installed, skip
+    pass
+except Exception:
+    # Failed to load, continue anyway
+    pass
+
 # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 from configs import load_config
@@ -88,7 +117,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    
+
     # Load config
     cfg = load_config(args.config)
     if args.dataset:

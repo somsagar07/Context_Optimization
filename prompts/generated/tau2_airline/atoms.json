@@ -1,0 +1,25 @@
+{
+    "reasoner": {
+        "100": "Reasoner instruction: Analyze customer interaction context, extract necessary details, and sequence required actions or queries logically based on predefined rules and domain expertise.",
+        "101": "Reasoner instruction: Analyze the customer interaction context, identify necessary actions, and sequence required operations or queries to achieve the expected outcome, considering potential deviations and their handling.",
+        "102": "Reasoner instruction: Analyze the customer interaction, extract necessary details, determine required actions, and sequence them into a logical workflow while adhering to predefined rules and context understanding.",
+        "103": "Analyze the input to detect if the customer interaction requires immediate action, retrieval of specific details, or a multi-step process, and route to the appropriate agent or function accordingly.",
+        "104": "Analyze the customer interaction to determine if it requires immediate action, specific user or reservation details, or a multi-step process, then select the appropriate agent or sequence of agents to handle the request.",
+        "105": "Decompose the customer interaction into identifying the request type, gathering necessary user and reservation details, and determining subsequent actions required based on the context and any mentioned constraints or changes in the conversation.",
+        "106": "Decompose each customer interaction into sub-tasks by identifying necessary actions, required user or reservation details, and potential interruptions or context switches, then route them to appropriate parallel threads for efficient processing."
+    },
+    "verifier": {
+        "100": "Verify all customer interactions are correctly mapped to the intended sequence of actions without logical gaps or inconsistencies.",
+        "101": "Verify that the output strictly follows the required format and includes all necessary actions or queries without unnecessary steps or omissions.",
+        "102": "Verify that the verifier agent critiques customer interactions by ensuring all necessary actions are logically derived from the context and user inputs, accounting for potential multi-step processes and retrieving required details accurately.",
+        "103": "Verify the verifier agent critiques customer interactions by ensuring all necessary actions are logically derived from the context while considering potential deviations and their impacts.",
+        "104": "Verify that the verifier agent critiques customer interactions by ensuring all necessary actions are logically derived from the context and user inputs, accounting for potential multi-step processes and retrieving accurate details."
+    },
+    "answerer": {
+        "100": "Instruction: Extract necessary user and reservation details, identify action steps, and list them in order for each customer interaction.",
+        "101": "Format the final output as: Expected outcome: [list of actions]",
+        "102": "Instruction: Synthesize user intent, retrieve relevant details, and sequence required actions logically for each customer interaction.",
+        "103": "When resolving conflicts between multiple answers or sub-task results, prioritize the most recent and relevant information while ensuring all necessary details are addressed and formatted according to predefined constraints.",
+        "104": "When resolving conflicts between multiple answers or sub-task results, prioritize the most recent and relevant information while ensuring all necessary details are addressed in a logical sequence."
+    }
+}

@@ -191,12 +191,23 @@ class LLMWorker:
         print(f"MetaCLIP-H14 embedder initialized. Embedding dimension: {self.embedding_dim}")
         
         # Update model.config.hidden_size for compatibility with observation spaces
-        class FakeConfig:
-            def __init__(self, hidden_size):
-                self.hidden_size = hidden_size
-                self.is_encoder_decoder = False
         original_config = self.model.config
-        self.model.config = FakeConfig(self.embedding_dim)
+        class FakeConfig:
+            def __init__(self, original_config, hidden_size):
+                self._original_config = original_config
+                self.hidden_size = hidden_size  # Override hidden_size
+                self.is_encoder_decoder = getattr(original_config, 'is_encoder_decoder', False)
+            
+            def get_text_config(self):
+                """Return text config (for compatibility with tau2 library)."""
+                return self
+            
+            def __getattr__(self, name):
+                """Delegate all other attributes to original config."""
+                return getattr(self._original_config, name)
+        
+        self.model.config = FakeConfig(original_config, self.embedding_dim)
+        self.additional_tool_descriptions = {}
 
     def get_embedding(self, text: str) -> np.ndarray:
         """Get embedding for text using MetaCLIP-H14 embedder."""
@@ -209,7 +220,7 @@ class LLMWorker:
             print(f"Embedding failed: {e}")
             raise
 
-    def _generate(self, prompt: str, active_tools: list = None, max_tokens: int = 512, prompt_suffix: str = None) -> str:
+    def _generate(self, prompt: str, active_tools: list = None, max_tokens: int = 512, prompt_suffix: str = None, additional_tool_descriptions: dict = None) -> str:
         """
         Core generation method with optional tool prompting and prompt modifiers.
         
@@ -218,6 +229,7 @@ class LLMWorker:
             active_tools: List of tool names to enable
             max_tokens: Maximum tokens to generate
             prompt_suffix: Additional instructions to add to system prompt (from RL)
+            additional_tool_descriptions: Optional dict of additional tool descriptions (e.g., from tau2)
         """
         # Tool descriptions with usage examples
         TOOL_DESCRIPTIONS = {
@@ -244,6 +256,10 @@ class LLMWorker:
                 "  Example: TOOL: ocr_reader || QUERY: '/path/to/image.jpg'"
             )
         }
+        
+        # Change default tool descriptions with additional tool descriptions (e.g., from tau2)
+        if additional_tool_descriptions:
+            TOOL_DESCRIPTIONS.update(additional_tool_descriptions)
         
         # NOTE: Changed this prompt but maybe can be seperated with RL prompt modifiers.
         # Build system prompt
@@ -321,7 +337,7 @@ class LLMWorker:
             "Please break this down and think step-by-step to solve it. "
             "Do not just give the answer, show your work."
         )
-        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix)
+        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix, additional_tool_descriptions=self.additional_tool_descriptions)
 
     def verify(self, question: str, reasoning: str, tools: list = None, tokens: int = 256, prompt_suffix: str = None) -> str:
         """Verify and critique reasoning for a question."""
@@ -332,12 +348,12 @@ class LLMWorker:
             "If it is correct, say 'The reasoning is correct.' "
             "If there is an error, point it out."
         )
-        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix)
+        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix, additional_tool_descriptions=self.additional_tool_descriptions)
 
     def answer_direct(self, question: str, tools: list = None, tokens: int = 128, prompt_suffix: str = None) -> str:
         """Generate a direct, concise answer."""
         prompt = f"Question: {question}\nAnswer concisely."
-        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix)
+        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix, additional_tool_descriptions=self.additional_tool_descriptions)
 
     def answer_with_context(self, question: str, context: str, tools: list = None, tokens: int = 128, prompt_suffix: str = None) -> str:
         """Generate an answer based on provided context/reasoning."""
@@ -346,7 +362,7 @@ class LLMWorker:
             f"Context/Reasoning: {context}\n"
             "Based on the above, provide the final answer."
         )
-        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix)
+        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix, additional_tool_descriptions=self.additional_tool_descriptions)
 
 
 class OpenRouterWorker:
@@ -382,13 +398,22 @@ class OpenRouterWorker:
         print(f"MetaCLIP-H14 embedder initialized. Embedding dimension: {self.embedding_dim}")
         
         # Fake model.config for compatibility with existing code that expects model.config.hidden_size
+        
         class FakeConfig:
             def __init__(self, hidden_size):
                 self.hidden_size = hidden_size
                 self.is_encoder_decoder = False
+            
+            def get_text_config(self):
+                """Return text config (for compatibility with tau2 library)."""
+                return self
+            
         self.model = type('obj', (object,), {'config': FakeConfig(self.embedding_dim)})()
         
         print(f"OpenRouter Worker initialized with model: {self.model_name}")
+        
+        # Store additional tool descriptions
+        self.additional_tool_descriptions = {}
 
     def _call_api(self, messages: list, max_tokens: int = 512, temperature: float = 0.0, max_retries: int = 5) -> str:
         """
@@ -543,7 +568,7 @@ class OpenRouterWorker:
             print(f"Embedding failed: {e}")
             raise
 
-    def _generate(self, prompt: str, active_tools: list = None, max_tokens: int = 512, prompt_suffix: str = None) -> str:
+    def _generate(self, prompt: str, active_tools: list = None, max_tokens: int = 512, prompt_suffix: str = None, additional_tool_descriptions: dict = None) -> str:
         """
         Core generation method with optional tool prompting and prompt modifiers.
         Same interface as LLMWorker._generate for compatibility.
@@ -553,6 +578,7 @@ class OpenRouterWorker:
             active_tools: List of tool names to enable
             max_tokens: Maximum tokens to generate
             prompt_suffix: Additional instructions to add to system prompt (from RL)
+            additional_tool_descriptions: Optional dict of additional tool descriptions (e.g., from tau2)
         """
         # Tool descriptions with usage examples (same as LLMWorker)
         TOOL_DESCRIPTIONS = {
@@ -575,6 +601,10 @@ class OpenRouterWorker:
                 "  Example: TOOL: ocr_reader || QUERY: '/path/to/image.jpg'"
             )
         }
+        
+        # Change default tool descriptions with additional tool descriptions (e.g., from tau2)
+        if additional_tool_descriptions:
+            TOOL_DESCRIPTIONS.update(additional_tool_descriptions)
         
         # Build system prompt (same as LLMWorker)
         sys_prompt = (
@@ -617,7 +647,7 @@ class OpenRouterWorker:
             "Please break this down and think step-by-step to solve it. "
             "Do not just give the answer, show your work."
         )
-        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix)
+        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix, additional_tool_descriptions=self.additional_tool_descriptions)
 
     def verify(self, question: str, reasoning: str, tools: list = None, tokens: int = 256, prompt_suffix: str = None) -> str:
         """Verify and critique reasoning for a question."""
@@ -628,12 +658,12 @@ class OpenRouterWorker:
             "If it is correct, say 'The reasoning is correct.' "
             "If there is an error, point it out."
         )
-        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix)
+        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix, additional_tool_descriptions=self.additional_tool_descriptions)
 
     def answer_direct(self, question: str, tools: list = None, tokens: int = 128, prompt_suffix: str = None) -> str:
         """Generate a direct, concise answer."""
         prompt = f"Question: {question}\nAnswer concisely."
-        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix)
+        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix, additional_tool_descriptions=self.additional_tool_descriptions)
 
     def answer_with_context(self, question: str, context: str, tools: list = None, tokens: int = 128, prompt_suffix: str = None) -> str:
         """Generate an answer based on provided context/reasoning."""
@@ -642,5 +672,5 @@ class OpenRouterWorker:
             f"Context/Reasoning: {context}\n"
             "Based on the above, provide the final answer."
         )
-        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix)
+        return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix, additional_tool_descriptions=self.additional_tool_descriptions)
 
