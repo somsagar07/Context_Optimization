@@ -202,7 +202,7 @@ class GeneralAgentEnv(gym.Env):
         reward -= tools_used_count * self.cfg.COST_TOOL_USAGE
         
         # Token budget penalty (normalized)
-        max_tokens = 1024 + 512 + 256
+        max_tokens = 2048 + 1024 + 512  # reasoner_high + verifier_high + answerer_high
         token_penalty = (total_tokens_used / max_tokens) * self.cfg.COST_TOKEN_BUDGET
         reward -= token_penalty
         

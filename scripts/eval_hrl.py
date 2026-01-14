@@ -4,8 +4,12 @@ Unified Evaluation Script for Hierarchical RL
 Evaluates trained structure and prompt policies.
 
 Usage:
+    # HuggingFace models (default)
     python scripts/eval_hrl.py --structure-model models/grpo_models/structure.pt --prompt-model models/grpo_models/prompt.pt
     python scripts/eval_hrl.py --structure-model models/ppo_models/structure.pt --prompt-model models/ppo_models/prompt.pt --episodes 50
+    
+    # API mode (must match training configuration)
+    python scripts/eval_hrl.py --structure-model models/ppo_models/structure.pt --prompt-model models/ppo_models/prompt.pt --api --api-model openai/gpt-4o
 """
 import sys
 import os
@@ -105,7 +109,7 @@ class StructurePolicy(nn.Module):
                 actions.append(torch.argmax(probs, dim=-1).item())
             else:
                 actions.append(Categorical(probs).sample().item())
-        return np.array(actions)
+        return np.array(actions, dtype=np.int64)
 
 
 def load_structure_policy(path, device="cpu"):
@@ -141,10 +145,10 @@ def load_prompt_policy(path, device="cpu"):
 
 # EVALUATION
 def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20, 
-             deterministic=True, verbose=True):
+             deterministic=True, verbose=True, use_api=False, api_model=None, hf_model=None):
     """Evaluate dual policy system."""
-    structure_env = StructureEnv(cfg, is_eval=True)
-    prompt_env = PromptEnv(cfg, is_eval=True)
+    structure_env = StructureEnv(cfg, is_eval=True, use_api=use_api, api_model=api_model, hf_model=hf_model)
+    prompt_env = PromptEnv(cfg, is_eval=True, use_api=use_api, api_model=api_model, hf_model=hf_model)
     
     results = {"correct": [], "workflows": [], "tokens": [], "rewards": [], "tools": []}
     
@@ -158,6 +162,10 @@ def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20,
         with torch.no_grad():
             struct_action = structure_policy.get_action(struct_obs, deterministic)
         
+        # Ensure action is numpy array
+        if not isinstance(struct_action, np.ndarray):
+            struct_action = np.array(struct_action, dtype=np.int64)
+        
         _, _, _, _, struct_exec_info = structure_env.step(struct_action)
         
         # Setup prompt env
@@ -170,28 +178,45 @@ def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20,
         
         # Prompt rollout
         prompt_obs, _ = prompt_env.reset()
-        total_reward = 0.0
+        accumulated_reward = 0.0
         done = False
         
         while not done:
             with torch.no_grad():
                 action = prompt_policy.get_action(prompt_obs, deterministic)
-            prompt_obs, reward, done, _, info = prompt_env.step(action)
-            total_reward += reward
+            prompt_obs, step_reward, done, _, info = prompt_env.step(action)
+            accumulated_reward += step_reward
+        
+        # Compute final reward (matching training logic from base.py)
+        correct = info.get("correct", False)
+        reward_scale = 1.0  # Default reward scale
+        tool_bonus = -0.05  # Default tool bonus (negative = penalty)
+        
+        # Final reward calculation (matches BaseTrainer.run_episode)
+        final_reward = (1.0 if correct else 0.0) * 5.0 * reward_scale
+        final_reward += accumulated_reward
+        final_reward -= info.get("steps_taken", 1) * cfg.COST_PER_STEP
+        final_reward += info.get("tools_used", 0) * tool_bonus
+        
+        max_tokens = 2048 + 1024 + 512  # reasoner_high + verifier_high + answerer_high
+        final_reward -= (info.get("total_tokens", 256) / max_tokens) * cfg.COST_TOKEN_BUDGET
         
         # Record
-        correct = info.get("correct", False)
         results["correct"].append(correct)
         results["workflows"].append(struct_exec_info["workflow"])
         results["tokens"].append(info.get("total_tokens", 0))
-        results["rewards"].append(total_reward)
+        results["rewards"].append(final_reward)
         results["tools"].append(info.get("tools_used", 0))
         
         if verbose:
             status = "✓" if correct else "✗"
             q = struct_info["question"][:50] + "..." if len(struct_info["question"]) > 50 else struct_info["question"]
+            # Decode tools for display
+            agent1_tools = decode_tools(struct_exec_info["structure"]["agent1_tools_idx"])
+            agent2_tools = decode_tools(struct_exec_info["structure"]["agent2_tools_idx"])
+            tools_str = f"A1:{'+'.join(agent1_tools) if agent1_tools else 'none'}, A2:{'+'.join(agent2_tools) if agent2_tools else 'none'}"
             print(f"  [{ep+1:3d}] {status} | {struct_exec_info['workflow']:20s} | "
-                  f"Tools: {info.get('tools_used', 0)} | Reward: {total_reward:.2f}")
+                  f"Tools: {info.get('tools_used', 0)} ({tools_str}) | Reward: {final_reward:.2f}")
     
     # Summary
     accuracy = np.mean(results["correct"]) * 100
@@ -224,6 +249,15 @@ def parse_args():
     parser.add_argument("--stochastic", action="store_true")
     parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"])
     parser.add_argument("--quiet", action="store_true")
+    
+    # API configuration (must match training configuration)
+    parser.add_argument("--api", action="store_true", default=False,
+                       help="Use OpenRouter API instead of local HuggingFace models (must match training mode)")
+    parser.add_argument("--api-model", type=str, default=None,
+                       help="OpenRouter model ID (e.g., 'openai/gpt-4o', 'anthropic/claude-3.5-sonnet'). Defaults to OPENROUTER_MODEL env var")
+    parser.add_argument("--hf-model", type=str, default=None,
+                       help="HuggingFace model name (e.g., 'Qwen/Qwen2.5-7B-Instruct'). Defaults to LLM_MODEL_NAME from config")
+    
     return parser.parse_args()
 
 
@@ -240,6 +274,13 @@ def main():
     
     print(f"  Structure: {args.structure_model}")
     print(f"  Prompt:    {args.prompt_model}")
+    if args.api:
+        model_name = args.api_model or os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")
+        print(f"  API Mode:  {model_name}")
+    else:
+        from configs.base import LLM_MODEL_NAME
+        model_name = args.hf_model or getattr(cfg, "LLM_MODEL_NAME", LLM_MODEL_NAME)
+        print(f"  HF Model:  {model_name}")
     print("=" * 60)
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -252,7 +293,10 @@ def main():
         structure_policy, prompt_policy, cfg,
         num_episodes=args.episodes,
         deterministic=not args.stochastic,
-        verbose=not args.quiet
+        verbose=not args.quiet,
+        use_api=args.api,
+        api_model=args.api_model,
+        hf_model=args.hf_model
     )
 
 

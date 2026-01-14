@@ -353,10 +353,10 @@ class MultiDiscretePolicyGRPO(nn.Module):
                     mask = torch.tensor(action_mask[i], dtype=torch.bool, device=logits.device)
                     logits = logits.masked_fill(~mask, float('-inf'))
                 
-            probs = torch.softmax(logits, dim=-1)
-            action = torch.argmax(probs, dim=-1) if deterministic else Categorical(probs).sample()
-            actions.append(action.item())
-            log_probs.append(torch.log(probs.gather(1, action.unsqueeze(-1)) + 1e-8).item())
+                probs = torch.softmax(logits, dim=-1)
+                action = torch.argmax(probs, dim=-1) if deterministic else Categorical(probs).sample()
+                actions.append(action.item())
+                log_probs.append(torch.log(probs.gather(1, action.unsqueeze(-1)) + 1e-8).item())
         
         return np.array(actions), sum(log_probs), 0.0  # No value
     
@@ -622,14 +622,44 @@ class BaseTrainer(ABC):
         
         # Compute final reward
         correct = info.get("correct", False)
+        tools_used = info.get("tools_used", 0)
+        
+        # Base correctness reward
         final_reward = (1.0 if correct else 0.0) * 5.0 * self.reward_scale
         final_reward += accumulated_reward
         final_reward -= info.get("steps_taken", 1) * self.cfg.COST_PER_STEP
         
-        tools_used = info.get("tools_used", 0)
-        final_reward += tools_used * self.tool_bonus
+        # Check if tools were selected (from structure action)
+        agent1_tools_list = self._decode_tools(agent1_tools_idx)
+        agent2_tools_list = self._decode_tools(agent2_tools_idx)
+        num_tools_selected = len(agent1_tools_list) + len(agent2_tools_list)
+        tools_selected = num_tools_selected > 0
         
-        max_tokens = 1024 + 512 + 256
+        # Tool usage reward: encourage tool usage, especially when it leads to correct answers
+        if tools_used > 0:
+            # Base bonus for using tools
+            final_reward += tools_used * self.tool_bonus
+            # Extra bonus if tools were used AND answer is correct (tools helped!)
+            if correct:
+                final_reward += tools_used * 0.2  # Additional 0.2 per tool when correct
+            
+            # Bonus for using a high percentage of selected tools
+            if tools_selected:
+                tool_usage_ratio = tools_used / num_tools_selected
+                if tool_usage_ratio >= 0.5:  # Used at least half of selected tools
+                    final_reward += 0.3 * tool_usage_ratio  # Up to 0.3 bonus for full usage
+        elif tools_selected:
+            # STRONG penalty for selecting tools but not using them
+            # This is the key issue: tools are selected but LLM doesn't use them
+            # Penalty is proportional to number of tools selected (more tools = bigger waste)
+            unused_tools_penalty = 0.5 * num_tools_selected  # 0.5 per unused tool
+            final_reward -= unused_tools_penalty
+            
+            # Additional penalty if answer is wrong (tools would have helped!)
+            if not correct:
+                final_reward -= 0.3 * num_tools_selected  # Extra 0.3 per tool when wrong
+        
+        max_tokens = 2048 + 1024 + 512  # reasoner_high + verifier_high + answerer_high
         final_reward -= (info.get("total_tokens", 256) / max_tokens) * self.cfg.COST_TOKEN_BUDGET
         
         # Update metrics
@@ -686,6 +716,24 @@ class BaseTrainer(ABC):
         """Algorithm-specific policy update."""
         pass
     
+    def _get_model_name_for_filename(self):
+        """Get model name for use in filename (sanitized)."""
+        if self.use_api:
+            model_name = self.api_model or os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")
+        else:
+            if self.hf_model:
+                model_name = self.hf_model
+            else:
+                try:
+                    from configs.base import LLM_MODEL_NAME
+                    model_name = LLM_MODEL_NAME
+                except:
+                    model_name = "unknown"
+        
+        # Sanitize model name for filename: replace / with -, replace spaces with _
+        model_name_safe = model_name.replace("/", "-").replace(" ", "_")
+        return model_name_safe
+    
     def train(self, num_episodes: int = 1000, batch_size: int = 32,
               log_every: int = 50, save_every: int = 2000,
               save_log_every: int = 500, **kwargs):
@@ -695,10 +743,12 @@ class BaseTrainer(ABC):
         
         timestamp = int(time.time())
         algo = self.algorithm.value
-        self.log_path = os.path.join(self.log_dir, f"training_log_{algo}_{self.cfg.DATASET_NAME}_{timestamp}.json")
+        model_name = self._get_model_name_for_filename()
+        self.log_path = os.path.join(self.log_dir, f"training_log_{model_name}_{algo}_{self.cfg.DATASET_NAME}_{timestamp}.json")
         
         print("\n" + "=" * 70)
         print(f"HIERARCHICAL TRAINING ({algo.upper()})")
+        print(f"Log will be saved to: {self.log_path} (every {save_log_every} episodes)")
         print("=" * 70)
         self._print_config(num_episodes, batch_size, kwargs)
         print("=" * 70 + "\n")
@@ -731,7 +781,8 @@ class BaseTrainer(ABC):
                 # Show tool selection stats
                 recent_episodes = self.episode_logs[-log_every:] if len(self.episode_logs) >= log_every else self.episode_logs
                 tools_selected = sum(1 for e in recent_episodes if e.get("agent1_tools") or e.get("agent2_tools"))
-                print(f"\n[{ep+1}/{num_episodes}] Acc: {acc:.1f}% | Reward: {avg_rew:.3f} | Tools Used: {tools:.2f} | Tools Selected: {tools_selected}/{len(recent_episodes)}")
+                correct_count = sum(1 for e in recent_episodes if e.get("correct", False))
+                print(f"\n[{ep+1}/{num_episodes}] Acc: {acc:.1f}% ({self.correct_count}/{self.episode_count}) | Reward: {avg_rew:.3f} | Tools Used: {tools:.2f} | Tools Selected: {tools_selected}/{len(recent_episodes)} | Recent Correct: {correct_count}/{len(recent_episodes)}")
             
             if (ep + 1) % save_every == 0:
                 self.save_models(f"_ep{ep+1}")
@@ -759,9 +810,29 @@ class BaseTrainer(ABC):
     
     def _save_log(self):
         if self.log_path and self.episode_logs:
+            print(f"\n[LOG] Saving log to {self.log_path} ({len(self.episode_logs)} episodes)...")
             rewards = [e["reward"] for e in self.episode_logs]
+            
+            # Determine model information
+            if self.use_api:
+                model_type = "API"
+                model_name = self.api_model or os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")
+            else:
+                model_type = "HuggingFace"
+                if self.hf_model:
+                    model_name = self.hf_model
+                else:
+                    # Fallback to config default
+                    try:
+                        from configs.base import LLM_MODEL_NAME
+                        model_name = LLM_MODEL_NAME
+                    except:
+                        model_name = "unknown"
+            
             summary = {
                 "algorithm": self.algorithm.value.upper(),
+                "model_type": model_type,
+                "model_name": model_name,
                 "total_episodes": len(self.episode_logs),
                 "accuracy": sum(1 for e in self.episode_logs if e["correct"]) / len(self.episode_logs),
                 "avg_reward": float(np.mean(rewards)),

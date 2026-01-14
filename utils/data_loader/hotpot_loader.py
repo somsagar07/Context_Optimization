@@ -21,6 +21,10 @@ class HotPotQADataset(BaseDataset):
         pred = prediction.lower().strip()
         truth = ground_truth.lower().strip()
         
+        # Empty prediction is always incorrect
+        if not pred:
+            return 0.0
+        
         if truth in pred or pred in truth:
             return 1.0
         return 0.0

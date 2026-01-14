@@ -40,6 +40,8 @@ from algorithms.base import MultiDiscretePolicyGRPO, PolicyNetworkGRPO
 from algorithms.ppo import MultiDiscretePolicyPPO, PolicyNetworkPPO
 from env.structure_env import StructureEnv
 from env.prompt_env import PromptEnv
+from agents_system.worker import LLMWorker
+from prompts import library
 
 
 def encode_tools(tools_list):
@@ -65,8 +67,18 @@ def decode_budget(budget_str):
 
 def decode_workflow(workflow_str):
     """Convert workflow string to index."""
-    mapping = {"Direct": 0, "Reason+Ans": 1, "Reason+Verify+Ans": 2}
-    return mapping.get(workflow_str, 1)
+    mapping = {
+        "Direct": 0,
+        "Reason+Ans": 1,
+        "Reason+Verify+Ans": 2,
+        "Routing": 3,
+        "Parallel-Sectioning": 4,
+        "Parallel-Voting": 5,
+        "Orchestrator-Workers": 6,
+        "Evaluator-Optimizer": 7,
+        "Autonomous-Agent": 8
+    }
+    return mapping.get(workflow_str, 1)  # Default to Reason+Ans if unknown
 
 
 def load_correct_episodes_from_log(log_path, min_reward=4.0):
@@ -95,9 +107,23 @@ def load_correct_episodes_from_log(log_path, min_reward=4.0):
     return correct_episodes
 
 
-def train_structure_policy_sft(structure_policy, episodes, structure_env, epochs=3, lr=1e-4, device="cuda"):
-    """Train structure policy on correct RL episodes (one episode at a time)."""
-    print(f"\n=== Training Structure Policy (Post-RL SFT) ===")
+def train_structure_policy_sft(structure_policy, episodes, structure_env, epochs=3, lr=1e-4, device="cuda", entropy_coef=0.01):
+    """
+    Train structure policy on correct RL episodes with entropy regularization to maintain diversity.
+    
+    Args:
+        entropy_coef: Entropy regularization coefficient to prevent overfitting to most common workflows
+    """
+    print(f"\n=== Training Structure Policy (Post-RL SFT, entropy_coef={entropy_coef}) ===")
+    
+    # Analyze workflow distribution in filtered episodes
+    workflow_counts = {}
+    for ep in episodes:
+        wf = ep.get("workflow", "Reason+Ans")
+        workflow_counts[wf] = workflow_counts.get(wf, 0) + 1
+    print(f"Workflow distribution in filtered episodes:")
+    for wf, count in sorted(workflow_counts.items(), key=lambda x: -x[1]):
+        print(f"  {wf}: {count} ({count/len(episodes)*100:.1f}%)")
     
     optimizer = optim.Adam(structure_policy.parameters(), lr=lr)
     structure_policy.train()
@@ -106,6 +132,7 @@ def train_structure_policy_sft(structure_policy, episodes, structure_env, epochs
     losses = []
     for epoch in range(epochs):
         epoch_loss = 0.0
+        epoch_entropy_loss = 0.0
         num_updates = 0
         
         # Shuffle episodes for each epoch
@@ -126,9 +153,10 @@ def train_structure_policy_sft(structure_policy, episodes, structure_env, epochs
             
             # Decode target action
             workflow = decode_workflow(episode.get("workflow", "Reason+Ans"))
-            reasoner_tools = encode_tools(episode.get("reasoner_tools", []))
+            # Log uses agent1_tools/agent2_tools, but also check for reasoner_tools/verifier_tools for compatibility
+            reasoner_tools = encode_tools(episode.get("agent1_tools", episode.get("reasoner_tools", [])))
             reasoner_budget = decode_budget(episode.get("reasoner_budget", "Mid"))
-            verifier_tools = encode_tools(episode.get("verifier_tools", []))
+            verifier_tools = encode_tools(episode.get("agent2_tools", episode.get("verifier_tools", [])))
             verifier_budget = decode_budget(episode.get("verifier_budget", "Mid"))
             answerer_budget = decode_budget(episode.get("answerer_budget", "Mid"))
             
@@ -155,45 +183,59 @@ def train_structure_policy_sft(structure_policy, episodes, structure_env, epochs
             
             # Compute loss for each action dimension
             total_loss = 0.0
+            total_entropy = 0.0
             for i, logits in enumerate(action_logits_list):
                 target = torch.LongTensor([target_action[i]]).to(device)
                 total_loss += criterion(logits, target)
+                
+                # Compute entropy for regularization (encourages diversity)
+                probs = torch.softmax(logits, dim=-1)
+                entropy = -(probs * torch.log(probs + 1e-8)).sum(dim=-1)
+                total_entropy += entropy.mean()
             
             # Average loss across action dimensions
             loss = total_loss / len(action_logits_list)
+            entropy_loss = -total_entropy / len(action_logits_list)  # Negative because we want to maximize entropy
+            
+            # Combined loss: classification loss - entropy regularization
+            combined_loss = loss - entropy_coef * entropy_loss
             
             # Backward pass
             optimizer.zero_grad()
-            loss.backward()
+            combined_loss.backward()
             torch.nn.utils.clip_grad_norm_(structure_policy.parameters(), 0.5)
             optimizer.step()
             
             epoch_loss += loss.item()
+            epoch_entropy_loss += entropy_loss.item()
             num_updates += 1
         
         avg_loss = epoch_loss / num_updates if num_updates > 0 else 0.0
+        avg_entropy = epoch_entropy_loss / num_updates if num_updates > 0 else 0.0
         losses.append(avg_loss)
-        print(f"Epoch {epoch+1} average loss: {avg_loss:.4f}")
+        print(f"Epoch {epoch+1} average loss: {avg_loss:.4f}, entropy: {avg_entropy:.4f}")
     
     structure_policy.eval()
     return losses
 
 
-def train_prompt_policy_sft(prompt_policy, episodes, prompt_env, epochs=3, lr=1e-5, device="cuda"):
+def train_prompt_policy_sft(prompt_policy, episodes, prompt_env, epochs=3, lr=5e-6, device="cuda"):
     """
     Train prompt policy on correct RL episodes (one step at a time).
     
-    Uses lower default learning rate (1e-5) because:
+    Uses lower default learning rate (5e-6) because:
     - Prompt policy processes ~76K steps per epoch (vs 11K for structure)
     - Fine-tuning requires gentler updates to avoid destabilizing pretrained weights
     - Sequential nature means errors compound across steps
+    - Lowered from 1e-5 to reduce loss spikes
     """
     print(f"\n=== Training Prompt Policy (Post-RL SFT, LR={lr:.2e}) ===")
     
     optimizer = optim.Adam(prompt_policy.parameters(), lr=lr)
     # Add learning rate scheduler to reduce LR if loss plateaus/increases
+    # Reduced patience from 2 to 1 to react faster when loss increases
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=0.5, patience=2, min_lr=1e-6
+        optimizer, mode='min', factor=0.5, patience=1, min_lr=1e-6
     )
     
     prompt_policy.train()
@@ -230,9 +272,10 @@ def train_prompt_policy_sft(prompt_policy, episodes, prompt_env, epochs=3, lr=1e
             
             # Decode structure from episode
             workflow = decode_workflow(episode.get("workflow", "Reason+Ans"))
-            reasoner_tools = encode_tools(episode.get("reasoner_tools", []))
+            # Log uses agent1_tools/agent2_tools, but also check for reasoner_tools/verifier_tools for compatibility
+            reasoner_tools = encode_tools(episode.get("agent1_tools", episode.get("reasoner_tools", [])))
             reasoner_budget = decode_budget(episode.get("reasoner_budget", "Mid"))
-            verifier_tools = encode_tools(episode.get("verifier_tools", []))
+            verifier_tools = encode_tools(episode.get("agent2_tools", episode.get("verifier_tools", [])))
             verifier_budget = decode_budget(episode.get("verifier_budget", "Mid"))
             answerer_budget = decode_budget(episode.get("answerer_budget", "Mid"))
             
@@ -243,16 +286,17 @@ def train_prompt_policy_sft(prompt_policy, episodes, prompt_env, epochs=3, lr=1e
                 embedding=prompt_env.worker.get_embedding(question),
                 structure={
                     "workflow_depth": workflow,
-                    "reasoner_tools_idx": reasoner_tools,
-                    "reasoner_budget_idx": reasoner_budget,
-                    "verifier_tools_idx": verifier_tools,
-                    "verifier_budget_idx": verifier_budget,
+                    "agent1_tools_idx": reasoner_tools,
+                    "agent1_budget_idx": reasoner_budget,
+                    "agent2_tools_idx": verifier_tools,
+                    "agent2_budget_idx": verifier_budget,
                     "answerer_budget_idx": answerer_budget,
                 }
             )
             
             # IMPORTANT: Reset prompt environment state for this episode
-            if workflow == 0:
+            # Direct (0) and Parallel-Voting (5) don't need reasoner prompts
+            if workflow == 0 or workflow == 5:
                 prompt_env.prompt_stage = prompt_env.PROMPT_STAGE_ANSWERER
             else:
                 prompt_env.prompt_stage = prompt_env.PROMPT_STAGE_REASONER
@@ -339,7 +383,8 @@ def train_prompt_policy_sft(prompt_policy, episodes, prompt_env, epochs=3, lr=1e
                 num_updates += 1
             
             # Collect and train on reasoner prompt steps
-            if workflow >= 1 and reasoner_prompts:
+            # Workflows that use reasoner: 1, 2, 3, 4, 6, 7, 8 (NOT 0 or 5)
+            if workflow >= 1 and workflow != 5 and reasoner_prompts:
                 prompt_env.prompt_stage = prompt_env.PROMPT_STAGE_REASONER
                 prompt_env.prompt_step = 0
                 for prompt_idx in reasoner_prompts:
@@ -349,7 +394,8 @@ def train_prompt_policy_sft(prompt_policy, episodes, prompt_env, epochs=3, lr=1e
                     prompt_env.prompt_step += 1
             
             # Collect and train on verifier prompt steps
-            if workflow == 2 and verifier_prompts:
+            # Workflows that use verifier: 2, 7 (Reason+Verify+Ans and Evaluator-Optimizer)
+            if workflow in [2, 7] and verifier_prompts:
                 prompt_env.prompt_stage = prompt_env.PROMPT_STAGE_VERIFIER
                 prompt_env.prompt_step = 0
                 for prompt_idx in verifier_prompts:
@@ -396,15 +442,24 @@ def main():
     # parser.add_argument("--rl-model-dir", type=str, required=True, help="Directory with RL-trained models")
     parser.add_argument("--epochs", type=int, default=3, help="SFT training epochs")
     parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate for structure policy")
-    parser.add_argument("--prompt-lr", type=float, default=1e-5, help="Learning rate for prompt policy (default: 1e-5, lower due to more training steps)")
+    parser.add_argument("--prompt-lr", type=float, default=5e-6, help="Learning rate for prompt policy (default: 5e-6, lowered to reduce loss spikes)")
+    parser.add_argument("--entropy-coef", type=float, default=0.01, help="Entropy regularization coefficient for structure policy (prevents overfitting to most common workflow, default: 0.01)")
     parser.add_argument("--min-reward", type=float, default=4.0, help="Minimum reward for filtering")
     parser.add_argument("--output-dir", type=str, default="models/sft_posttrained", help="Output directory")
     parser.add_argument("--device", type=str, default=None, help="Device (cuda/cpu)")
-    parser.add_argument("--algorithm", type=str, default="grpo", choices=["ppo", "grpo"], help="Model architecture to use (matches your saved checkpoint)")
+    parser.add_argument("--algorithm", type=str, default="grpo", choices=["ppo", "grpo"], help="Model architecture to use. Auto-detected from checkpoint if available, otherwise uses this value (default: grpo)")
     
     parser.add_argument("--prompt_model_path", type=str, required=True, help="Path to the prompt policy checkpoint (e.g., models/ppo_models/prompt_policy_...pt)")
     parser.add_argument("--structure_model_path", type=str, required=True, help="Path to the structure policy checkpoint (e.g., models/ppo_models/structure_policy_...pt)")
-    parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia"], help="Dataset name (overrides config)")
+    parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"], help="Dataset name (overrides config)")
+    
+    # API configuration (must match training configuration)
+    parser.add_argument("--api", action="store_true", default=False,
+                       help="Use OpenRouter API instead of local HuggingFace models (must match training mode)")
+    parser.add_argument("--api-model", type=str, default=None,
+                       help="OpenRouter model ID (e.g., 'openai/gpt-4o', 'anthropic/claude-3.5-sonnet'). Defaults to OPENROUTER_MODEL env var")
+    parser.add_argument("--hf-model", type=str, default=None,
+                       help="HuggingFace model name (e.g., 'Qwen/Qwen2.5-7B-Instruct'). Defaults to LLM_MODEL_NAME from config")
     
     args = parser.parse_args()
     
@@ -422,12 +477,59 @@ def main():
         cfg.DATASET_NAME = args.dataset
         print(f"Overriding config dataset with: {cfg.DATASET_NAME}")
     
+    # Update Prompt Atoms based on dataset (same as train.py)
+    print(f"Checking prompt atoms for dataset: {cfg.DATASET_NAME}...")
+    atoms_path = library._get_atoms_path(cfg.DATASET_NAME)
+    
+    # 1. Check if atoms exist (Fast path)
+    if os.path.exists(atoms_path):
+        print(f"  Found existing atoms at {atoms_path}. Loading...")
+        library.load_or_create_atoms(cfg.DATASET_NAME, worker=None)
+    
+    else:
+        print(f"  Atoms not found. Initializing temporary worker to generate them...")
+        
+        # Create temp worker (use API if specified, otherwise HuggingFace)
+        import gc
+        
+        if args.api:
+            from agents_system.worker import OpenRouterWorker
+            temp_worker = OpenRouterWorker(model_name=args.api_model)
+        else:
+            # Loading bigger model for better atom generation
+            temp_worker = LLMWorker(model_name=args.hf_model or "Qwen/Qwen2.5-7B-Instruct")
+        
+        library.load_or_create_atoms(cfg.DATASET_NAME, worker=temp_worker)
+        
+        # CRITICAL: Free memory immediately
+        print("  Generation complete. Freeing memory for training...")
+        del temp_worker
+        gc.collect()
+        torch.cuda.empty_cache()
+    
+    print(f"  Active Atoms: {library.NUM_ATOMS}")
+    
     # Load correct episodes from log
     all_episodes = load_correct_episodes_from_log(args.rl_log, min_reward=args.min_reward)
     
     if len(all_episodes) == 0:
         print("Error: No high-quality episodes found. Try lowering --min-reward threshold.")
         return
+    
+    # Check if log indicates API mode was used during training
+    with open(args.rl_log, 'r') as f:
+        log_data = json.load(f)
+    log_model_type = log_data.get("model_type", None)
+    log_model_name = log_data.get("model_name", None)
+    
+    if log_model_type:
+        print(f"\n⚠️  Training log indicates model was trained with: {log_model_type} ({log_model_name})")
+        if log_model_type == "API" and not args.api:
+            print(f"   WARNING: You're running SFT with HuggingFace mode (--api not set), but training used API mode!")
+            print(f"   Consider adding --api flag to match training configuration.")
+        elif log_model_type == "HuggingFace" and args.api:
+            print(f"   WARNING: You're running SFT with API mode (--api set), but training used HuggingFace mode!")
+            print(f"   Consider removing --api flag to match training configuration.")
     
     # Find RL-trained models (look for _final.pt files)
     # struct_pattern = os.path.join(args.rl_model_dir, "*structure*_final.pt")
@@ -469,7 +571,37 @@ def main():
     struct_checkpoint = torch.load(struct_path, map_location=device, weights_only=False)
     prompt_checkpoint = torch.load(prompt_path, map_location=device, weights_only=False)
     
-    algorithm = args.algorithm.lower()
+    # Auto-detect algorithm from checkpoint
+    user_specified = args.algorithm.lower()
+    detected_algorithm = None
+    
+    # Try to detect from checkpoint metadata
+    if "algorithm" in struct_checkpoint:
+        detected_algorithm = struct_checkpoint["algorithm"].lower()
+    elif "algorithm" in prompt_checkpoint:
+        detected_algorithm = prompt_checkpoint["algorithm"].lower()
+    else:
+        # Fallback: check for value_head in state_dict (PPO has it, GRPO doesn't)
+        struct_state = struct_checkpoint.get("model_state_dict", struct_checkpoint)
+        has_value_head = any("value_head" in key for key in struct_state.keys())
+        detected_algorithm = "ppo" if has_value_head else "grpo"
+    
+    # Determine which algorithm to use
+    if user_specified and detected_algorithm:
+        if user_specified != detected_algorithm:
+            print(f"⚠️  WARNING: You specified --algorithm {user_specified.upper()}, but checkpoint contains {detected_algorithm.upper()} model!")
+            print(f"   Using detected algorithm: {detected_algorithm.upper()}")
+            algorithm = detected_algorithm
+        else:
+            algorithm = user_specified
+            print(f"Using algorithm: {algorithm.upper()} (matches checkpoint)")
+    elif detected_algorithm:
+        algorithm = detected_algorithm
+        print(f"Auto-detected algorithm from checkpoint: {algorithm.upper()}")
+    else:
+        # Fallback to default if detection fails
+        algorithm = user_specified or "grpo"
+        print(f"Using algorithm: {algorithm.upper()} (default/fallback)")
     
     if algorithm == "ppo":
         # Initialize policies with same architecture
@@ -499,9 +631,22 @@ def main():
     prompt_policy.load_state_dict(prompt_checkpoint["model_state_dict"])
     print("✓ Models loaded")
     
-    # Create environments for observation generation
-    structure_env = StructureEnv(cfg)
-    prompt_env = PromptEnv(cfg)
+    # Create environments for observation generation (with API support if needed)
+    print(f"\n{'='*60}")
+    print("Initializing environments...")
+    if args.api:
+        model_name = args.api_model or os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")
+        print(f"  Mode: API (OpenRouter)")
+        print(f"  Model: {model_name}")
+    else:
+        from configs.base import LLM_MODEL_NAME
+        model_name = args.hf_model or getattr(cfg, "LLM_MODEL_NAME", LLM_MODEL_NAME)
+        print(f"  Mode: HuggingFace")
+        print(f"  Model: {model_name}")
+    print(f"{'='*60}")
+    
+    structure_env = StructureEnv(cfg, use_api=args.api, api_model=args.api_model, hf_model=args.hf_model)
+    prompt_env = PromptEnv(cfg, use_api=args.api, api_model=args.api_model, hf_model=args.hf_model)
     
     # Train both policies
     print("\n" + "="*60)
@@ -510,7 +655,7 @@ def main():
     
     struct_losses = train_structure_policy_sft(
         structure_policy, all_episodes, structure_env, 
-        epochs=args.epochs, lr=args.lr, device=device
+        epochs=args.epochs, lr=args.lr, device=device, entropy_coef=args.entropy_coef
     )
     prompt_losses = train_prompt_policy_sft(
         prompt_policy, all_episodes, prompt_env,

@@ -274,7 +274,7 @@ class MultiStepAgentEnv(gym.Env):
             reward -= execution_info["tools_count"] * self.cfg.COST_TOOL_USAGE
             
             # Token penalty (normalized)
-            max_tokens = 1024 + 512 + 256
+            max_tokens = 2048 + 1024 + 512  # reasoner_high + verifier_high + answerer_high
             token_penalty = (execution_info["total_tokens"] / max_tokens) * self.cfg.COST_TOKEN_BUDGET
             reward -= token_penalty
             

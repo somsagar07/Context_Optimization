@@ -8,7 +8,7 @@ Supports both PPO and GRPO algorithms:
 Usage:
     python train.py --algorithm grpo --episodes 20000
     python train.py --algorithm ppo --episodes 20000
-    python train.py --algorithm grpo --episodes 20000 --entropy-coef 0.08 --tool-bonus 0.02
+    python train.py --algorithm grpo --episodes 20000 --entropy-coef 0.08 --tool-bonus 0.15
     python train.py --algorithm grpo --episodes 20000 --pretrain-structure models/sft_posttrained/structure_policy_sft.pt --pretrain-prompt models/sft_posttrained/prompt_policy_sft.pt
 """
 import argparse
@@ -86,7 +86,7 @@ def parse_args():
     
     # Reward tuning
     parser.add_argument("--reward-scale", type=float, default=1.0, help="Scale correctness reward")
-    parser.add_argument("--tool-bonus", type=float, default=-0.05, help="Bonus per tool (+ or -)")
+    parser.add_argument("--tool-bonus", type=float, default=0.1, help="Bonus per tool used (positive encourages tool usage, default: 0.1)")
     
     # Action masking
     parser.add_argument("--mask", action="store_true", default=False,
@@ -105,6 +105,7 @@ def parse_args():
     # Logging
     parser.add_argument("--log-every", type=int, default=50, help="Log frequency")
     parser.add_argument("--save-every", type=int, default=2000, help="Checkpoint frequency")
+    parser.add_argument("--save-log-every", type=int, default=100, help="Save log file frequency (default: 100)")
     
     # Pretrained models (e.g., from SFT)
     parser.add_argument("--pretrain-structure", type=str, default=None,
@@ -188,6 +189,7 @@ def main():
         batch_size=args.batch_size,
         log_every=args.log_every,
         save_every=args.save_every,
+        save_log_every=args.save_log_every,
         # Algorithm params
         gamma=cfg.PROMPT_GAMMA,
         clip_epsilon=args.clip_epsilon,
@@ -206,7 +208,7 @@ def main():
     struct_path, prompt_path = trainer.save_models("_final")
     
     print(f"\nTo evaluate:")
-    print(f"  python scripts/eval_hrl.py --structure-model {struct_path} --prompt-model {prompt_path}")
+    print(f"  python scripts/eval_hrl.py --structure-model {struct_path} --prompt-model {prompt_path} ")
 
 
 if __name__ == "__main__":
