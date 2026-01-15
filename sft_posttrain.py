@@ -439,6 +439,8 @@ def main():
     parser = argparse.ArgumentParser(description="SFT Post-training from RL logs")
     parser.add_argument("--config", type=str, default="hierarchical", help="Config to use")
     parser.add_argument("--rl-log", type=str, required=True, help="Path to RL training log JSON")
+    parser.add_argument("--dataset", type=str, required=True, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"], help="Dataset name (overrides config)")
+
     # parser.add_argument("--rl-model-dir", type=str, required=True, help="Directory with RL-trained models")
     parser.add_argument("--epochs", type=int, default=3, help="SFT training epochs")
     parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate for structure policy")
@@ -451,7 +453,6 @@ def main():
     
     parser.add_argument("--prompt_model_path", "--prompt-model", type=str, required=True, help="Path to the prompt policy checkpoint (e.g., models/ppo_models/prompt_policy_...pt)")
     parser.add_argument("--structure_model_path", "--structure-model", type=str, required=True, help="Path to the structure policy checkpoint (e.g., models/ppo_models/structure_policy_...pt)")
-    parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"], help="Dataset name (overrides config)")
     
     # API configuration (must match training configuration)
     parser.add_argument("--api", action="store_true", default=False,

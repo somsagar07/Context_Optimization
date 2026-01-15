@@ -257,10 +257,11 @@ def parse_args():
     parser.add_argument("--structure-model", type=str, required=True)
     parser.add_argument("--prompt-model", type=str, required=True)
     parser.add_argument("--episodes", type=int, default=20)
+    parser.add_argument("--dataset", type=str, required=True, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"])
+
     parser.add_argument("--stochastic", action="store_true", help="Sample from policy distribution instead of argmax")
     parser.add_argument("--temperature", type=float, default=1.0, 
                        help="Softmax temperature: <1.0=sharper (deterministic), >1.0=flatter (diverse)")
-    parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"])
     parser.add_argument("--quiet", action="store_true")
     
     # API configuration (must match training configuration)
