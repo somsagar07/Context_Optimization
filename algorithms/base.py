@@ -7,6 +7,7 @@ Contains:
 - BaseTrainer with shared logic
 """
 import os
+import re
 import time
 import json
 import numpy as np
@@ -434,6 +435,15 @@ class BaseTrainer(ABC):
         self.api_model = api_model
         self.hf_model = hf_model
         
+        self.model_name = api_model if use_api else hf_model
+        if self.model_name is None:
+            try:
+                from configs.base import LLM_MODEL_NAME
+                self.model_name = LLM_MODEL_NAME
+            except:
+                self.model_name = "default"
+                print(f"Warning: LLM_MODEL_NAME not found in configs.base.py, using default model name: {self.model_name}")
+        
         # Create environments
         self.structure_env = StructureEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
         self.prompt_env = PromptEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
@@ -468,6 +478,21 @@ class BaseTrainer(ABC):
         # Reward config
         self.reward_scale = 1.0
         self.tool_bonus = 0.0
+    
+    def _sanitize_folder_name(self, model_name: str) -> str:
+        """Sanitize model name for logging."""
+        # Split from / and get last part
+        model_name = model_name.split('/')[-1]
+        
+        sanitized = re.sub(r'[<>:"/\\|?*]', '_', model_name)
+        sanitized = sanitized.replace(' ', '_')
+        sanitized = sanitized.replace('.', '_')
+        sanitized = sanitized.strip('. ')
+        sanitized = re.sub(r'_+', '_', sanitized)
+        
+        if not sanitized:
+            return "default"
+        return sanitized
     
     def _init_optimizers(self, struct_lr=None, prompt_lr=None):
         """
@@ -851,7 +876,9 @@ class BaseTrainer(ABC):
                 json.dump(summary, f, indent=2)
     
     def save_models(self, suffix: str = ""):
-        model_dir = f"models/{self.algorithm.value}_models"
+        print(f"Saving models for {self.model_name}")
+        model_folder = self._sanitize_folder_name(self.model_name)
+        model_dir = os.path.join("models", self.algorithm.value, self.cfg.DATASET_NAME, model_folder)
         os.makedirs(model_dir, exist_ok=True)
         
         timestamp = int(time.time())
