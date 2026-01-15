@@ -46,7 +46,7 @@ except Exception:
 
 from configs import load_config
 from algorithms import Algorithm, PPOTrainer, GRPOTrainer
-from agents_system.worker import LLMWorker
+from agents_system.worker import LLMWorker, OpenRouterWorker
 from prompts import library
 
 
@@ -102,6 +102,10 @@ def parse_args():
     parser.add_argument("--hf-model", type=str, default=None,
                        help="HuggingFace model name (e.g., 'Qwen/Qwen2.5-7B-Instruct'). Defaults to LLM_MODEL_NAME from config")
     
+    # Prompt generation model (for generating prompt atoms)
+    parser.add_argument("--prompt-gen-model", type=str, default="openai/gpt-5.2",
+                       help="Model to use for prompt generation (OpenRouter model ID, e.g., 'openai/gpt-4o'). Defaults to 'openai/gpt-4o'")
+    
     # Logging
     parser.add_argument("--log-every", type=int, default=50, help="Log frequency")
     parser.add_argument("--save-every", type=int, default=2000, help="Checkpoint frequency")
@@ -136,19 +140,24 @@ def main():
     else:
         print(f"  Atoms not found. Initializing temporary worker to generate them...")
         
-        # Create temp worker
-        import gc
-        import torch
-        
-        # Loading bigger model for better atom generation
-        temp_worker = LLMWorker(model_name="Qwen/Qwen2.5-7B-Instruct") 
-        library.load_or_create_atoms(cfg.DATASET_NAME, worker=temp_worker)
-        
-        # CRITICAL: Free memory immediately
-        print("  Generation complete. Freeing memory for training...")
-        del temp_worker
-        gc.collect()
-        torch.cuda.empty_cache()
+        # Use GPT via OpenRouter for better prompt generation
+        print(f"  Using {args.prompt_gen_model} for prompt generation...")
+        try:
+            temp_worker = OpenRouterWorker(model_name=args.prompt_gen_model)
+            library.load_or_create_atoms(cfg.DATASET_NAME, worker=temp_worker)
+            print("  Generation complete.")
+            del temp_worker
+        except Exception as e:
+            print(f"  Error using OpenRouter for prompt generation: {e}")
+            print("  Falling back to local Qwen model...")
+            import gc
+            import torch
+            temp_worker = LLMWorker(model_name="Qwen/Qwen2.5-7B-Instruct")
+            library.load_or_create_atoms(cfg.DATASET_NAME, worker=temp_worker)
+            print("  Generation complete. Freeing memory for training...")
+            del temp_worker
+            gc.collect()
+            torch.cuda.empty_cache()
     
     print(f"  Active Atoms: {library.NUM_ATOMS}")
     

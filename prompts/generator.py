@@ -3,6 +3,8 @@ import os
 import random
 import sys
 from typing import Dict, List
+import re
+import codecs
 
 # Ensure we can import from parent directories
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -26,6 +28,105 @@ class AtomGenerator:
             "expert_persona": "Adopt the persona of a domain expert (e.g., mathematician, scientist).",
             "constraint_focused": "Emphasize adhering to strict formatting and constraints."
         }
+    
+    def _clean_atom_text(self, text: str) -> str:
+        """
+        Clean and normalize generated atom text.
+        Includes normalization of smart quotes, dashes, and symbols to ASCII.
+        """
+        if not text:
+            return ""
+        
+        # Step 1: Remove common prefixes first (case-insensitive)
+        prefixes_to_remove = [
+            r"^Final Answer:\s*",
+            r"^Answer:\s*",
+            r"^Output:\s*",
+            r"^System instruction:\s*",
+            r"^Instruction:\s*",
+            r"^Prompt:\s*",
+            r"^Response:\s*",
+        ]
+        for prefix_pattern in prefixes_to_remove:
+            text = re.sub(prefix_pattern, "", text, flags=re.IGNORECASE)
+        
+        # Step 2: Decode UTF-8 bytes (Your existing logic)
+        def decode_utf8_bytes_in_text(text):
+            result = []
+            i = 0
+            while i < len(text):
+                char = text[i]
+                code_point = ord(char)
+                if 0x80 <= code_point <= 0xFF:
+                    decoded = None
+                    best_length = 0
+                    for length in range(1, min(5, len(text) - i + 1)):
+                        if i + length > len(text): break
+                        byte_chars = []
+                        valid = True
+                        for k in range(i, i + length):
+                            cp = ord(text[k])
+                            if 0x80 <= cp <= 0xFF: byte_chars.append(text[k])
+                            else: valid = False; break
+                        if valid and len(byte_chars) == length:
+                            try:
+                                byte_sequence = bytes([ord(c) for c in byte_chars])
+                                decoded = byte_sequence.decode('utf-8')
+                                best_length = length
+                            except (UnicodeDecodeError, ValueError):
+                                if best_length == 0: continue
+                                else: break
+                    if decoded and best_length > 0:
+                        result.append(decoded)
+                        i += best_length
+                    else:
+                        result.append(char)
+                        i += 1
+                else:
+                    result.append(char)
+                    i += 1
+            return ''.join(result)
+        
+        text = decode_utf8_bytes_in_text(text)
+
+        # Step 2.5: Normalize Smart Punctuation and Symbols to ASCII
+        # This fixes \u2019, \u201c, \u2192, etc.
+        replacements = {
+            # Quotes
+            "\u2018": "'",  # Left Single Quote
+            "\u2019": "'",  # Right Single Quote
+            "\u201A": "'",  # Single Low-9 Quote
+            "\u201B": "'",  # Single High-Reversed-9 Quote
+            "\u201C": '"',  # Left Double Quote
+            "\u201D": '"',  # Right Double Quote
+            "\u201E": '"',  # Double Low-9 Quote
+            "\u201F": '"',  # Double High-Reversed-9 Quote
+            
+            # Dashes and Hyphens
+            "\u2013": "-",  # En Dash
+            "\u2014": "-",  # Em Dash
+            "\u2011": "-",  # Non-Breaking Hyphen
+            
+            # Spaces and Ellipsis
+            "\u00A0": " ",  # Non-Breaking Space
+            "\u2026": "...", # Ellipsis
+            
+            # Symbols often found in LLM logic outputs
+            "\u2192": "->", # Right Arrow (→)
+            "\u2190": "<-", # Left Arrow (←)
+        }
+        
+        for unicode_char, ascii_char in replacements.items():
+            text = text.replace(unicode_char, ascii_char)
+
+        # Step 3: Remove surrounding quotes (Modified to handle straight quotes now)
+        text = re.sub(r'^["\']+|["\']+$', '', text)
+        
+        # Step 4: Remove leading/trailing whitespace and normalize internal whitespace
+        text = text.strip()
+        text = re.sub(r'\s+', ' ', text)
+        
+        return text
 
     def _get_dataset_examples(self, dataset_name: str, n: int = 3) -> str:
         """Fetches real examples from the dataset to ground the generation."""
@@ -120,8 +221,9 @@ class AtomGenerator:
             for attempt in range(max_retries):
                 try:
                     response = self.worker.answer_direct("Generate instruction", prompt_suffix=meta_prompt)
+                    
                     if response:
-                        atom_text = response.replace('"', '').replace("System instruction:", "").strip()
+                        atom_text = self._clean_atom_text(response)
                         if atom_text:  # Valid non-empty atom
                             break
                     if attempt < max_retries - 1:
@@ -180,8 +282,16 @@ class AtomGenerator:
                     answerer[current_idx] = text
                     current_idx += 1
         
+        # Clean all atoms before returning
+        def clean_atoms_dict(atoms_dict):
+            """Clean all atom texts in a dictionary."""
+            cleaned = {}
+            for key, value in atoms_dict.items():
+                cleaned[key] = self._clean_atom_text(value) if value else value
+            return cleaned
+        
         return {
-            "reasoner": reasoner,
-            "verifier": verifier,
-            "answerer": answerer,
+            "reasoner": clean_atoms_dict(reasoner),
+            "verifier": clean_atoms_dict(verifier),
+            "answerer": clean_atoms_dict(answerer),
         }

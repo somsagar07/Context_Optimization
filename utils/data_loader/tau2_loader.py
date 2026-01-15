@@ -89,7 +89,7 @@ class Tau2Dataset(BaseDataset):
         2. Cache directory (cache_dir/{domain}_tasks.json)
         3. Download from GitHub as last resort
         """
-        # Priority 1: Check local tau2 repository (single source of truth)
+        # Check local tau2 repository (single source of truth)
         tau2_data_root = self._find_tau2_data_root()
         if tau2_data_root:
             repo_tasks_path = os.path.join(tau2_data_root, 'tau2', 'domains', self.domain, 'tasks.json')
@@ -102,7 +102,7 @@ class Tau2Dataset(BaseDataset):
                     print(f"Error reading {repo_tasks_path}: {e}")
                     # Continue to next priority
         
-        # Priority 2: Check cache directory
+        # Check cache directory
         os.makedirs(self.cache_dir, exist_ok=True)
         candidates = [
             f"{self.domain}_tasks.json",
@@ -121,7 +121,7 @@ class Tau2Dataset(BaseDataset):
                     print(f"Error reading {path}: {e}")
                     # Continue to next candidate
 
-        # Priority 3: Download from GitHub as last resort
+        # Download from GitHub as last resort
         url = f"{self.GITHUB_BASE}/{self.domain}/tasks.json"
         save_path = os.path.join(self.cache_dir, f"{self.domain}_tasks.json")
         
