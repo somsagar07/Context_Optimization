@@ -121,9 +121,19 @@ class GRPOTrainer(BaseTrainer):
             surr2 = torch.clamp(ratio, 1 - clip_epsilon, 1 + clip_epsilon) * struct_advantages
             
             policy_loss = -torch.min(surr1, surr2).mean()
-            # Compute entropy with masks
-            struct_mask = struct_action_masks[0] if struct_action_masks[0] is not None else None
-            entropy = self.structure_policy.get_entropy(struct_obs_tensor, action_mask=struct_mask).mean()
+            # Compute entropy with per-sample masks to match actual action constraints
+            if self.use_action_masking:
+                entropy_list = []
+                for i in range(len(struct_obs)):
+                    workflow_idx = int(struct_actions[i][0])
+                    mask = self.structure_env._get_action_mask(workflow_depth=workflow_idx)
+                    entropy_list.append(
+                        self.structure_policy.get_entropy(struct_obs[i], action_mask=mask).mean()
+                    )
+                entropy = torch.stack(entropy_list).mean()
+            else:
+                struct_mask = struct_action_masks[0] if struct_action_masks[0] is not None else None
+                entropy = self.structure_policy.get_entropy(struct_obs_tensor, action_mask=struct_mask).mean()
             
             # Optional KL regularization
             kl_loss = 0.0

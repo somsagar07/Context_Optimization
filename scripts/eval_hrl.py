@@ -61,7 +61,7 @@ class PromptPolicy(nn.Module):
         if has_value:
             self.value_head = nn.Linear(256, 1)
     
-    def get_action(self, obs, deterministic=True):
+    def get_action(self, obs, deterministic=True, temperature=1.0):
         if not isinstance(obs, torch.Tensor):
             obs = torch.FloatTensor(obs)
         if obs.dim() == 1:
@@ -70,6 +70,8 @@ class PromptPolicy(nn.Module):
         
         features = self.network(obs)
         logits = self.action_head(features)
+        # Apply temperature scaling (lower = sharper, higher = more uniform)
+        logits = logits / temperature
         probs = torch.softmax(logits, dim=-1)
         
         if deterministic:
@@ -93,7 +95,7 @@ class StructurePolicy(nn.Module):
         if has_value:
             self.value_head = nn.Linear(256, 1)
     
-    def get_action(self, obs, deterministic=True):
+    def get_action(self, obs, deterministic=True, temperature=1.0):
         if not isinstance(obs, torch.Tensor):
             obs = torch.FloatTensor(obs)
         if obs.dim() == 1:
@@ -104,6 +106,8 @@ class StructurePolicy(nn.Module):
         actions = []
         for head in self.action_heads:
             logits = head(features)
+            # Apply temperature scaling (lower = sharper, higher = more uniform/diverse)
+            logits = logits / temperature
             probs = torch.softmax(logits, dim=-1)
             if deterministic:
                 actions.append(torch.argmax(probs, dim=-1).item())
@@ -145,8 +149,15 @@ def load_prompt_policy(path, device="cpu"):
 
 # EVALUATION
 def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20, 
-             deterministic=True, verbose=True, use_api=False, api_model=None, hf_model=None):
-    """Evaluate dual policy system."""
+             deterministic=True, verbose=True, use_api=False, api_model=None, hf_model=None,
+             temperature=1.0):
+    """Evaluate dual policy system.
+    
+    Args:
+        temperature: Softmax temperature for action sampling. 
+                     <1.0 = sharper (more deterministic)
+                     >1.0 = flatter (more diverse/exploratory)
+    """
     structure_env = StructureEnv(cfg, is_eval=True, use_api=use_api, api_model=api_model, hf_model=hf_model)
     prompt_env = PromptEnv(cfg, is_eval=True, use_api=use_api, api_model=api_model, hf_model=hf_model)
     
@@ -160,7 +171,7 @@ def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20,
         struct_obs, struct_info = structure_env.reset()
         
         with torch.no_grad():
-            struct_action = structure_policy.get_action(struct_obs, deterministic)
+            struct_action = structure_policy.get_action(struct_obs, deterministic, temperature)
         
         # Ensure action is numpy array
         if not isinstance(struct_action, np.ndarray):
@@ -183,7 +194,7 @@ def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20,
         
         while not done:
             with torch.no_grad():
-                action = prompt_policy.get_action(prompt_obs, deterministic)
+                action = prompt_policy.get_action(prompt_obs, deterministic, temperature)
             prompt_obs, step_reward, done, _, info = prompt_env.step(action)
             accumulated_reward += step_reward
         
@@ -246,7 +257,9 @@ def parse_args():
     parser.add_argument("--structure-model", type=str, required=True)
     parser.add_argument("--prompt-model", type=str, required=True)
     parser.add_argument("--episodes", type=int, default=20)
-    parser.add_argument("--stochastic", action="store_true")
+    parser.add_argument("--stochastic", action="store_true", help="Sample from policy distribution instead of argmax")
+    parser.add_argument("--temperature", type=float, default=1.0, 
+                       help="Softmax temperature: <1.0=sharper (deterministic), >1.0=flatter (diverse)")
     parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"])
     parser.add_argument("--quiet", action="store_true")
     
@@ -274,6 +287,7 @@ def main():
     
     print(f"  Structure: {args.structure_model}")
     print(f"  Prompt:    {args.prompt_model}")
+    print(f"  Mode:      {'Stochastic' if args.stochastic else 'Deterministic'} (temp={args.temperature})")
     if args.api:
         model_name = args.api_model or os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")
         print(f"  API Mode:  {model_name}")
@@ -296,7 +310,8 @@ def main():
         verbose=not args.quiet,
         use_api=args.api,
         api_model=args.api_model,
-        hf_model=args.hf_model
+        hf_model=args.hf_model,
+        temperature=args.temperature
     )
 
 

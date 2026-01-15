@@ -31,6 +31,7 @@ from collections import defaultdict
 
 from configs import load_config
 from algorithms.base import MultiDiscretePolicyGRPO, PolicyNetworkGRPO
+from algorithms.ppo import MultiDiscretePolicyPPO, PolicyNetworkPPO
 from env.structure_env import StructureEnv
 from env.prompt_env import PromptEnv
 
@@ -669,26 +670,62 @@ def main():
     struct_checkpoint = torch.load(struct_path, map_location=device, weights_only=False)
     prompt_checkpoint = torch.load(prompt_path, map_location=device, weights_only=False)
     
-    # Initialize policies (current and reference)
-    structure_policy = MultiDiscretePolicyGRPO(
-        obs_dim=struct_checkpoint["obs_dim"],
-        action_dims=struct_checkpoint["action_dims"]
-    ).to(device)
+    # Auto-detect algorithm from checkpoint
+    detected_algorithm = None
+    if "algorithm" in struct_checkpoint:
+        detected_algorithm = struct_checkpoint["algorithm"].lower()
+    elif "algorithm" in prompt_checkpoint:
+        detected_algorithm = prompt_checkpoint["algorithm"].lower()
+    else:
+        # Fallback: check for value_head in state_dict (PPO has it, GRPO doesn't)
+        struct_state = struct_checkpoint.get("model_state_dict", struct_checkpoint)
+        has_value_head = any("value_head" in key for key in struct_state.keys())
+        detected_algorithm = "ppo" if has_value_head else "grpo"
     
-    structure_policy_ref = MultiDiscretePolicyGRPO(
-        obs_dim=struct_checkpoint["obs_dim"],
-        action_dims=struct_checkpoint["action_dims"]
-    ).to(device)
+    algorithm = "ppo" if "ppo" in detected_algorithm else "grpo"
+    print(f"Auto-detected algorithm from checkpoint: {algorithm.upper()}")
     
-    prompt_policy = PolicyNetworkGRPO(
-        obs_dim=prompt_checkpoint["obs_dim"],
-        action_dim=prompt_checkpoint["action_dim"]
-    ).to(device)
-    
-    prompt_policy_ref = PolicyNetworkGRPO(
-        obs_dim=prompt_checkpoint["obs_dim"],
-        action_dim=prompt_checkpoint["action_dim"]
-    ).to(device)
+    # Initialize policies (current and reference) based on algorithm
+    if algorithm == "ppo":
+        structure_policy = MultiDiscretePolicyPPO(
+            obs_dim=struct_checkpoint["obs_dim"],
+            action_dims=struct_checkpoint["action_dims"]
+        ).to(device)
+        
+        structure_policy_ref = MultiDiscretePolicyPPO(
+            obs_dim=struct_checkpoint["obs_dim"],
+            action_dims=struct_checkpoint["action_dims"]
+        ).to(device)
+        
+        prompt_policy = PolicyNetworkPPO(
+            obs_dim=prompt_checkpoint["obs_dim"],
+            action_dim=prompt_checkpoint["action_dim"]
+        ).to(device)
+        
+        prompt_policy_ref = PolicyNetworkPPO(
+            obs_dim=prompt_checkpoint["obs_dim"],
+            action_dim=prompt_checkpoint["action_dim"]
+        ).to(device)
+    else:
+        structure_policy = MultiDiscretePolicyGRPO(
+            obs_dim=struct_checkpoint["obs_dim"],
+            action_dims=struct_checkpoint["action_dims"]
+        ).to(device)
+        
+        structure_policy_ref = MultiDiscretePolicyGRPO(
+            obs_dim=struct_checkpoint["obs_dim"],
+            action_dims=struct_checkpoint["action_dims"]
+        ).to(device)
+        
+        prompt_policy = PolicyNetworkGRPO(
+            obs_dim=prompt_checkpoint["obs_dim"],
+            action_dim=prompt_checkpoint["action_dim"]
+        ).to(device)
+        
+        prompt_policy_ref = PolicyNetworkGRPO(
+            obs_dim=prompt_checkpoint["obs_dim"],
+            action_dim=prompt_checkpoint["action_dim"]
+        ).to(device)
     
     # Load RL weights into both current and reference models
     structure_policy.load_state_dict(struct_checkpoint["model_state_dict"])
@@ -733,14 +770,14 @@ def main():
         "model_state_dict": structure_policy.state_dict(),
         "action_dims": struct_checkpoint["action_dims"],
         "obs_dim": struct_checkpoint["obs_dim"],
-        "algorithm": "GRPO_DPO",
+        "algorithm": f"{algorithm.upper()}_DPO",
     }, struct_save_path)
     
     torch.save({
         "model_state_dict": prompt_policy.state_dict(),
         "action_dim": prompt_checkpoint["action_dim"],
         "obs_dim": prompt_checkpoint["obs_dim"],
-        "algorithm": "GRPO_DPO",
+        "algorithm": f"{algorithm.upper()}_DPO",
     }, prompt_save_path)
     
     print(f"\n{'='*60}")

@@ -90,9 +90,19 @@ class PPOTrainer(BaseTrainer):
             
             policy_loss = -torch.min(surr1, surr2).mean()
             value_loss = nn.MSELoss()(values_new, struct_returns)
-            # Compute entropy with masks (use first mask as representative, or None if all None)
-            struct_mask = struct_action_masks[0] if struct_action_masks[0] is not None else None
-            entropy = self.structure_policy.get_entropy(struct_obs_tensor, action_mask=struct_mask).mean()
+            # Compute entropy with per-sample masks to match actual action constraints
+            if self.use_action_masking:
+                entropy_list = []
+                for i in range(len(struct_obs)):
+                    workflow_idx = int(struct_actions[i][0])
+                    mask = self.structure_env._get_action_mask(workflow_depth=workflow_idx)
+                    entropy_list.append(
+                        self.structure_policy.get_entropy(struct_obs[i], action_mask=mask).mean()
+                    )
+                entropy = torch.stack(entropy_list).mean()
+            else:
+                struct_mask = struct_action_masks[0] if struct_action_masks[0] is not None else None
+                entropy = self.structure_policy.get_entropy(struct_obs_tensor, action_mask=struct_mask).mean()
             
             loss = policy_loss + value_coef * value_loss - struct_ent_coef * entropy
             

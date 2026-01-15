@@ -308,8 +308,9 @@ class PromptEnv(gym.Env):
             agent = "answerer"
             num_atoms = self.num_answerer_atoms
         
-        # Clamp action to valid range
-        action = min(action, num_atoms - 1)
+        # Clamp action to valid range; out-of-range becomes DONE
+        if action >= num_atoms:
+            action = 0
         
         # Action 0 = DONE with this agent's prompts
         if action == 0 or self.prompt_step >= self.MAX_PROMPTS_PER_AGENT:

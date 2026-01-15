@@ -8,15 +8,15 @@ Usage:
     # PPO Workflow
     python sft_posttrain.py \
         --rl-log logs/training_log_ppo_gaia_1767177868.json \
-        --structure-model models/ppo_models/structure_policy_gaia_1767177868_final.pt \
-        --prompt-model models/ppo_models/prompt_policy_gaia_1767177868_final.pt \
+        --structure_model_path models/ppo_models/structure_policy_gaia_1767177868_final.pt \
+        --prompt_model_path models/ppo_models/prompt_policy_gaia_1767177868_final.pt \
         --algorithm ppo --epochs 3
 
     # GRPO Workflow
     python sft_posttrain.py \
         --rl-log logs/training_log_grpo_gaia_1767177421.json \
-        --structure-model models/grpo_models/structure_policy_gaia_1767177421_final.pt \
-        --prompt-model models/grpo_models/prompt_policy_gaia_1767177421_final.pt \
+        --structure_model_path models/grpo_models/structure_policy_gaia_1767177421_final.pt \
+        --prompt_model_path models/grpo_models/prompt_policy_gaia_1767177421_final.pt \
         --algorithm grpo --epochs 3
 
     # After RL training
@@ -449,8 +449,8 @@ def main():
     parser.add_argument("--device", type=str, default=None, help="Device (cuda/cpu)")
     parser.add_argument("--algorithm", type=str, default="grpo", choices=["ppo", "grpo"], help="Model architecture to use. Auto-detected from checkpoint if available, otherwise uses this value (default: grpo)")
     
-    parser.add_argument("--prompt_model_path", type=str, required=True, help="Path to the prompt policy checkpoint (e.g., models/ppo_models/prompt_policy_...pt)")
-    parser.add_argument("--structure_model_path", type=str, required=True, help="Path to the structure policy checkpoint (e.g., models/ppo_models/structure_policy_...pt)")
+    parser.add_argument("--prompt_model_path", "--prompt-model", type=str, required=True, help="Path to the prompt policy checkpoint (e.g., models/ppo_models/prompt_policy_...pt)")
+    parser.add_argument("--structure_model_path", "--structure-model", type=str, required=True, help="Path to the structure policy checkpoint (e.g., models/ppo_models/structure_policy_...pt)")
     parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"], help="Dataset name (overrides config)")
     
     # API configuration (must match training configuration)

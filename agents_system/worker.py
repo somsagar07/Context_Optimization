@@ -451,7 +451,35 @@ class OpenRouterWorker:
         # Store additional tool descriptions
         self.additional_tool_descriptions = {}
 
-    def _call_api(self, messages: list, max_tokens: int = 512, temperature: float = 0.0, max_retries: int = 10) -> str:
+    def _wait_for_network(self, max_wait: int = 600) -> bool:
+        """
+        Wait for network connectivity to be restored.
+        Useful after multiple connection failures to avoid wasting retries.
+        
+        Args:
+            max_wait: Maximum seconds to wait (default: 10 minutes)
+            
+        Returns:
+            True if network is available, False if timeout
+        """
+        import socket
+        start_time = time.time()
+        check_interval = 30  # Check every 30 seconds
+        
+        while time.time() - start_time < max_wait:
+            try:
+                # Try to resolve openrouter.ai
+                socket.getaddrinfo('openrouter.ai', 443)
+                return True
+            except socket.gaierror:
+                elapsed = int(time.time() - start_time)
+                remaining = max_wait - elapsed
+                print(f"Network unavailable ({elapsed}s elapsed, waiting up to {remaining}s more)...")
+                time.sleep(check_interval)
+        
+        return False
+    
+    def _call_api(self, messages: list, max_tokens: int = 512, temperature: float = 0.0, max_retries: int = 15) -> str:
         """
         Call OpenRouter API for text generation with retry logic and exponential backoff.
         
@@ -459,7 +487,7 @@ class OpenRouterWorker:
             messages: List of message dicts with "role" and "content"
             max_tokens: Maximum tokens to generate
             temperature: Sampling temperature (0.0 for deterministic)
-            max_retries: Maximum number of retry attempts (default: 10, increased for training stability)
+            max_retries: Maximum number of retry attempts (default: 15, for long-running training stability)
             
         Returns:
             Generated text response
@@ -548,12 +576,25 @@ class OpenRouterWorker:
                     
             except requests.exceptions.ConnectionError as e:
                 last_exception = e
+                # Network errors (DNS, connection refused, etc.) need longer recovery time
+                # These often indicate temporary network outages - wait longer before giving up
                 if attempt < max_retries - 1:
-                    wait_time = min(2 ** attempt, 60)  # Exponential backoff, max 60s
-                    print(f"API connection error (attempt {attempt + 1}/{max_retries}). Retrying in {wait_time}s...")
-                    time.sleep(wait_time)
+                    print(f"Network error (attempt {attempt + 1}/{max_retries}): {type(e).__name__}")
+                    
+                    # After 3 failed attempts, do a full network wait before continuing
+                    if attempt >= 2:
+                        print("  Multiple network failures detected. Waiting for network to recover...")
+                        if self._wait_for_network(max_wait=600):  # Wait up to 10 minutes
+                            print("  Network recovered! Resuming...")
+                        else:
+                            print("  Network still unavailable after extended wait.")
+                    else:
+                        # Use longer wait times for network errors (they often persist)
+                        wait_time = min(30 * (attempt + 1), 120)  # 30s, 60s, up to 2 min
+                        print(f"  Waiting {wait_time}s before retry...")
+                        time.sleep(wait_time)
                 else:
-                    print(f"API connection error after {max_retries} attempts")
+                    print(f"Network error after {max_retries} attempts: {e}")
                     
             except requests.exceptions.HTTPError as e:
                 # Check for rate limiting (429) or server errors (5xx)

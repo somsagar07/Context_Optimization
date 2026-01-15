@@ -58,6 +58,8 @@ class MultiStepAgentEnv(gym.Env):
         self.worker = LLMWorker()
         self.tools = ToolRegistry()
         self.dataset = get_dataset_loader(cfg.DATASET_NAME)
+        # Initialize workflow instances (lazy loading)
+        self._workflow_instances = {}
         
         # Action space: max across all stages (reasoner/verifier have 24 = 8×3)
         # NOTE: Edited to 16 tools, so max is 48
@@ -231,7 +233,7 @@ class MultiStepAgentEnv(gym.Env):
                 
         elif self.stage == self.STAGE_REASONER:
             # Choose reasoner tools + budget
-            tools_idx, budget_idx = self._decode_config(min(action, 23))
+            tools_idx, budget_idx = self._decode_config(min(action, 47))
             self.agent1_tools = tools_idx
             self.agent1_budget = budget_idx
             
@@ -247,7 +249,7 @@ class MultiStepAgentEnv(gym.Env):
                 
         elif self.stage == self.STAGE_VERIFIER:
             # Choose verifier tools + budget
-            tools_idx, budget_idx = self._decode_config(min(action, 23))
+            tools_idx, budget_idx = self._decode_config(min(action, 47))
             self.agent2_tools = tools_idx
             self.agent2_budget = budget_idx
             
