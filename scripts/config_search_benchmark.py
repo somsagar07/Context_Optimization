@@ -29,12 +29,15 @@ Usage:
 """
 
 import os
+import sys
+# Add parent directory to path for imports when running from scripts/
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 import argparse
 import gc
 import heapq
-import sys
 import time
 from collections import defaultdict
 from contextlib import redirect_stdout, redirect_stderr

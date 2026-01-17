@@ -5,6 +5,7 @@ import sys
 import os
 import requests
 import time
+import hashlib
 sys.path.append('..')
 from configs.base import LLM_MODEL_NAME, DEVICE
 
@@ -24,14 +25,26 @@ except ImportError:
 
 
 class MetaCLIPEmbedder:
-    """MetaCLIP-H14 embedder for consistent embeddings across API and HuggingFace modes."""
+    """MetaCLIP-H14 embedder for consistent embeddings across API and HuggingFace modes.
     
-    def __init__(self, target_dim: int = None):
+    Supports precomputed embeddings for faster training:
+    - Run scripts/precompute_embeddings.py to generate embeddings
+    - Embeddings are auto-loaded from embeddings_cache/ directory
+    - Falls back to GPU computation if embedding not found in cache
+    """
+    
+    # Class-level cache shared across all instances (loaded once per process)
+    _precomputed_cache = None
+    _cache_loaded = False
+    _cache_stats = {"hits": 0, "misses": 0}
+    
+    def __init__(self, target_dim: int = None, use_precomputed: bool = True):
         """
         Initialize MetaCLIP-H14 embedder.
         
         Args:
             target_dim: Target embedding dimension (None = use native 1024D, no projection)
+            use_precomputed: Whether to use precomputed embeddings if available (default: True)
         """
         self.model_name = "facebook/metaclip-h14-fullcc2.5b"
         self.target_dim = target_dim
@@ -39,11 +52,90 @@ class MetaCLIPEmbedder:
         self.model = None
         self.device = None
         self.embedding_dim = None
+        self.max_length = 77  # Default, updated on init
         self.projection = None
         self._initialized = False
+        self.use_precomputed = use_precomputed
+        
+        # Load precomputed embeddings (once per process)
+        if use_precomputed and not MetaCLIPEmbedder._cache_loaded:
+            self._load_precomputed_cache()
+    
+    @classmethod
+    def _load_precomputed_cache(cls):
+        """Load precomputed embeddings from disk (class method, called once per process)."""
+        if cls._cache_loaded:
+            return
+        
+        # Find embeddings cache directory
+        current_file_dir = os.path.dirname(os.path.abspath(__file__))
+        cache_dirs = [
+            os.path.join(os.path.dirname(current_file_dir), "embeddings_cache"),
+            os.path.join(current_file_dir, "..", "embeddings_cache"),
+            "./embeddings_cache",
+            "../embeddings_cache",
+        ]
+        
+        cache_dir = None
+        for d in cache_dirs:
+            abs_d = os.path.abspath(d)
+            if os.path.isdir(abs_d):
+                cache_dir = abs_d
+                break
+        
+        if not cache_dir:
+            print("No precomputed embeddings found. Will compute embeddings on-the-fly.")
+            cls._cache_loaded = True  # Mark as loaded (no cache found)
+            return
+        
+        print(f"Loading precomputed embeddings from {cache_dir}...")
+        cls._precomputed_cache = {}
+        
+        # Load all embedding .npz files
+        npz_files = [f for f in os.listdir(cache_dir) if f.endswith("_embeddings.npz")]
+        
+        if not npz_files:
+            print("  No embedding files found in cache directory.")
+            cls._cache_loaded = True
+            return
+        
+        for filename in npz_files:
+            filepath = os.path.join(cache_dir, filename)
+            try:
+                data = np.load(filepath, allow_pickle=True)
+                hashes = data["hashes"]
+                embeddings = data["embeddings"]
+                
+                for h, emb in zip(hashes, embeddings):
+                    cls._precomputed_cache[str(h)] = emb
+                
+                print(f"  ✓ Loaded {len(hashes)} embeddings from {filename}")
+            except Exception as e:
+                print(f"  ✗ Failed to load {filename}: {e}")
+        
+        total = len(cls._precomputed_cache) if cls._precomputed_cache else 0
+        print(f"Total precomputed embeddings loaded: {total}")
+        cls._cache_loaded = True
+    
+    @staticmethod
+    def _compute_hash(text: str) -> str:
+        """Compute hash for text lookup (matches precompute script)."""
+        return hashlib.md5(text.encode()).hexdigest()[:16]
+    
+    @classmethod
+    def get_cache_stats(cls):
+        """Get cache hit/miss statistics."""
+        total = cls._cache_stats["hits"] + cls._cache_stats["misses"]
+        hit_rate = cls._cache_stats["hits"] / total * 100 if total > 0 else 0
+        return {
+            "hits": cls._cache_stats["hits"],
+            "misses": cls._cache_stats["misses"],
+            "total": total,
+            "hit_rate": f"{hit_rate:.1f}%"
+        }
     
     def _init_embedder(self):
-        """Initialize the MetaCLIP model."""
+        """Initialize the MetaCLIP model (only when needed for cache misses)."""
         if self._initialized:
             return
         
@@ -89,6 +181,7 @@ class MetaCLIPEmbedder:
     def embed(self, text: str) -> np.ndarray:
         """
         Embed text using MetaCLIP-H14.
+        Uses precomputed embeddings if available, otherwise computes on-the-fly.
         
         Args:
             text: Input text to embed
@@ -96,6 +189,24 @@ class MetaCLIPEmbedder:
         Returns:
             numpy array embedding (1024D if target_dim=None, otherwise target_dim)
         """
+        # Try precomputed cache first (O(1) lookup)
+        if self.use_precomputed and MetaCLIPEmbedder._precomputed_cache:
+            text_hash = self._compute_hash(text)
+            if text_hash in MetaCLIPEmbedder._precomputed_cache:
+                MetaCLIPEmbedder._cache_stats["hits"] += 1
+                embedding = MetaCLIPEmbedder._precomputed_cache[text_hash].copy()
+                
+                # Apply projection if needed (precomputed are raw 1024D)
+                if self.target_dim and embedding.shape[0] != self.target_dim:
+                    if self.projection is None:
+                        self._init_projection(embedding.shape[0])
+                    embedding = self.projection @ embedding
+                
+                return embedding.astype(np.float32)
+            else:
+                MetaCLIPEmbedder._cache_stats["misses"] += 1
+        
+        # Fall back to computing on-the-fly (requires GPU)
         if not self._initialized:
             self._init_embedder()
         
@@ -127,9 +238,16 @@ class MetaCLIPEmbedder:
     
     def get_dimension(self) -> int:
         """Get the output embedding dimension."""
+        if self.target_dim:
+            return self.target_dim
         if not self._initialized:
+            # Check cache first to avoid loading model just for dimension
+            if MetaCLIPEmbedder._precomputed_cache:
+                # Get dimension from first cached embedding
+                first_emb = next(iter(MetaCLIPEmbedder._precomputed_cache.values()))
+                return first_emb.shape[0]
             self._init_embedder()
-        return self.target_dim if self.target_dim else self.embedding_dim
+        return self.embedding_dim
 
 
 class LLMWorker:

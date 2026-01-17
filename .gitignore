@@ -21,4 +21,7 @@ models/
 # Paper files
 paper/
 
+# Precomputed embeddings (large files, regenerate with: python scripts/precompute_embeddings.py --all)
+embeddings_cache/
+
 .env
