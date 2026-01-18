@@ -664,16 +664,30 @@ def main():
     )
     
     # Save models (in same format as RL models for compatibility)
+    # Create organized folder structure: output_dir/dataset/model_name/
     timestamp = int(time.time())
-    os.makedirs(args.output_dir, exist_ok=True)
-    struct_save_path = os.path.join(args.output_dir, f"structure_policy_sft_{timestamp}.pt")
-    prompt_save_path = os.path.join(args.output_dir, f"prompt_policy_sft_{timestamp}.pt")
+    
+    # Get dataset name
+    dataset_name = cfg.DATASET_NAME
+    
+    # Get model name from log (sanitize for folder name)
+    model_name = log_model_name or "unknown_model"
+    model_name_safe = model_name.replace("/", "-").replace("\\", "-")
+    
+    # Create subfolder structure: sft_posttrained/hotpotqa/google-gemini-2.5-flash-lite/
+    save_dir = os.path.join(args.output_dir, dataset_name, model_name_safe)
+    os.makedirs(save_dir, exist_ok=True)
+    
+    struct_save_path = os.path.join(save_dir, f"structure_policy_sft_{timestamp}.pt")
+    prompt_save_path = os.path.join(save_dir, f"prompt_policy_sft_{timestamp}.pt")
     
     torch.save({
         "model_state_dict": structure_policy.state_dict(),
         "action_dims": struct_checkpoint["action_dims"],
         "obs_dim": struct_checkpoint["obs_dim"],
         "algorithm": f"{algorithm.upper()}_SFT",
+        "dataset": dataset_name,
+        "base_model": model_name,
     }, struct_save_path)
     
     torch.save({
@@ -681,16 +695,19 @@ def main():
         "action_dim": prompt_checkpoint["action_dim"],
         "obs_dim": prompt_checkpoint["obs_dim"],
         "algorithm": f"{algorithm.upper()}_SFT",
+        "dataset": dataset_name,
+        "base_model": model_name,
     }, prompt_save_path)
     
     print(f"\n{'='*60}")
     print("✓ SFT post-training complete!")
     print(f"{'='*60}")
     print(f"\nModels saved to:")
-    print(f"  Structure: {struct_save_path}")
-    print(f"  Prompt: {prompt_save_path}")
+    print(f"  {save_dir}/")
+    print(f"    - structure_policy_sft_{timestamp}.pt")
+    print(f"    - prompt_policy_sft_{timestamp}.pt")
     print(f"\nEvaluate with:")
-    print(f"  python scripts/eval_hrl.py --structure-model {struct_save_path} --prompt-model {prompt_save_path}")
+    print(f"  python scripts/eval_hrl.py --structure-model {struct_save_path} --prompt-model {prompt_save_path} --dataset {dataset_name} --api --api-model {model_name}")
 
 
 if __name__ == "__main__":
