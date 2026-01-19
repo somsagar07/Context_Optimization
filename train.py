@@ -161,9 +161,6 @@ def main():
     
     print(f"  Active Atoms: {library.NUM_ATOMS}")
     
-    # Create model directory
-    os.makedirs(f"models/{args.algorithm}_models", exist_ok=True)
-    
     # Create trainer
     if args.algorithm == "ppo":
         trainer = PPOTrainer(cfg, use_action_masking=args.mask, use_api=args.api, api_model=args.api_model, hf_model=args.hf_model)
