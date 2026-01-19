@@ -236,6 +236,9 @@ class StructureEnv(gym.Env):
             ][workflow_depth],
         }
         
+        if self.is_tau2 and isinstance(self.current_a, dict):
+            info["tau2_answer"] = self.current_a
+        
         # No reward here - will get real reward after PromptEnv executes
         # This terminates the structure selection (one-step env)
         info["action_mask"] = self._get_action_mask()

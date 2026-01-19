@@ -178,6 +178,13 @@ class Tau2ExecutionWrapper:
             
             # Create environment with domain and task_id
             self.env = gym.make(TAU_BENCH_ENV_ID, domain=self.domain, task_id=task_id)
+            
+            # Share environment with tool registry so tools can be executed
+            if hasattr(self.tools_registry, 'set_env'):
+                self.tools_registry.set_env(self.env)
+            elif hasattr(self.tools_registry, 'env'):
+                self.tools_registry.env = self.env
+            
             print(f"  ✓ Created tau2 environment for task: {task_id}")
         except Exception as e:
             print(f"  ⚠ Warning: Cannot create tau2 environment for task {task_id}: {e}")
@@ -287,7 +294,8 @@ class Tau2ExecutionWrapper:
                     done = True
         
         # Calculate Pass^k reward (k=1 for now, can be extended)
-        pass_k_reward = 1.0 if reward > 0 else 0.0
+        # pass_k_reward = 1.0 if reward > 0 else 0.0
+        pass_k_reward = reward
         
         # Get additional metrics from info
         execution_info = {

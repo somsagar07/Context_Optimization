@@ -88,7 +88,11 @@ class Tau2Dataset(BaseDataset):
         1. Local tau2 repository (tau2_data_root/tau2/domains/{domain}/tasks.json) - SINGLE SOURCE OF TRUTH
         2. Cache directory (cache_dir/{domain}_tasks.json)
         3. Download from GitHub as last resort
+        
+        Then filter by split if split_tasks.json exists.
         """
+        all_tasks = None
+        
         # Check local tau2 repository (single source of truth)
         tau2_data_root = self._find_tau2_data_root()
         if tau2_data_root:
@@ -97,50 +101,87 @@ class Tau2Dataset(BaseDataset):
                 print(f"Found tasks in local tau2 repository: {repo_tasks_path}")
                 try:
                     with open(repo_tasks_path, 'r') as f:
-                        return json.load(f)
+                        all_tasks = json.load(f)
                 except Exception as e:
                     print(f"Error reading {repo_tasks_path}: {e}")
                     # Continue to next priority
         
-        # Check cache directory
-        os.makedirs(self.cache_dir, exist_ok=True)
-        candidates = [
-            f"{self.domain}_tasks.json",
-            f"{self.domain}.json",
-            "tasks.json"
-        ]
-        
-        for fname in candidates:
-            path = os.path.join(self.cache_dir, fname)
-            if os.path.exists(path):
-                print(f"Found cached file: {path}")
-                try:
-                    with open(path, 'r') as f:
-                        return json.load(f)
-                except Exception as e:
-                    print(f"Error reading {path}: {e}")
-                    # Continue to next candidate
+        # Check cache directory if not loaded yet
+        if all_tasks is None:
+            os.makedirs(self.cache_dir, exist_ok=True)
+            candidates = [
+                f"{self.domain}_tasks.json",
+                f"{self.domain}.json",
+                "tasks.json"
+            ]
+            
+            for fname in candidates:
+                path = os.path.join(self.cache_dir, fname)
+                if os.path.exists(path):
+                    print(f"Found cached file: {path}")
+                    try:
+                        with open(path, 'r') as f:
+                            all_tasks = json.load(f)
+                            break
+                    except Exception as e:
+                        print(f"Error reading {path}: {e}")
+                        # Continue to next candidate
 
         # Download from GitHub as last resort
-        url = f"{self.GITHUB_BASE}/{self.domain}/tasks.json"
-        save_path = os.path.join(self.cache_dir, f"{self.domain}_tasks.json")
-        
-        print(f"Downloading from GitHub: {url}...")
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            data = response.json()
+        if all_tasks is None:
+            url = f"{self.GITHUB_BASE}/{self.domain}/tasks.json"
+            save_path = os.path.join(self.cache_dir, f"{self.domain}_tasks.json")
             
-            with open(save_path, 'w') as f:
-                json.dump(data, f)
-            print(f"Saved to {save_path}")
-            return data
-        except Exception as e:
-            raise RuntimeError(
-                f"Failed to download from GitHub ({url}).\n"
-                f"Error: {e}\n"
-                "Please check your internet connection or if the repo structure has changed."
-            )
+            print(f"Downloading from GitHub: {url}...")
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+                all_tasks = response.json()
+                
+                with open(save_path, 'w') as f:
+                    json.dump(all_tasks, f)
+                print(f"Saved to {save_path}")
+            except Exception as e:
+                raise RuntimeError(
+                    f"Failed to download from GitHub ({url}).\n"
+                    f"Error: {e}\n"
+                    "Please check your internet connection or if the repo structure has changed."
+                )
+        
+        # Filter by split if split_tasks.json exists
+        if tau2_data_root:
+            split_tasks_path = os.path.join(tau2_data_root, 'tau2', 'domains', self.domain, 'split_tasks.json')
+            if os.path.exists(split_tasks_path):
+                try:
+                    with open(split_tasks_path, 'r') as f:
+                        split_data = json.load(f)
+                    
+                    # Get task IDs for the requested split
+                    split_task_ids = split_data.get(self.split, [])
+                    if split_task_ids:
+                        print(f"Filtering tasks by split '{self.split}': {len(split_task_ids)} task IDs")
+                        
+                        # Filter tasks based on task_id matching
+                        # For airline/retail: task IDs are strings like "0", "1", etc.
+                        # For telecom: task IDs are complex strings like "[mobile_data_issue]..."
+                        filtered_tasks = []
+                        for task in all_tasks:
+                            task_id = task.get("id", "Unknown")
+                            # Handle both simple string IDs and complex telecom IDs
+                            if str(task_id) in split_task_ids or task_id in split_task_ids:
+                                filtered_tasks.append(task)
+                        
+                        if filtered_tasks:
+                            print(f"  Filtered to {len(filtered_tasks)} tasks (from {len(all_tasks)} total)")
+                            return filtered_tasks
+                        else:
+                            print(f"  ⚠ Warning: No tasks matched split '{self.split}'. Using all tasks.")
+                    else:
+                        print(f"  ⚠ Warning: Split '{self.split}' not found in split_tasks.json. Using all tasks.")
+                except Exception as e:
+                    print(f"  ⚠ Warning: Could not read split_tasks.json: {e}. Using all tasks.")
+        
+        return all_tasks
 
     def _normalize_task(self, raw_task):
         scenario = raw_task.get("user_scenario", {})

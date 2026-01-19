@@ -38,13 +38,20 @@ WORKFLOW_NAMES = [
 BUDGET_NAMES = ["Low", "Mid", "High"]
 
 
-def decode_tools(idx):
-    tools = []
-    if idx & 1: tools.append("calculator")
-    if idx & 2: tools.append("web_search")
-    if idx & 4: tools.append("python")
-    if idx & 8: tools.append("ocr_reader")
-    return tools if tools else ["none"]
+# Replace lines 41-47
+def decode_tools(idx, structure_env=None):
+    """Decode tool index to list of tool names. Supports both standard and tau2 tools."""
+    if structure_env and structure_env.is_tau2 and structure_env.tau2_tools:
+        # Use tau2 tool registry
+        return structure_env.tau2_tools.decode_tool_index(idx)
+    else:
+        # Standard tool decoding (4 tools: calculator, web_search, python, ocr_reader)
+        tools = []
+        if idx & 1: tools.append("calculator")
+        if idx & 2: tools.append("web_search")
+        if idx & 4: tools.append("python")
+        if idx & 8: tools.append("ocr_reader")
+        return tools if tools else ["none"]
 
 # POLICY NETWORKS 
 class PromptPolicy(nn.Module):
@@ -184,7 +191,8 @@ def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20,
             question=struct_exec_info["question"],
             answer=struct_exec_info["answer"],
             embedding=struct_exec_info["embedding"],
-            structure=struct_exec_info["structure"]
+            structure=struct_exec_info["structure"],
+            task=struct_exec_info.get("task")
         )
         
         # Prompt rollout
@@ -223,8 +231,8 @@ def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20,
             status = "✓" if correct else "✗"
             q = struct_info["question"][:50] + "..." if len(struct_info["question"]) > 50 else struct_info["question"]
             # Decode tools for display
-            agent1_tools = decode_tools(struct_exec_info["structure"]["agent1_tools_idx"])
-            agent2_tools = decode_tools(struct_exec_info["structure"]["agent2_tools_idx"])
+            agent1_tools = decode_tools(struct_exec_info["structure"]["agent1_tools_idx"], structure_env)
+            agent2_tools = decode_tools(struct_exec_info["structure"]["agent2_tools_idx"], structure_env)
             tools_str = f"A1:{'+'.join(agent1_tools) if agent1_tools else 'none'}, A2:{'+'.join(agent2_tools) if agent2_tools else 'none'}"
             print(f"  [{ep+1:3d}] {status} | {struct_exec_info['workflow']:20s} | "
                   f"Tools: {info.get('tools_used', 0)} ({tools_str}) | Reward: {final_reward:.2f}")
@@ -257,7 +265,7 @@ def parse_args():
     parser.add_argument("--structure-model", type=str, required=True)
     parser.add_argument("--prompt-model", type=str, required=True)
     parser.add_argument("--episodes", type=int, default=20)
-    parser.add_argument("--dataset", type=str, required=True, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"])
+    parser.add_argument("--dataset", type=str, required=True, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25", "tau2_airline", "tau2_retail", "tau2_telecom"])
 
     parser.add_argument("--stochastic", action="store_true", help="Sample from policy distribution instead of argmax")
     parser.add_argument("--temperature", type=float, default=1.0, 

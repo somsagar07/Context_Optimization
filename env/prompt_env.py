@@ -174,7 +174,7 @@ class PromptEnv(gym.Env):
         # Flag to track if structure has been set
         self._structure_set = False
         
-    def set_structure(self, question: str, answer: str, embedding: np.ndarray, structure: dict):
+    def set_structure(self, question: str, answer: str, embedding: np.ndarray, structure: dict, task=None):
         """
         Set the structure decision from the high-level policy.
         Must be called before reset() when using externally.
@@ -184,14 +184,21 @@ class PromptEnv(gym.Env):
             answer: The ground truth answer
             embedding: Pre-computed question embedding
             structure: Dict with workflow_depth, tools, budgets
+            task: Task object for tau2 datasets
         """
         self.current_q = question
         self.current_a = answer
         self.question_embedding = embedding
         
-        # For tau2, store task object if available
-        if self.is_tau2 and isinstance(answer, dict):
-            self.current_task = answer
+        # # For tau2, store task object if available
+        # if self.is_tau2 and isinstance(answer, dict):
+        #     self.current_task = answer
+        # For tau2, store task object if provided
+        if self.is_tau2:
+            if task is not None:
+                self.current_task = task
+            elif isinstance(answer, dict):
+                self.current_task = answer
         
         self.workflow_depth = structure["workflow_depth"]
         self.agent1_tools_idx = structure["agent1_tools_idx"]
@@ -242,12 +249,16 @@ class PromptEnv(gym.Env):
     
     def _get_observation(self):
         """Build observation vector."""
+        if self.is_tau2 and isinstance(self.tools, Tau2ToolRegistry):
+            max_tool_idx = self.tools.get_max_tool_index()
+        else:
+            max_tool_idx = 15
         # Structure decisions (normalized)
         structure_vec = np.array([
             self.workflow_depth / 8.0,  # Normalize for 9 workflows (0-8)
-            self.agent1_tools_idx / 15.0,  # Normalize for 16 tool options (0-15)
+            self.agent1_tools_idx / max(max_tool_idx, 1.0),  # Normalize for 16 tool options (0-15)
             self.agent1_budget_idx / 2.0,
-            self.agent2_tools_idx / 15.0,  # Normalize for 16 tool options (0-15)
+            self.agent2_tools_idx / max(max_tool_idx, 1.0),  # Normalize for 16 tool options (0-15)
             self.agent2_budget_idx / 2.0,
             self.answerer_budget_idx / 2.0,
         ], dtype=np.float32)
@@ -495,9 +506,11 @@ class PromptEnv(gym.Env):
             conversation_history = exec_info.get("conversation_history", [])
             final_text = "\n".join([f"{role}: {msg}" for role, msg in conversation_history[-3:]])  # Last 3 turns
             
-            # Update exec_info with pass_k
+            # pass_k_reward is the actual reward from Tau2 environment (not binary)
             exec_info["pass_k"] = pass_k_reward
-            exec_info["correct"] = pass_k_reward > 0
+            exec_info["tau2_reward"] = pass_k_reward  # Store Tau2's shaped reward
+            exec_info["final_reward"] = exec_info.get("final_reward", pass_k_reward)  # Keep final_reward from wrapper
+            exec_info["correct"] = pass_k_reward > 0  # Binary correctness for logging/metrics
             
             return final_text, exec_info
         
