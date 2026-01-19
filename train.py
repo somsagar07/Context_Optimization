@@ -42,7 +42,7 @@ except Exception:
     # Failed to load, continue anyway
     pass
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 from configs import load_config
 from algorithms import Algorithm, PPOTrainer, GRPOTrainer

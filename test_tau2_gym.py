@@ -3,6 +3,7 @@ Test script to verify tau2 gym environment is working correctly,
 including policy.md loading and initial message generation.
 """
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import sys
 
 # Load .env file FIRST (before any other imports that might need env vars)

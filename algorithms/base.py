@@ -649,9 +649,21 @@ class BaseTrainer(ABC):
         correct = info.get("correct", False)
         tools_used = info.get("tools_used", 0)
         
-        # Base correctness reward
-        final_reward = (1.0 if correct else 0.0) * 5.0 * self.reward_scale
-        final_reward += accumulated_reward
+        # Check if this is a Tau2 dataset - use Tau2's shaped reward as base
+        is_tau2 = hasattr(self.prompt_env, 'is_tau2') and self.prompt_env.is_tau2
+        tau2_reward = info.get("tau2_reward") if is_tau2 else None
+        
+        if tau2_reward is not None:
+            # Use Tau2's shaped reward as the base (already includes task completion, action success, etc.)
+            # Scale it appropriately and add our efficiency penalties/bonuses
+            final_reward = tau2_reward * self.reward_scale
+            final_reward += accumulated_reward  # Prompt selection intermediate rewards
+        else:
+            # For non-Tau2 datasets, use binary correctness reward
+            final_reward = (1.0 if correct else 0.0) * 5.0 * self.reward_scale
+            final_reward += accumulated_reward
+        
+        # Apply efficiency penalties (steps, tokens) - these apply to both Tau2 and non-Tau2
         final_reward -= info.get("steps_taken", 1) * self.cfg.COST_PER_STEP
         
         # Check if tools were selected (from structure action)

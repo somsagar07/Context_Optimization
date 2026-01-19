@@ -3,6 +3,7 @@ Tau2 Tool Registry - Wraps tau2 domain-specific tools.
 Dynamically loads tools from tau2 domains and maps them to indices.
 """
 import os
+import json
 os.environ.setdefault("LOGURU_LEVEL", "WARNING")
 # Configure loguru to suppress DEBUG and INFO logs
 try:
@@ -31,10 +32,11 @@ class Tau2ToolRegistry:
             domain: tau2 domain name (airline, retail, telecom)
         """
         self.domain = domain
-        self.env = None
+        self.env = None  # Will be set by Tau2ExecutionWrapper when env is created
         self.available_tools = {}
         self.tool_names = []
         self._initialized = False
+        self._tool_kit = None  # Store reference to tool kit for execution
         
     def _init_tools(self):
         """Initialize tools from tau2 environment."""
@@ -75,10 +77,12 @@ class Tau2ToolRegistry:
                     if hasattr(tool_kit, 'tools'):
                         tools_dict = tool_kit.tools  # This is the property that returns the dict
                         self.tool_names = list(tools_dict.keys())
+                        self._tool_kit = tool_kit  # Store for later execution
                     elif hasattr(tool_kit, 'get_tools'):
                         # Alternative: use get_tools() which returns Dict[str, Tool]
                         tools_dict = tool_kit.get_tools()
                         self.tool_names = list(tools_dict.keys())
+                        self._tool_kit = tool_kit  # Store for later execution
                     else:
                         raise AttributeError("ToolKit does not have tools property or get_tools method")
                     
@@ -122,19 +126,77 @@ class Tau2ToolRegistry:
             self._initialized = True
             print(f"  Using fallback tools: {self.tool_names}")
     
+    def set_env(self, env):
+        """Set the Tau2 gym environment for tool execution."""
+        self.env = env
+        
+        # Try to get tool kit from environment if available
+        if env:
+            if hasattr(env, 'tools'):
+                self._tool_kit = env.tools
+            elif hasattr(env, 'domain_env') and hasattr(env.domain_env, 'tools'):
+                self._tool_kit = env.domain_env.tools
+            elif hasattr(env, 'unwrapped') and hasattr(env.unwrapped, 'tools'):
+                self._tool_kit = env.unwrapped.tools
+            
+            # Update tool wrappers to use the new environment
+            # Recreate wrappers so they have access to the env
+            if self._initialized and self.tool_names:
+                for tool_name in self.tool_names:
+                    self.available_tools[tool_name] = self._create_tool_wrapper(tool_name)
+    
     def _create_tool_wrapper(self, tool_name: str):
         """Create a wrapper function for a tau2 tool."""
         def tool_wrapper(query: str) -> str:
             """Execute tau2 tool with query."""
             try:
-                # Tau2 tools are typically accessed through the environment
-                # This is a placeholder - actual implementation depends on tau2 API
-                if self.env and hasattr(self.env, 'execute_tool'):
-                    result = self.env.execute_tool(tool_name, query)
-                    return str(result)
-                else:
-                    # Fallback: return error message
-                    return f"Tool {tool_name} not available (tau2 integration incomplete)"
+                # Parse JSON query if it's a JSON string
+                # Tau2 tools expect keyword arguments, not JSON strings
+                try:
+                    query_dict = json.loads(query)
+                    # If parsing succeeded, we have a dict - pass as keyword args
+                    use_kwargs = True
+                except (json.JSONDecodeError, TypeError):
+                    # Not JSON, use as-is (for backward compatibility)
+                    query_dict = {}
+                    use_kwargs = False
+                
+                # Try multiple methods to execute the tool
+                # Method 1: Direct tool kit execution (most common)
+                if self._tool_kit:
+                    if hasattr(self._tool_kit, 'tools') and tool_name in self._tool_kit.tools:
+                        tool_func = self._tool_kit.tools[tool_name]
+                        if use_kwargs:
+                            # Pass as keyword arguments (Tau2 tools expect this)
+                            result = tool_func(**query_dict)
+                        else:
+                            # Pass as string (fallback for non-JSON queries)
+                            result = tool_func(query)
+                        return str(result)
+                    elif hasattr(self._tool_kit, 'execute'):
+                        if use_kwargs:
+                            result = self._tool_kit.execute(tool_name, **query_dict)
+                        else:
+                            result = self._tool_kit.execute(tool_name, query)
+                        return str(result)
+                
+                # Method 2: Environment-level execution
+                if self.env:
+                    if hasattr(self.env, 'execute_tool'):
+                        if use_kwargs:
+                            result = self.env.execute_tool(tool_name, **query_dict)
+                        else:
+                            result = self.env.execute_tool(tool_name, query)
+                        return str(result)
+                    elif hasattr(self.env, 'tools') and hasattr(self.env.tools, 'execute'):
+                        if use_kwargs:
+                            result = self.env.tools.execute(tool_name, **query_dict)
+                        else:
+                            result = self.env.tools.execute(tool_name, query)
+                        return str(result)
+                
+                # Fallback: return error message
+                return f"Tool {tool_name} not available (tau2 environment not set or tool not found)"
             except Exception as e:
                 return f"Error executing {tool_name}: {str(e)}"
         
