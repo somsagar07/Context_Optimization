@@ -17,7 +17,21 @@ class GSM8kDataset(BaseDataset):
         return sample['question'], sample['answer']
 
     def extract_number(self, text: str):
-        """Extract numerical answer from text (GSM8k specific)."""
+        """Extract numerical answer from text (GSM8k specific).
+        
+        Smart extraction:
+        1. If 'Final Answer:' present, extract first number after it
+        2. Otherwise, use last number (for step-by-step reasoning)
+        """
+        # First try: look for "Final Answer:" pattern
+        match = re.search(r'Final Answer[:\s]+', text, re.IGNORECASE)
+        if match:
+            after_fa = text[match.end():]
+            nums = re.findall(r"[-+]?\d*\.\d+|\d+", after_fa.replace(',', ''))
+            if nums:
+                return float(nums[0])
+        
+        # Fallback: use last number (for step-by-step or #### format)
         if "####" in text:
             text = text.split("####")[-1]
         nums = re.findall(r"[-+]?\d*\.\d+|\d+", text.replace(',', ''))
