@@ -188,10 +188,36 @@ def run_single_episode(ep, structure_policy, prompt_policy, cfg, deterministic, 
             )
             answer = task
         else:
-            # Standard dataset (gsm8k, hotpotqa, etc.)
+            # Standard dataset - extract based on dataset type
             sample = dataset.data[sample_idx]
-            question = sample.get('question', sample.get('problem', ''))
-            answer = sample.get('answer', '')
+            dataset_name = getattr(dataset, 'name', '').lower()
+            
+            if dataset_name == 'gaia':
+                # GAIA: 'Question', 'Final answer', optional file attachment
+                question = sample['Question']
+                answer = sample['Final answer']
+                # Handle file attachments (same as gaia_loader.get_sample)
+                rel_path = sample.get('file_path', '')
+                if rel_path and hasattr(dataset, 'data_dir'):
+                    import os
+                    full_path = os.path.join(dataset.data_dir, rel_path)
+                    question += f"\n\n[System Notification]\nFile Attachment: {full_path}\nYou can use your tools to read or process this file."
+            elif dataset_name == 'medqa':
+                # MedQA: nested 'data' dict with 'Question', 'Options', 'Correct Answer'
+                data = sample['data']
+                question = data['Question']
+                options = data['Options']  # Dict: {'A': '...', 'B': '...', etc.}
+                options_text = "\n".join([f"{k}: {v}" for k, v in sorted(options.items())])
+                question = f"{question}\n\nOptions:\n{options_text}"
+                answer = data['Correct Answer']
+            elif dataset_name == 'aime25':
+                # AIME25: 'problem', 'answer'
+                question = sample.get('problem', '')
+                answer = sample.get('answer', '')
+            else:
+                # GSM8K, HotPotQA, and other standard datasets: 'question', 'answer'
+                question = sample.get('question', sample.get('problem', ''))
+                answer = sample.get('answer', '')
         
         # Manually set the current sample and get embedding
         structure_env.current_q = question
