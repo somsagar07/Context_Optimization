@@ -19,6 +19,7 @@ Usage:
 """
 import sys
 import os
+# os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -195,6 +196,8 @@ def run_single_episode(ep, structure_policy, prompt_policy, cfg, deterministic, 
         # Manually set the current sample and get embedding
         structure_env.current_q = question
         structure_env.current_a = answer
+        
+        # Each env has its own pre-initialized embedder - no sharing needed
         structure_env.question_embedding = structure_env.worker.get_embedding(question)
         
         # Build observation and info manually (similar to reset())
@@ -318,7 +321,25 @@ def evaluate_parallel(structure_policy, prompt_policy, cfg, num_episodes=20,
                                 api_model=api_model, hf_model=hf_model,
                                 dataset=shared_dataset)
         env_pools.append((structure_env, prompt_env))
-    print(f"  Done! All {num_workers} environments ready.\n")
+    print(f"  Done! All {num_workers} environments ready.")
+    
+    # Pre-initialize ALL embedders SEQUENTIALLY before parallel execution
+    # This avoids race conditions during lazy loading - each worker gets its own ready embedder
+    # Having separate embedders per worker avoids GPU contention from sharing one model
+    print(f"\n  Pre-initializing all embedders (one per worker, avoids race conditions)...")
+    initialized_count = 0
+    for i, (structure_env, prompt_env) in enumerate(env_pools):
+        for env_name, env in [("structure", structure_env), ("prompt", prompt_env)]:
+            try:
+                if hasattr(env, 'worker') and hasattr(env.worker, 'embedder'):
+                    embedder = env.worker.embedder
+                    if hasattr(embedder, '_init_embedder') and not embedder._initialized:
+                        embedder._init_embedder()
+                        initialized_count += 1
+            except Exception as e:
+                print(f"    ⚠ Warning: Could not initialize {env_name} embedder {i}: {e}")
+    print(f"  ✓ Pre-initialized {initialized_count} embedders (each worker has its own)")
+    print()
     
     # Lock for each environment pair to ensure thread-safe access
     env_locks = [threading.Lock() for _ in range(num_workers)]

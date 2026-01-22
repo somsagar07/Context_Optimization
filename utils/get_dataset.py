@@ -33,12 +33,15 @@ def get_dataset_loader(name: str, is_eval: bool = False, domain: str = None):
         split = "validation" if is_eval else "train"
         return HotPotQADataset(split=split)
     elif name == "gaia":
-        # GAIADataset uses rl_split parameter (string, not boolean)
-        rl_split = "validation" if is_eval else "train"
+        # # GAIADataset uses rl_split parameter (string, not boolean)
+        # rl_split = "validation" if is_eval else "train"
+        # GAIADataset uses rl_split parameter: "train" (0-64) or "eval" (65-165)
+        rl_split = "eval" if is_eval else "train"
         return GAIADataset(rl_split=rl_split)
     elif name == "medqa":
-        # openlifescienceai/medqa uses "dev" for validation split
-        split = "dev" if is_eval else "train"
+        # openlifescienceai/medqa has train/dev/test splits
+        # Use "test" for final evaluation, "train" for training
+        split = "test" if is_eval else "train"
         return MedQADataset(split=split)
     elif name == "aime25":
         # AIME25 only has "test" split, we split it internally
