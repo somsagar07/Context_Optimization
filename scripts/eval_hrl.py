@@ -5,11 +5,14 @@ Evaluates trained structure and prompt policies.
 
 Usage:
     # HuggingFace models (default)
-    python scripts/eval_hrl.py --structure-model models/grpo_models/structure.pt --prompt-model models/grpo_models/prompt.pt
-    python scripts/eval_hrl.py --structure-model models/ppo_models/structure.pt --prompt-model models/ppo_models/prompt.pt --episodes 50
+    python scripts/eval_hrl.py --structure-model models/grpo_models/structure.pt --prompt-model models/grpo_models/prompt.pt --dataset gsm8k
+    python scripts/eval_hrl.py --structure-model models/ppo_models/structure.pt --prompt-model models/ppo_models/prompt.pt --dataset gsm8k --episodes 50
+    
+    # Evaluate on all datapoints
+    python scripts/eval_hrl.py --structure-model models/ppo_models/structure.pt --prompt-model models/ppo_models/prompt.pt --dataset gsm8k --episodes all
     
     # API mode (must match training configuration)
-    python scripts/eval_hrl.py --structure-model models/ppo_models/structure.pt --prompt-model models/ppo_models/prompt.pt --api --api-model openai/gpt-4o
+    python scripts/eval_hrl.py --structure-model models/ppo_models/structure.pt --prompt-model models/ppo_models/prompt.pt --dataset gsm8k --api --api-model openai/gpt-4o
 """
 import sys
 import os
@@ -17,8 +20,11 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import argparse
+import json
 import numpy as np
+from datetime import datetime
 from collections import defaultdict
+from tqdm import tqdm
 
 import torch
 import torch.nn as nn
@@ -135,7 +141,7 @@ def load_structure_policy(path, device="cpu"):
     policy.eval()
     
     print(f"  Loaded structure policy ({algo})")
-    return policy
+    return policy, algo
 
 
 def load_prompt_policy(path, device="cpu"):
@@ -150,7 +156,7 @@ def load_prompt_policy(path, device="cpu"):
     policy.eval()
     
     print(f"  Loaded prompt policy ({algo})")
-    return policy
+    return policy, algo
 
 
 
@@ -169,11 +175,16 @@ def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20,
     prompt_env = PromptEnv(cfg, is_eval=True, use_api=use_api, api_model=api_model, hf_model=hf_model)
     
     results = {"correct": [], "workflows": [], "tokens": [], "rewards": [], "tools": []}
+    episode_logs = []  # Detailed per-episode logs
+    
+    # Running stats for tqdm
+    running_correct = 0
+    running_reward = 0.0
     
     print(f"\nEvaluating on {num_episodes} episodes...")
-    print("-" * 60)
     
-    for ep in range(num_episodes):
+    pbar = tqdm(range(num_episodes), desc="Evaluating", leave=True)
+    for ep in pbar:
         # Structure decision
         struct_obs, struct_info = structure_env.reset()
         
@@ -220,27 +231,50 @@ def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20,
         max_tokens = 2048 + 1024 + 512  # reasoner_high + verifier_high + answerer_high
         final_reward -= (info.get("total_tokens", 256) / max_tokens) * cfg.COST_TOKEN_BUDGET
         
-        # Record
+        # Decode tools for logging
+        agent1_tools = decode_tools(struct_exec_info["structure"]["agent1_tools_idx"], structure_env)
+        agent2_tools = decode_tools(struct_exec_info["structure"]["agent2_tools_idx"], structure_env)
+        
+        # Record aggregated results
         results["correct"].append(correct)
         results["workflows"].append(struct_exec_info["workflow"])
         results["tokens"].append(info.get("total_tokens", 0))
         results["rewards"].append(final_reward)
         results["tools"].append(info.get("tools_used", 0))
         
-        if verbose:
-            status = "✓" if correct else "✗"
-            q = struct_info["question"][:50] + "..." if len(struct_info["question"]) > 50 else struct_info["question"]
-            # Decode tools for display
-            agent1_tools = decode_tools(struct_exec_info["structure"]["agent1_tools_idx"], structure_env)
-            agent2_tools = decode_tools(struct_exec_info["structure"]["agent2_tools_idx"], structure_env)
-            tools_str = f"A1:{'+'.join(agent1_tools) if agent1_tools else 'none'}, A2:{'+'.join(agent2_tools) if agent2_tools else 'none'}"
-            print(f"  [{ep+1:3d}] {status} | {struct_exec_info['workflow']:20s} | "
-                  f"Tools: {info.get('tools_used', 0)} ({tools_str}) | Reward: {final_reward:.2f}")
+        # Record detailed episode log
+        episode_logs.append({
+            "episode": ep + 1,
+            "correct": correct,
+            "workflow": struct_exec_info["workflow"],
+            "reward": float(final_reward),
+            "tools_used": info.get("tools_used", 0),
+            "tools_available": {
+                "agent1": agent1_tools,
+                "agent2": agent2_tools
+            },
+            "tokens": info.get("total_tokens", 0),
+            "steps": info.get("steps_taken", 1),
+            "question": struct_info["question"],
+            "prediction": info.get("final_answer", ""),  # final_answer from prompt_env
+            "ground_truth": info.get("ground_truth", "")
+        })
+        
+        # Update running stats
+        running_correct += int(correct)
+        running_reward += final_reward
+        
+        # Update tqdm with running accuracy and reward
+        pbar.set_postfix({
+            "acc": f"{running_correct/(ep+1)*100:.1f}%",
+            "reward": f"{running_reward/(ep+1):.2f}"
+        })
     
     # Summary
     accuracy = np.mean(results["correct"]) * 100
     avg_reward = np.mean(results["rewards"])
     avg_tools = np.mean(results["tools"])
+    avg_tokens = np.mean(results["tokens"])
     
     workflow_counts = defaultdict(int)
     for w in results["workflows"]:
@@ -252,11 +286,19 @@ def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20,
     print(f"  Accuracy:    {accuracy:.1f}%")
     print(f"  Avg Reward:  {avg_reward:.3f}")
     print(f"  Avg Tools:   {avg_tools:.2f}")
+    print(f"  Avg Tokens:  {avg_tokens:.0f}")
     print(f"\n  Workflows:")
     for w, c in sorted(workflow_counts.items()):
         print(f"    {w}: {c} ({c/num_episodes*100:.1f}%)")
     
-    return {"accuracy": accuracy, "avg_reward": avg_reward, "avg_tools": avg_tools}
+    return {
+        "accuracy": accuracy, 
+        "avg_reward": avg_reward, 
+        "avg_tools": avg_tools,
+        "avg_tokens": avg_tokens,
+        "workflow_distribution": dict(workflow_counts),
+        "episodes": episode_logs
+    }
 
 
 def parse_args():
@@ -264,13 +306,16 @@ def parse_args():
     parser.add_argument("--config", type=str, default="hierarchical")
     parser.add_argument("--structure-model", type=str, required=True)
     parser.add_argument("--prompt-model", type=str, required=True)
-    parser.add_argument("--episodes", type=int, default=20)
+    parser.add_argument("--episodes", type=str, default="20",
+                       help="Number of episodes to evaluate, or 'all' for all datapoints")
     parser.add_argument("--dataset", type=str, required=True, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25", "tau2_airline", "tau2_retail", "tau2_telecom"])
 
     parser.add_argument("--stochastic", action="store_true", help="Sample from policy distribution instead of argmax")
     parser.add_argument("--temperature", type=float, default=1.0, 
                        help="Softmax temperature: <1.0=sharper (deterministic), >1.0=flatter (diverse)")
     parser.add_argument("--quiet", action="store_true")
+    parser.add_argument("--log-file", type=str, default=None,
+                       help="Path to save evaluation logs as JSON. If not provided, auto-generates filename in eval_logs/")
     
     # API configuration (must match training configuration)
     parser.add_argument("--api", action="store_true", default=False,
@@ -289,6 +334,21 @@ def main():
     cfg = load_config(args.config)
     if args.dataset:
         cfg.DATASET_NAME = args.dataset
+    
+    # Handle "all" episodes - evaluate on entire dataset
+    if args.episodes.lower() == "all":
+        from utils.get_dataset import get_dataset_loader
+        dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=True)
+        # Get dataset size - tau2 uses .tasks, others use .data
+        if hasattr(dataset, 'tasks'):
+            num_episodes = len(dataset.tasks)
+        elif hasattr(dataset, 'data'):
+            num_episodes = len(dataset.data)
+        else:
+            num_episodes = len(dataset)
+        print(f"Evaluating on ALL {num_episodes} datapoints from {cfg.DATASET_NAME}")
+    else:
+        num_episodes = int(args.episodes)
     
     print("=" * 60)
     print("HIERARCHICAL RL EVALUATION")
@@ -309,12 +369,15 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"\nLoading models (device: {device})...")
     
-    structure_policy = load_structure_policy(args.structure_model, device)
-    prompt_policy = load_prompt_policy(args.prompt_model, device)
+    structure_policy, struct_algo = load_structure_policy(args.structure_model, device)
+    prompt_policy, prompt_algo = load_prompt_policy(args.prompt_model, device)
+    
+    # Use structure policy algorithm (should match prompt policy)
+    method = struct_algo.lower()  # e.g., "ppo" or "grpo"
     
     results = evaluate(
         structure_policy, prompt_policy, cfg,
-        num_episodes=args.episodes,
+        num_episodes=num_episodes,
         deterministic=not args.stochastic,
         verbose=not args.quiet,
         use_api=args.api,
@@ -322,8 +385,47 @@ def main():
         hf_model=args.hf_model,
         temperature=args.temperature
     )
+    
+    # Save logs
+    log_file = args.log_file
+    if log_file is None:
+        # Auto-generate path: eval_logs/<method>/<dataset_name>/<model_name>/eval_<timestamp>.json
+        # Extract just the model name (after '/') and replace '.' with '_'
+        model_suffix = model_name.split("/")[-1].replace(".", "_").replace(":", "_")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_dir = os.path.join("eval_logs", method, cfg.DATASET_NAME, model_suffix)
+        os.makedirs(log_dir, exist_ok=True)
+        log_file = os.path.join(log_dir, f"eval_{timestamp}.json")
+    
+    # Build complete log with metadata
+    log_data = {
+        "metadata": {
+            "timestamp": datetime.now().isoformat(),
+            "method": method,
+            "dataset": cfg.DATASET_NAME,
+            "num_episodes": num_episodes,
+            "structure_model": args.structure_model,
+            "prompt_model": args.prompt_model,
+            "model": model_name,
+            "api_mode": args.api,
+            "deterministic": not args.stochastic,
+            "temperature": args.temperature
+        },
+        "summary": {
+            "accuracy": results["accuracy"],
+            "avg_reward": results["avg_reward"],
+            "avg_tools": results["avg_tools"],
+            "avg_tokens": results["avg_tokens"],
+            "workflow_distribution": results["workflow_distribution"]
+        },
+        "episodes": results["episodes"]
+    }
+    
+    with open(log_file, "w") as f:
+        json.dump(log_data, f, indent=2)
+    
+    print(f"\n  Logs saved to: {log_file}")
 
 
 if __name__ == "__main__":
     main()
-
