@@ -42,13 +42,14 @@ class StructureEnv(gym.Env):
     The PromptEnv handles the actual LLM execution after prompt selection.
     """
     
-    def __init__(self, cfg=None, is_eval=False, use_api=False, api_model=None, hf_model=None):
+    def __init__(self, cfg=None, is_eval=False, use_api=False, api_model=None, hf_model=None, dataset=None):
         """
         Args:
             cfg: Configuration module
             use_api: If True, use OpenRouterWorker instead of LLMWorker
             api_model: OpenRouter model ID (e.g., 'openai/gpt-4o')
             hf_model: HuggingFace model name (e.g., 'Qwen/Qwen2.5-7B-Instruct'). Defaults to LLM_MODEL_NAME from config
+            dataset: Pre-loaded dataset (optional, to avoid reloading in parallel evaluation)
         """
         super().__init__()
         
@@ -63,8 +64,9 @@ class StructureEnv(gym.Env):
             self.worker = OpenRouterWorker(model_name=api_model)
         else:
             self.worker = LLMWorker(model_name=hf_model)
-            
-        self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
+        
+        # Use provided dataset or load new one
+        self.dataset = dataset if dataset is not None else get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
         # Check if this is a tau2 dataset
         self.is_tau2 = hasattr(self.dataset, 'domain') and self.dataset.name.startswith('tau2_')

@@ -28,15 +28,7 @@ import re
 
 # Handle tau2 dataset
 from tools.tau2_tool_registry import Tau2ToolRegistry
-try:
-    from tau2_executions_wrapper import Tau2ExecutionWrapper
-except ImportError:
-    # Try importing from parent directory
-    import os
-    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    if parent_dir not in sys.path:
-        sys.path.insert(0, parent_dir)
-    from tau2_executions_wrapper import Tau2ExecutionWrapper
+from utils.data_loader.tau2_executions_wrapper import Tau2ExecutionWrapper
 
 class PromptEnv(gym.Env):
     """
@@ -71,7 +63,16 @@ class PromptEnv(gym.Env):
         "answerer": {0: 128, 1: 256, 2: 512}
     }
     
-    def __init__(self, cfg=None, is_eval=False, use_api=False, api_model=None, hf_model=None):
+    def __init__(self, cfg=None, is_eval=False, use_api=False, api_model=None, hf_model=None, dataset=None):
+        """
+        Args:
+            cfg: Configuration module
+            is_eval: If True, use evaluation split of dataset
+            use_api: If True, use OpenRouterWorker instead of LLMWorker
+            api_model: OpenRouter model ID (e.g., 'openai/gpt-4o')
+            hf_model: HuggingFace model name (e.g., 'Qwen/Qwen2.5-7B-Instruct')
+            dataset: Pre-loaded dataset (optional, to avoid reloading in parallel evaluation)
+        """
         super().__init__()
         
         # Store config
@@ -100,7 +101,9 @@ class PromptEnv(gym.Env):
             self.worker = LLMWorker(model_name=hf_model)
             self.get_workflow_func = get_workflow
         # self.tools = ToolRegistry()
-        self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
+        
+        # Use provided dataset or load new one
+        self.dataset = dataset if dataset is not None else get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
         # Check if this is a tau2 dataset
         self.is_tau2 = hasattr(self.dataset, 'domain') and self.dataset.name.startswith('tau2_')
@@ -110,14 +113,21 @@ class PromptEnv(gym.Env):
             self.tools = Tau2ToolRegistry(self.dataset.domain)
             
             if isinstance(self.tools, Tau2ToolRegistry):
+                # Load domain policy
+                domain_policy = self.tools.get_domain_policy()
+                if domain_policy:
+                    # Store policy for worker to use
+                    self.worker.domain_policy = domain_policy
+                    print(f"✓ Loaded domain policy for {self.dataset.domain}")
+                else:
+                    print(f"⚠ Warning: Could not load domain policy for {self.dataset.domain}")
+                
                 tau2_descriptions = self.tools.get_tool_prompt_descriptions()
                 if tau2_descriptions:
                     self.worker.additional_tool_descriptions = tau2_descriptions
                     print(f"✓ Loaded {len(tau2_descriptions)} tau2 tool descriptions for worker")
                 else:
                     print(f"⚠ Warning: No tool descriptions returned from tau2 registry")
-            
-                # self.worker.additional_tool_descriptions = tau2_descriptions
             
             self.tau2_executor = Tau2ExecutionWrapper(
                 self.dataset.domain,
@@ -345,8 +355,15 @@ class PromptEnv(gym.Env):
         if self._all_prompts_done():
             final_text, exec_info = self._execute_workflow()
             
-            # Calculate correctness (reward will be added in base.py to avoid double-counting)
-            correctness = self.dataset.evaluate_correctness(final_text, self.current_a)
+            # Calculate correctness
+            # For tau2 datasets, use the correctness from exec_info (evaluated by tau2-bench)
+            # For other datasets, use the dataset's evaluate_correctness method
+            if self.is_tau2:
+                # tau2 correctness is determined by the execution wrapper using tau2-bench's evaluator
+                correct = exec_info.get("correct", False)
+            else:
+                correctness = self.dataset.evaluate_correctness(final_text, self.current_a)
+                correct = correctness == 1.0
             
             # Dataset-specific bonuses (keep these as they're unique to prompt selection)
             if self.dataset.name in ["gaia"]:
@@ -369,7 +386,7 @@ class PromptEnv(gym.Env):
             terminated = True
             info = {
                 "question": self.current_q,
-                "correct": correctness == 1.0,
+                "correct": correct,  # Use the correctly computed correctness
                 "workflow": [
                     "Direct", "Reason+Ans", "Reason+Verify+Ans",
                     "Routing", "Parallel-Sectioning", "Parallel-Voting",
@@ -388,6 +405,18 @@ class PromptEnv(gym.Env):
                 "final_answer": final_text,
                 "ground_truth": self.current_a,
             }
+            
+            # For tau2, pass through additional info from the execution wrapper
+            if self.is_tau2:
+                info["tau2_reward"] = exec_info.get("tau2_reward", 0.0)
+                info["shaped_reward"] = exec_info.get("shaped_reward", 0.0)
+                info["final_reward"] = exec_info.get("final_reward", 0.0)
+                info["task_completed"] = exec_info.get("task_completed", False)
+                info["partial_rewards"] = exec_info.get("partial_rewards", {})
+                info["reward_breakdown"] = exec_info.get("reward_breakdown", {})
+                # Full simulation data for logs
+                info["simulation_run"] = exec_info.get("simulation_run")
+                info["task"] = exec_info.get("task")
         
         return self._get_observation(), reward, terminated, False, info
     
@@ -506,11 +535,58 @@ class PromptEnv(gym.Env):
             conversation_history = exec_info.get("conversation_history", [])
             final_text = "\n".join([f"{role}: {msg}" for role, msg in conversation_history[-3:]])  # Last 3 turns
             
-            # pass_k_reward is the actual reward from Tau2 environment (not binary)
+            # Update question embedding to use the output embedding (like standard datasets)
+            # This ensures the next state uses the embedding of the output, not the original question
+            # This matches the behavior in general_env.py where next_obs = embedding(final_text)
+            try:
+                self.question_embedding = self.worker.get_embedding(final_text)
+            except Exception as e:
+                # Fallback: if embedding fails, keep original question embedding
+                print(f"  ⚠ Warning: Could not update embedding from final_text: {e}")
+            
+            # pass_k_reward is now the shaped reward (includes partial credit)
+            # shaped_reward gives partial credit even if final reward is 0
+            shaped_reward = exec_info.get("shaped_reward", pass_k_reward)
+            final_reward = exec_info.get("final_reward", pass_k_reward)
+            partial_rewards = exec_info.get("partial_rewards", {})
+            
             exec_info["pass_k"] = pass_k_reward
-            exec_info["tau2_reward"] = pass_k_reward  # Store Tau2's shaped reward
-            exec_info["final_reward"] = exec_info.get("final_reward", pass_k_reward)  # Keep final_reward from wrapper
-            exec_info["correct"] = pass_k_reward > 0  # Binary correctness for logging/metrics
+            exec_info["tau2_reward"] = shaped_reward  # Store Tau2's shaped reward (includes partial credit)
+            exec_info["shaped_reward"] = shaped_reward  # Also store explicitly
+            exec_info["final_reward"] = final_reward  # Keep final_reward from wrapper
+            
+            # Determine correctness: mark as correct if:
+            # 1. Final reward > 0 (full success), OR
+            # 2. Shaped reward > 0.5 (significant partial credit), OR
+            # 3. Task completed (conversation ended) with substantial partial rewards, OR
+            # 4. Task completed with DB match and most actions correct
+            task_completed = exec_info.get("task_completed", False)
+            is_correct = False
+            
+            if final_reward > 0:
+                is_correct = True  # Full success
+            elif shaped_reward > 0.5:
+                is_correct = True  # Significant partial credit
+            elif task_completed and partial_rewards:
+                # Task completed but reward is 0 - check if we have substantial partial success
+                has_db_match = partial_rewards.get("db_match", False)
+                action_ratio = 0.0
+                if partial_rewards.get("total_actions_count", 0) > 0:
+                    action_ratio = (partial_rewards.get("correct_actions_count", 0) / 
+                                   partial_rewards.get("total_actions_count", 1))
+                
+                # Mark as correct if:
+                # - DB matches AND most actions are correct (70%+), OR
+                # - High action ratio (80%+) even without DB match (actions are more important)
+                if (has_db_match and action_ratio >= 0.7) or action_ratio >= 0.8:
+                    is_correct = True
+            elif task_completed and shaped_reward > 0.3:
+                # Task completed with at least some partial credit
+                is_correct = True
+            
+            exec_info["correct"] = is_correct
+            # Pass through partial_rewards for reward calculation in base.py
+            exec_info["partial_rewards"] = partial_rewards
             
             return final_text, exec_info
         
@@ -558,6 +634,15 @@ class PromptEnv(gym.Env):
             answerer_tokens,
             prompt_suffixes=prompt_suffixes
         )
+        
+        # Update question embedding to use the output embedding (like standard datasets)
+        # This ensures the next state uses the embedding of the output, not the original question
+        # This matches the behavior in general_env.py where next_obs = embedding(final_text)
+        try:
+            self.question_embedding = self.worker.get_embedding(final_text)
+        except Exception as e:
+            # Fallback: if embedding fails, keep original question embedding
+            print(f"  ⚠ Warning: Could not update embedding from final_text: {e}")
         
         return final_text, exec_info
 
