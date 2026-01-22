@@ -704,9 +704,10 @@ Examples:
     
     parser.add_argument("--baseline", type=str, default="all",
                        help="Baseline to run: all, search, direct, reason, verify, routing, parallel_section, parallel_vote, orchestrator, eval_opt, autonomous, or specific config name")
-    parser.add_argument("--dataset", type=str, default="hotpotqa",
-                       choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"],
-                       help="Dataset to evaluate on")
+    from utils import validate_dataset_name, get_dataset_help_text
+    
+    parser.add_argument("--dataset", type=validate_dataset_name, default="hotpotqa",
+                       help=get_dataset_help_text(include_tau2=False))
     parser.add_argument("--episodes", type=int, default=50,
                        help="Number of episodes per configuration")
     parser.add_argument("--list-baselines", action="store_true",

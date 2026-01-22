@@ -61,12 +61,13 @@ def parse_args():
         default=30,
         help="Number of episodes to evaluate"
     )
+    from utils import validate_dataset_name, get_dataset_help_text
+    
     parser.add_argument(
         "--dataset",
-        type=str,
+        type=validate_dataset_name,
         default=None,
-        choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"],
-        help="Override dataset from config"
+        help=get_dataset_help_text(include_tau2=False)
     )
     return parser.parse_args()
 

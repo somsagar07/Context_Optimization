@@ -19,16 +19,21 @@ def test_dataset(name: str, num_samples: int = 3):
     Test a dataset loader.
     
     Args:
-        name: Dataset name (gsm8k, hotpotqa, gaia, medqa, aime25)
+        name: Dataset name (gsm8k, hotpotqa, gaia, medqa, aime25, mmlu_*)
         num_samples: Number of samples to show
     """
     print("=" * 80)
     print(f"Testing {name.upper()} Dataset")
     print("=" * 80)
     
+    # MMLU has no train split - it maps train->dev automatically
+    is_mmlu = name.startswith("mmlu")
+    
     try:
         # Test training split
         print(f"\n[1] Loading {name} training split...")
+        if is_mmlu:
+            print("    (Note: MMLU has no 'train' split, will use 'dev' for few-shot examples)")
         dataset_train = get_dataset_loader(name, is_eval=False)
         print(f"    ✓ Successfully loaded training split")
         print(f"    Dataset name: {dataset_train.name}")
@@ -86,6 +91,33 @@ def test_dataset(name: str, num_samples: int = 3):
                 match = "✓" if abs(extracted - expected) < 1e-3 else "✗"
                 print(f"  {match} '{text}' -> {extracted} (expected: {expected})")
         
+        elif is_mmlu:
+            print(f"\n[5] Testing MMLU-specific features:")
+            
+            # Test __len__ and __getitem__
+            print(f"  Testing __len__: {len(dataset_train)}")
+            sample_item = dataset_train[0]
+            print(f"  Testing __getitem__[0]: keys = {list(sample_item.keys())}")
+            
+            # Test get_question/get_answer
+            question_0 = dataset_train.get_question(0)
+            answer_0 = dataset_train.get_answer(0)
+            print(f"  Testing get_question(0): {len(question_0)} chars")
+            print(f"  Testing get_answer(0): {answer_0}")
+            
+            # Test multiple choice evaluation
+            print(f"\n  Testing multiple choice evaluation:")
+            mc_test_cases = [
+                ("A", "A", 1.0),
+                ("The answer is B", "B", 1.0),
+                ("I think it's C because...", "C", 1.0),
+                ("A", "B", 0.0),
+            ]
+            for pred, truth, expected in mc_test_cases:
+                result = dataset_train.evaluate_correctness(pred, truth)
+                match = "✓" if result == expected else "✗"
+                print(f"    {match} '{pred}' vs '{truth}' -> {result} (expected: {expected})")
+        
         print(f"\n✓ {name.upper()} dataset test PASSED\n")
         return True
         
@@ -109,7 +141,16 @@ def test_dataset(name: str, num_samples: int = 3):
 
 
 def main():
-    datasets = ["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"]
+    # Standard datasets + MMLU categories
+    datasets = [
+        "gsm8k", 
+        "hotpotqa", 
+        "gaia", 
+        "medqa", 
+        "aime25",
+        "mmlu_math",           # MMLU math category
+        "mmlu_math_physics",   # MMLU combined categories
+    ]
     results = {}
     
     for dataset_name in datasets:

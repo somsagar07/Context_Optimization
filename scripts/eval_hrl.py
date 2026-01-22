@@ -214,6 +214,25 @@ def run_single_episode(ep, structure_policy, prompt_policy, cfg, deterministic, 
                 # AIME25: 'problem', 'answer'
                 question = sample.get('problem', '')
                 answer = sample.get('answer', '')
+            elif dataset_name.startswith('mmlu'):
+                # MMLU: format options and map answer index to text
+                if hasattr(dataset, "get_question") and hasattr(dataset, "get_answer"):
+                    question = dataset.get_question(sample_idx)
+                    answer = dataset.get_answer(sample_idx)
+                else:
+                    question_text = sample.get('question', '')
+                    choices = sample.get('choices', [])
+                    if choices:
+                        options_text = "\n".join([f"{chr(65+i)}: {choice}" for i, choice in enumerate(choices)])
+                        question = f"{question_text}\n\nOptions:\n{options_text}"
+                        answer_idx = sample.get('answer', None)
+                        if isinstance(answer_idx, int) and 0 <= answer_idx < len(choices):
+                            answer = choices[answer_idx]
+                        else:
+                            answer = sample.get('answer', '')
+                    else:
+                        question = question_text
+                        answer = sample.get('answer', '')
             else:
                 # GSM8K, HotPotQA, and other standard datasets: 'question', 'answer'
                 question = sample.get('question', sample.get('problem', ''))
@@ -550,13 +569,16 @@ def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20,
 
 
 def parse_args():
+    from utils import validate_dataset_name, get_dataset_help_text
+    
     parser = argparse.ArgumentParser(description="Evaluate hierarchical RL")
     parser.add_argument("--config", type=str, default="hierarchical")
     parser.add_argument("--structure-model", type=str, required=True)
     parser.add_argument("--prompt-model", type=str, required=True)
     parser.add_argument("--episodes", type=str, default="20",
                        help="Number of episodes to evaluate, or 'all' for all datapoints")
-    parser.add_argument("--dataset", type=str, required=True, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25", "tau2_airline", "tau2_retail", "tau2_telecom"])
+    parser.add_argument("--dataset", type=validate_dataset_name, required=True, default=None,
+                       help=get_dataset_help_text(include_tau2=True))
 
     parser.add_argument("--stochastic", action="store_true", help="Sample from policy distribution instead of argmax")
     parser.add_argument("--temperature", type=float, default=1.0, 

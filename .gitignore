@@ -24,4 +24,7 @@ paper/
 # Precomputed embeddings (large files, regenerate with: python scripts/precompute_embeddings.py --all)
 embeddings_cache/
 
+# Test files
+test/
+
 .env

@@ -117,6 +117,43 @@ def load_dataset_with_config(dataset_name: str, split: str):
         data = load_dataset(data_dir, "2023_all", split=split)
         extract_fn = _make_gaia_extractor(data_dir)
     
+    elif dataset_name.startswith("mmlu"):
+        # MMLU datasets: use the MMLUDataset loader
+        from utils.get_dataset import get_dataset_loader
+        from utils.data_loader.mmlu_loader import MMLU_SUBJECTS
+        
+        # Parse categories from name if provided
+        categories = None
+        if "_" in dataset_name:
+            name_parts = dataset_name.split("_")[1:]  # Skip "mmlu"
+            categories = [part for part in name_parts if part in MMLU_SUBJECTS.keys()]
+        
+        # Use the dataset loader to get MMLU dataset
+        mmlu_dataset = get_dataset_loader(dataset_name, is_eval=(split != "train"), categories=categories)
+        
+        # Extract questions from MMLU dataset
+        def extract_mmlu_question(idx):
+            sample = mmlu_dataset.data[idx]
+            question_text = sample['question']
+            choices = sample['choices']
+            options_text = "\n".join([f"{chr(65+i)}: {choice}" for i, choice in enumerate(choices)])
+            return f"{question_text}\n\nOptions:\n{options_text}"
+        
+        # Create a list-like interface for compatibility
+        class MMLUDataWrapper:
+            def __init__(self, dataset):
+                self.dataset = dataset
+                self._data = dataset.data
+            
+            def __len__(self):
+                return len(self._data)
+            
+            def __getitem__(self, idx):
+                return {"question": extract_mmlu_question(idx)}
+        
+        data = MMLUDataWrapper(mmlu_dataset)
+        extract_fn = lambda x: x["question"]
+    
     elif dataset_name.startswith("tau2_"):
         # Tau2 datasets: tau2_airline, tau2_retail, tau2_telecom
         domain = dataset_name.split("_", 1)[1]
@@ -179,6 +216,22 @@ DATASET_CONFIGS = {
     "tau2_telecom": {
         "splits": ["all"],
     },
+    # MMLU category presets (MMLU has no train split, uses dev/test)
+    "mmlu_math": {
+        "splits": ["test"],
+    },
+    "mmlu_physics": {
+        "splits": ["test"],
+    },
+    "mmlu_bio": {
+        "splits": ["test"],
+    },
+    "mmlu_chemistry": {
+        "splits": ["test"],
+    },
+    "mmlu_cs": {
+        "splits": ["test"],
+    },
 }
 
 
@@ -194,11 +247,15 @@ def precompute_dataset(
     Saves:
         - {dataset_name}_{split}_embeddings.npz: Embeddings array and hashes
     """
-    if dataset_name not in DATASET_CONFIGS:
+    # Get config - for MMLU, create config dynamically if not in DATASET_CONFIGS
+    if dataset_name in DATASET_CONFIGS:
+        config = DATASET_CONFIGS[dataset_name]
+    elif dataset_name.startswith("mmlu"):
+        # MMLU datasets: use test split (MMLU has no train, dev is for few-shot)
+        config = {"splits": ["test"]}
+    else:
         print(f"Unknown dataset: {dataset_name}. Skipping.")
         return
-    
-    config = DATASET_CONFIGS[dataset_name]
     os.makedirs(output_dir, exist_ok=True)
     
     for split in config["splits"]:
@@ -270,6 +327,34 @@ def precompute_dataset(
         print(f"  File size: {os.path.getsize(output_path) / 1024 / 1024:.2f} MB")
 
 
+def validate_embedding_dataset(name):
+    """Validate dataset name for embedding precomputation."""
+    # Standard datasets in DATASET_CONFIGS
+    if name in DATASET_CONFIGS:
+        return name
+    
+    # Allow any mmlu_* pattern (for custom combinations like mmlu_math_physics)
+    if name.startswith("mmlu"):
+        from utils.data_loader.mmlu_loader import MMLU_SUBJECTS
+        if name == "mmlu":
+            return name
+        # Validate categories
+        parts = name.split("_")[1:]
+        valid_categories = set(MMLU_SUBJECTS.keys())
+        for part in parts:
+            if part not in valid_categories:
+                raise argparse.ArgumentTypeError(
+                    f"Invalid MMLU category '{part}' in '{name}'. "
+                    f"Valid: {sorted(valid_categories)}"
+                )
+        return name
+    
+    raise argparse.ArgumentTypeError(
+        f"Unknown dataset: '{name}'. "
+        f"Valid: {list(DATASET_CONFIGS.keys())} or any 'mmlu_*' combination"
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Precompute MetaCLIP embeddings for datasets",
@@ -277,6 +362,8 @@ def main():
         epilog="""
 Examples:
     python scripts/precompute_embeddings.py --datasets hotpotqa gsm8k
+    python scripts/precompute_embeddings.py --datasets mmlu_math mmlu_bio
+    python scripts/precompute_embeddings.py --datasets mmlu_math_physics  # Combined categories
     python scripts/precompute_embeddings.py --all
     python scripts/precompute_embeddings.py --datasets hotpotqa --force
         """
@@ -284,13 +371,14 @@ Examples:
     parser.add_argument(
         "--datasets", 
         nargs="+", 
-        choices=list(DATASET_CONFIGS.keys()),
-        help="Datasets to precompute"
+        type=validate_embedding_dataset,
+        help=f"Datasets to precompute. Standard: {list(DATASET_CONFIGS.keys())}. "
+             "Also supports 'mmlu_<category>' combinations (e.g., mmlu_math_physics)."
     )
     parser.add_argument(
         "--all", 
         action="store_true",
-        help="Precompute all datasets"
+        help="Precompute all standard datasets (including mmlu_math, mmlu_physics, etc.)"
     )
     parser.add_argument(
         "--output-dir",

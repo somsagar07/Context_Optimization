@@ -48,6 +48,7 @@ from configs import load_config
 from algorithms import Algorithm, PPOTrainer, GRPOTrainer
 from agents_system.worker import LLMWorker, OpenRouterWorker
 from prompts import library
+from utils import validate_dataset_name, get_dataset_help_text
 
 
 def parse_args():
@@ -67,7 +68,8 @@ def parse_args():
     parser.add_argument("--config", type=str, default="hierarchical", help="Config to use")
     parser.add_argument("--episodes", type=int, default=20000, help="Number of episodes")
     parser.add_argument("--batch-size", type=int, default=32, help="Batch size")
-    parser.add_argument("--dataset", type=str, default=None, choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25", "tau2_airline", "tau2_retail", "tau2_telecom"])
+    parser.add_argument("--dataset", type=validate_dataset_name, default=None,
+                       help=get_dataset_help_text(include_tau2=True))
     
     # Algorithm hyperparameters
     parser.add_argument("--clip-epsilon", type=float, default=0.2, help="Clipping parameter")

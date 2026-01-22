@@ -1,5 +1,5 @@
 """
-Prompt Environment - Low-Level Policy (HIRO-style Worker)
+Prompt Environment - Low-Level Policy
 
 Multi-step environment for sequential prompt selection.
 Receives structure decisions from the high-level policy and:
@@ -26,9 +26,6 @@ from prompts.library import (
 )
 import re
 
-# Handle tau2 dataset
-from tools.tau2_tool_registry import Tau2ToolRegistry
-from utils.data_loader.tau2_executions_wrapper import Tau2ExecutionWrapper
 
 class PromptEnv(gym.Env):
     """
