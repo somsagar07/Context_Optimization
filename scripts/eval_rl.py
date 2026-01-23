@@ -1,11 +1,28 @@
 """
 Evaluation script for RL learned controller.
-Supports both single-step and multi-step environments.
+Supports both single-step and multi-step environments, with optional prompt learning.
 
 Usage:
-    python scripts/eval_rl.py --config multi_step                    # Use latest model
+    # Use latest model with default HuggingFace model
+    python scripts/eval_rl.py --config multi_step
+    
+    # Specify model path
     python scripts/eval_rl.py --config single_step --model path/to/model
+    
+    # Evaluate with prompt learning (must match how model was trained!)
+    python scripts/eval_rl.py --config multi_step --learn-prompts --model path/to/model_prompts
+    
+    # More evaluation episodes
     python scripts/eval_rl.py --config multi_step --episodes 100
+    
+    # Use specific HuggingFace model
+    python scripts/eval_rl.py --config single_step --hf-model Qwen/Qwen2.5-7B-Instruct
+    
+    # Use OpenRouter API
+    python scripts/eval_rl.py --config single_step --api --api-model openai/gpt-4o
+    
+    # Evaluate on different dataset
+    python scripts/eval_rl.py --config multi_step --dataset gsm8k --episodes 50
 """
 import sys
 import os
@@ -25,12 +42,41 @@ from configs import load_config
 from env import GeneralAgentEnv, MultiStepAgentEnv
 
 
+def make_env(cfg, is_eval, use_api, api_model, hf_model, env_mode, learn_prompts=False):
+    """Factory function to create environment (avoids lambda closure issues)."""
+    def _init():
+        if env_mode == "multi_step":
+            return MultiStepAgentEnv(
+                cfg=cfg,
+                is_eval=is_eval,
+                use_api=use_api,
+                api_model=api_model,
+                hf_model=hf_model,
+                learn_prompts=learn_prompts
+            )
+        else:
+            return GeneralAgentEnv(
+                cfg=cfg,
+                is_eval=is_eval,
+                use_api=use_api,
+                api_model=api_model,
+                hf_model=hf_model
+            )
+    return _init
+
+
 def get_latest_model():
-    """Find the latest model in the models directory."""
-    models_dir = os.path.join(os.path.dirname(__file__), "models")
+    """Find the latest model in the models/flat_rl directory."""
+    # Look in project root models/flat_rl/ directory
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    models_dir = os.path.join(project_root, "models", "flat_rl")
     list_of_files = glob.glob(os.path.join(models_dir, "*.zip"))
     if not list_of_files:
-        return None
+        # Also check models/ for backwards compatibility
+        models_dir_fallback = os.path.join(project_root, "models")
+        list_of_files = glob.glob(os.path.join(models_dir_fallback, "*.zip"))
+        if not list_of_files:
+            return None
     latest_file = max(list_of_files, key=os.path.getctime)
     # Return path without extension as PPO.load expects
     return os.path.splitext(latest_file)[0]
@@ -69,10 +115,40 @@ def parse_args():
         default=None,
         help=get_dataset_help_text(include_tau2=False)
     )
+    
+    # LLM configuration
+    parser.add_argument(
+        "--api",
+        action="store_true",
+        default=False,
+        help="Use OpenRouter API instead of local HuggingFace model"
+    )
+    parser.add_argument(
+        "--api-model",
+        type=str,
+        default=None,
+        help="OpenRouter model ID (e.g., 'openai/gpt-4o'). Required if --api is used."
+    )
+    parser.add_argument(
+        "--hf-model",
+        type=str,
+        default=None,
+        help="HuggingFace model name. Uses config default if not specified."
+    )
+    
+    # Prompt learning (multi_step only)
+    parser.add_argument(
+        "--learn-prompts",
+        action="store_true",
+        default=False,
+        help="Enable prompt learning mode (multi_step only). Must match how model was trained!"
+    )
     return parser.parse_args()
 
 
-def run_eval(cfg, model_path: str = None, num_episodes: int = 30, dataset_override: str = None):
+def run_eval(cfg, model_path: str = None, num_episodes: int = 30, dataset_override: str = None,
+              use_api: bool = False, api_model: str = None, hf_model: str = None,
+              learn_prompts: bool = False):
     """
     Run evaluation for RL controller.
     
@@ -81,6 +157,10 @@ def run_eval(cfg, model_path: str = None, num_episodes: int = 30, dataset_overri
         model_path: Path to trained model (without .zip extension)
         num_episodes: Number of episodes
         dataset_override: Optional dataset override
+        use_api: If True, use OpenRouter API
+        api_model: OpenRouter model ID
+        hf_model: HuggingFace model name
+        learn_prompts: If True, enable prompt learning mode (multi_step only)
     """
     dataset_name = dataset_override or cfg.DATASET_NAME
     
@@ -98,15 +178,19 @@ def run_eval(cfg, model_path: str = None, num_episodes: int = 30, dataset_overri
     print(f"  Dataset:    {dataset_name}")
     print(f"  Episodes:   {num_episodes}")
     print(f"  Model:      {os.path.basename(model_path)}")
+    if learn_prompts:
+        print(f"  Prompts:    Learning enabled")
+    if use_api:
+        print(f"  LLM:        API - {api_model}")
+    else:
+        print(f"  LLM:        HuggingFace - {hf_model or 'default'}")
     print(f"{'='*70}\n")
     
     # Setup environment based on mode
-    if cfg.ENV_MODE == "multi_step":
-        print("Using MultiStepAgentEnv")
-        env = DummyVecEnv([lambda: MultiStepAgentEnv(cfg)])
-    else:
-        print("Using GeneralAgentEnv")
-        env = DummyVecEnv([lambda: GeneralAgentEnv(cfg)])
+    print(f"Using {'MultiStepAgentEnv' if cfg.ENV_MODE == 'multi_step' else 'GeneralAgentEnv'}")
+    env = DummyVecEnv([make_env(cfg, is_eval=True, use_api=use_api, 
+                                 api_model=api_model, hf_model=hf_model, 
+                                 env_mode=cfg.ENV_MODE, learn_prompts=learn_prompts)])
     
     # Load RL model
     real_path = model_path if model_path.endswith('.zip') else model_path + ".zip"
@@ -158,7 +242,7 @@ def run_eval(cfg, model_path: str = None, num_episodes: int = 30, dataset_overri
         decision_steps_list.append(decision_steps)
         
         # Store detailed result
-        detailed_results.append({
+        result_entry = {
             "episode": ep,
             "correct": info["correct"],
             "workflow": info["workflow"],
@@ -167,12 +251,20 @@ def run_eval(cfg, model_path: str = None, num_episodes: int = 30, dataset_overri
             "tools": info["tools_used"],
             "tokens": info["total_tokens"],
             "reward": episode_reward,
-            "reasoner_tools": str(info.get("reasoner_tools", [])),
-            "verifier_tools": str(info.get("verifier_tools", [])),
-            "reasoner_budget": info.get("reasoner_budget", "N/A"),
-            "verifier_budget": info.get("verifier_budget", "N/A"),
+            "agent1_tools": str(info.get("agent1_tools", [])),
+            "agent2_tools": str(info.get("agent2_tools", [])),
+            "agent1_budget": info.get("agent1_budget", "N/A"),
+            "agent2_budget": info.get("agent2_budget", "N/A"),
             "answerer_budget": info.get("answerer_budget", "N/A"),
-        })
+        }
+        
+        # Add prompt info if learning prompts
+        if "reasoner_prompt" in info:
+            result_entry["reasoner_prompt"] = info["reasoner_prompt"]
+            result_entry["verifier_prompt"] = info.get("verifier_prompt")
+            result_entry["answerer_prompt"] = info.get("answerer_prompt")
+        
+        detailed_results.append(result_entry)
         
         if (ep + 1) % 10 == 0:
             print(f"  Episode {ep+1}/{num_episodes} - Running Acc: {np.mean(accuracies):.1%}")
@@ -205,8 +297,13 @@ def run_eval(cfg, model_path: str = None, num_episodes: int = 30, dataset_overri
     print("\nWorkflow Distribution:")
     print(detailed_df["workflow"].value_counts().to_string())
     
-    # Save detailed results
-    output_path = f"eval_results_{cfg.ENV_MODE}_{dataset_name}_{int(time.time())}.csv"
+    # Save detailed results to logs/flat_rl/
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    log_dir = os.path.join(project_root, "logs", "flat_rl")
+    os.makedirs(log_dir, exist_ok=True)
+    
+    output_filename = f"eval_results_{cfg.ENV_MODE}_{dataset_name}_{int(time.time())}.csv"
+    output_path = os.path.join(log_dir, output_filename)
     detailed_df.to_csv(output_path, index=False)
     print(f"\nDetailed results saved to: {output_path}")
     
@@ -248,12 +345,26 @@ if __name__ == "__main__":
     cfg = load_config(args.config)
     print(f"Loaded config: {args.config}")
     
+    # Validate LLM configuration
+    if args.api and not args.api_model:
+        print("Error: --api-model is required when using --api")
+        sys.exit(1)
+    
+    # Validate learn_prompts (only works with multi_step)
+    if args.learn_prompts and args.config != "multi_step":
+        print("Error: --learn-prompts is only supported with --config multi_step")
+        sys.exit(1)
+    
     # Run evaluation
     detailed_df = run_eval(
         cfg=cfg,
         model_path=args.model,
         num_episodes=args.episodes,
-        dataset_override=args.dataset
+        dataset_override=args.dataset,
+        use_api=args.api,
+        api_model=args.api_model,
+        hf_model=args.hf_model,
+        learn_prompts=args.learn_prompts
     )
     
     if detailed_df is not None:

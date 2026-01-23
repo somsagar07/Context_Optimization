@@ -5,6 +5,7 @@ import sys
 sys.path.append('..')
 
 from agents_system import LLMWorker
+from agents_system.worker import OpenRouterWorker
 from agents_system.workflows import get_workflow
 from tools import ToolRegistry
 from utils import get_dataset_loader
@@ -30,13 +31,16 @@ class GeneralAgentEnv(gym.Env):
     All actions are selected at once, no temporal credit assignment.
     """
     
-    def __init__(self, cfg=None, is_eval=False):
+    def __init__(self, cfg=None, is_eval=False, use_api=False, api_model=None, hf_model=None):
         """
         Initialize the environment.
         
         Args:
             cfg: Configuration module. If None, imports default config.
             is_eval: If True, loads evaluation dataset.
+            use_api: If True, use OpenRouter API instead of local HuggingFace model.
+            api_model: OpenRouter model ID (e.g., "openai/gpt-4o"). Required if use_api=True.
+            hf_model: HuggingFace model name. If None, uses config default.
         """
         super(GeneralAgentEnv, self).__init__()
         
@@ -46,7 +50,14 @@ class GeneralAgentEnv(gym.Env):
             cfg = load_config("single_step")  # Default to single_step for GeneralAgentEnv
         self.cfg = cfg
         
-        self.worker = LLMWorker()
+        # Initialize worker based on API or HuggingFace mode
+        if use_api:
+            if not api_model:
+                raise ValueError("api_model is required when use_api=True")
+            self.worker = OpenRouterWorker(model_name=api_model)
+        else:
+            self.worker = LLMWorker(model_name=hf_model)
+        
         self.tools = ToolRegistry()
         self.dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
