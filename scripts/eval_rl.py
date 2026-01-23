@@ -66,17 +66,25 @@ def make_env(cfg, is_eval, use_api, api_model, hf_model, env_mode, learn_prompts
 
 
 def get_latest_model():
-    """Find the latest model in the models/flat_rl directory."""
+    """Find the latest model in the models/flat_rl directory (recursively searches subfolders)."""
     # Look in project root models/flat_rl/ directory
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     models_dir = os.path.join(project_root, "models", "flat_rl")
-    list_of_files = glob.glob(os.path.join(models_dir, "*.zip"))
+    
+    # Search recursively in subfolders (models/flat_rl/{model_name}/*.zip)
+    list_of_files = glob.glob(os.path.join(models_dir, "**", "*.zip"), recursive=True)
+    
+    if not list_of_files:
+        # Also check flat directory for backwards compatibility
+        list_of_files = glob.glob(os.path.join(models_dir, "*.zip"))
+        
     if not list_of_files:
         # Also check models/ for backwards compatibility
         models_dir_fallback = os.path.join(project_root, "models")
         list_of_files = glob.glob(os.path.join(models_dir_fallback, "*.zip"))
         if not list_of_files:
             return None
+            
     latest_file = max(list_of_files, key=os.path.getctime)
     # Return path without extension as PPO.load expects
     return os.path.splitext(latest_file)[0]
@@ -297,9 +305,20 @@ def run_eval(cfg, model_path: str = None, num_episodes: int = 30, dataset_overri
     print("\nWorkflow Distribution:")
     print(detailed_df["workflow"].value_counts().to_string())
     
-    # Save detailed results to logs/flat_rl/
+    # Save detailed results to logs/flat_rl/{model_folder}/
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    log_dir = os.path.join(project_root, "logs", "flat_rl")
+    
+    # Determine model folder from model_path (e.g., models/flat_rl/gpt-4o/model.zip -> gpt-4o)
+    model_folder = "default"
+    if model_path:
+        # Extract folder name from path
+        path_parts = os.path.normpath(model_path).split(os.sep)
+        if "flat_rl" in path_parts:
+            idx = path_parts.index("flat_rl")
+            if idx + 1 < len(path_parts) - 1:  # There's a subfolder between flat_rl and the file
+                model_folder = path_parts[idx + 1]
+    
+    log_dir = os.path.join(project_root, "logs", "flat_rl", model_folder)
     os.makedirs(log_dir, exist_ok=True)
     
     output_filename = f"eval_results_{cfg.ENV_MODE}_{dataset_name}_{int(time.time())}.csv"

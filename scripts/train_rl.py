@@ -45,6 +45,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import argparse
+import re
 import time
 from datetime import datetime
 
@@ -56,6 +57,30 @@ from stable_baselines3.common.monitor import Monitor
 
 from configs import load_config
 from env import GeneralAgentEnv, MultiStepAgentEnv
+
+
+def _sanitize_folder_name(model_name: str) -> str:
+    """Sanitize model name for use as folder name."""
+    if not model_name:
+        return "default"
+    # Get last part of path (e.g., "openai/gpt-4o" -> "gpt-4o")
+    model_name = model_name.split('/')[-1]
+    sanitized = re.sub(r'[<>:"/\\|?*]', '_', model_name)
+    sanitized = sanitized.replace(' ', '_')
+    sanitized = sanitized.replace('.', '_')
+    sanitized = sanitized.strip('. ')
+    sanitized = re.sub(r'_+', '_', sanitized)
+    return sanitized if sanitized else "default"
+
+
+def _get_model_display_name(use_api: bool, api_model: str, hf_model: str) -> str:
+    """Get a display name for the model being used."""
+    if use_api and api_model:
+        return api_model
+    elif hf_model:
+        return hf_model
+    else:
+        return "default"
 
 
 class TrainingCallback(BaseCallback):
@@ -248,9 +273,19 @@ def main():
     print(f"  GAMMA:           {gamma}")
     print(f"  ENT_COEF:        {ent_coef}")
     
-    # Create output directories
-    os.makedirs(args.output_dir, exist_ok=True)
-    os.makedirs(args.log_dir, exist_ok=True)
+    # Get model display name and create subfolder structure (like HRL)
+    model_display_name = _get_model_display_name(args.api, args.api_model, args.hf_model)
+    model_folder = _sanitize_folder_name(model_display_name)
+    
+    # Create output directories with model subfolder (models/flat_rl/{model_folder}/)
+    model_output_dir = os.path.join(args.output_dir, model_folder)
+    log_output_dir = os.path.join(args.log_dir, model_folder)
+    os.makedirs(model_output_dir, exist_ok=True)
+    os.makedirs(log_output_dir, exist_ok=True)
+    
+    print(f"\nOutput directories:")
+    print(f"  Models: {model_output_dir}")
+    print(f"  Logs:   {log_output_dir}")
     
     # Create environment
     print(f"\nCreating environment: {cfg.ENV_MODE}...")
@@ -284,27 +319,36 @@ def main():
     # Save final model
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     prompt_suffix = "_prompts" if args.learn_prompts else ""
-    model_name = f"flat_rl_{cfg.ENV_MODE}{prompt_suffix}_{cfg.DATASET_NAME}_{timestamp}"
-    model_path = os.path.join(args.output_dir, model_name)
+    model_filename = f"flat_rl_{cfg.ENV_MODE}{prompt_suffix}_{cfg.DATASET_NAME}_{timestamp}"
+    model_path = os.path.join(model_output_dir, model_filename)
     model.save(model_path)
     print(f"\nFinal model saved to: {model_path}.zip")
     
     # Save training log
     log_data = {
+        # Algorithm and model info (like HRL train.py)
+        "algorithm": "PPO",
+        "model_name": model_display_name,
+        # Config and dataset
         "config": args.config,
+        "env_mode": cfg.ENV_MODE,
         "dataset": cfg.DATASET_NAME,
         "learn_prompts": args.learn_prompts,
+        # Training hyperparameters
         "timesteps": total_timesteps,
         "n_steps": n_steps,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
         "gamma": gamma,
         "ent_coef": ent_coef,
+        # LLM configuration
         "use_api": args.api,
         "api_model": args.api_model,
         "hf_model": args.hf_model,
+        # Output paths
         "model_path": model_path + ".zip",
         "timestamp": timestamp,
+        # Training results
         "total_episodes": len(callback.episode_correct),
         "final_accuracy": float(np.mean(callback.episode_correct[-100:])) if callback.episode_correct else 0.0,
         "episode_correct": callback.episode_correct,
@@ -313,7 +357,7 @@ def main():
     
     import json
     log_filename = f"train_log_{cfg.ENV_MODE}{prompt_suffix}_{cfg.DATASET_NAME}_{timestamp}.json"
-    log_path = os.path.join(args.log_dir, log_filename)
+    log_path = os.path.join(log_output_dir, log_filename)
     with open(log_path, 'w') as f:
         json.dump(log_data, f, indent=2)
     print(f"Training log saved to: {log_path}")
@@ -322,9 +366,13 @@ def main():
     print("\n" + "="*70)
     print("TRAINING SUMMARY")
     print("="*70)
+    print(f"  Algorithm:     PPO")
+    print(f"  Model:         {model_display_name}")
     print(f"  Config:        {args.config}")
     print(f"  Dataset:       {cfg.DATASET_NAME}")
     print(f"  Timesteps:     {total_timesteps}")
+    print(f"  Episodes:      {len(callback.episode_correct)}")
+    print(f"  Final Acc:     {log_data['final_accuracy']:.1%}")
     print(f"  Model saved:   {model_path}.zip")
     print(f"  Log saved:     {log_path}")
     print("="*70)
