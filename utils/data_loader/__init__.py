@@ -4,6 +4,7 @@ from .hotpot_loader import HotPotQADataset
 from .gaia_loader import GAIADataset
 from .medqa_loader import MedQADataset
 from .aime25_loader import AIME25Dataset
+from .drop_loader import DROPDataset
 from .tau2_loader import Tau2Dataset
 from .mmlu_loader import MMLUDataset
 
@@ -14,6 +15,7 @@ __all__ = [
     'GAIADataset',
     'MedQADataset',
     'AIME25Dataset',
+    'DROPDataset',
     'Tau2Dataset',
     'MMLUDataset',
 ]

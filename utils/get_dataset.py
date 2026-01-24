@@ -9,6 +9,7 @@ from .data_loader import (
     GAIADataset,
     MedQADataset,
     AIME25Dataset,
+    DROPDataset,
     # Tau2Dataset,
     MMLUDataset
 )
@@ -17,7 +18,7 @@ from .data_loader.mmlu_loader import MMLU_SUBJECTS
 
 # Standard datasets (exact match required)
 STANDARD_DATASETS = [
-    "gsm8k", "hotpotqa", "gaia", "medqa", "aime25", 
+    "gsm8k", "hotpotqa", "gaia", "medqa", "aime25", "drop",
     "tau2_airline", "tau2_retail", "tau2_telecom"
 ]
 
@@ -85,7 +86,7 @@ def get_dataset_help_text():
     Returns:
         Help text string for argparse
     """
-    standard = "gsm8k, hotpotqa, gaia, medqa, aime25"
+    standard = "gsm8k, hotpotqa, gaia, medqa, aime25, drop"
     
     return (
         f"Dataset name. Standard datasets: {standard}. "
@@ -139,6 +140,10 @@ def get_dataset_loader(name: str, is_eval: bool = False, domain: str = None,
         # AIME25 only has "test" split, we split it internally
         split = "test" if is_eval else "train"
         return AIME25Dataset(split=split)
+    elif name == "drop":
+        # DROP uses "train" and "validation" splits
+        split = "validation" if is_eval else "train"
+        return DROPDataset(split=split)
     elif name.startswith("mmlu"):
         # MMLU datasets: 
         # - "mmlu" = all subjects (all categories)
@@ -156,4 +161,4 @@ def get_dataset_loader(name: str, is_eval: bool = False, domain: str = None,
         
         return MMLUDataset(split=split, subjects=subjects, categories=categories)
     else:
-        raise ValueError(f"Unknown dataset: {name}. Available: gsm8k, hotpotqa, gaia, medqa, aime25, tau2_airline, tau2_retail, tau2_telecom, mmlu, mmlu_math, mmlu_physics, mmlu_bio, etc.")
+        raise ValueError(f"Unknown dataset: {name}. Available: gsm8k, hotpotqa, gaia, medqa, aime25, drop, tau2_airline, tau2_retail, tau2_telecom, mmlu, mmlu_math, mmlu_physics, mmlu_bio, etc.")
