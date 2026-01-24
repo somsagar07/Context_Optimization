@@ -38,25 +38,58 @@ class MedQADataset(BaseDataset):
     
     def evaluate_correctness(self, prediction: str, ground_truth: str) -> float:
         """
-        Evaluate correctness for MedQA (multiple choice).
-        Handles letter answers (A, B, C, D) and full text matching.
+        Robust evaluation that prioritizes the 'Final Answer' section 
+        and Option Letters to avoid False Positives.
         """
-        pred = prediction.strip().upper()
-        truth = ground_truth.strip().upper()
+        pred_text = prediction.strip()
         
-        # Extract letter answers (A, B, C, D, E, F)
-        pred_letter = re.search(r'\b([A-F])\b', pred)
-        truth_letter = re.search(r'\b([A-F])\b', truth)
+        # 1. Parse Ground Truth
+        # Assumes ground_truth format "A Answer Text" or just "Answer Text"
+        gt_letter_match = re.match(r'^([A-D])\b', ground_truth)
+        gt_letter = gt_letter_match.group(1) if gt_letter_match else None
         
-        if pred_letter and truth_letter:
-            return 1.0 if pred_letter.group(1) == truth_letter.group(1) else 0.0
-        
-        # Match full text (case-insensitive, normalized)
-        pred_normalized = re.sub(r'[^\w\s]', '', pred.lower())
-        truth_normalized = re.sub(r'[^\w\s]', '', truth.lower())
-        
-        if truth_normalized in pred_normalized or pred_normalized in truth_normalized:
-            return 1.0
-        
-        return 0.0
+        # Normalize the text part of ground truth for fallback comparison
+        gt_text_normalized = re.sub(r'\W+', '', ground_truth.lower())
+        if gt_letter:
+            # Remove the leading "A " from the normalized text
+            gt_text_normalized = re.sub(r'\W+', '', ground_truth[1:].lower())
 
+        # 2. Extract "Final Answer" section from Prediction
+        # Models often reason about wrong answers before giving the right one.
+        # We only want to grade the final decision.
+        final_answer_patterns = [
+            r"Final Answer\s*[:\-\s](.*)",  # Matches "Final Answer: ..."
+            r"The answer is\s*[:\-\s](.*)", # Matches "The answer is ..."
+            r"Answer\s*[:\-\s](.*)"         # Matches "Answer: ..."
+        ]
+        
+        extracted_answer = pred_text # Default to full text if no header found
+        for pattern in final_answer_patterns:
+            match = re.search(pattern, pred_text, re.IGNORECASE | re.DOTALL)
+            if match:
+                extracted_answer = match.group(1).strip()
+                # If multiple matches, usually the last one is the real conclusion,
+                # but regex search finds the first. Let's try `rsplit` logic if regex feels risky.
+                # A safer split approach:
+                if "Final Answer" in pred_text:
+                    extracted_answer = pred_text.split("Final Answer")[-1]
+                break
+
+        # 3. Check for Option Letter in Extracted Answer (Primary Metric)
+        if gt_letter:
+            # Look for "A", "B", "C", "D" specifically in the final answer
+            # We look for the letter followed by punctuation or end of string
+            pred_letter_match = re.search(r'\b([A-D])\b', extracted_answer)
+            if pred_letter_match:
+                predicted_letter = pred_letter_match.group(1)
+                return 1.0 if predicted_letter == gt_letter else 0.0
+
+        # 4. Fallback: Strict Text Containment (if letter extraction failed)
+        # We verify if the normalized ground truth text exists in the normalized extracted answer.
+        pred_normalized = re.sub(r'\W+', '', extracted_answer.lower())
+        
+        if gt_text_normalized and gt_text_normalized in pred_normalized:
+            return 1.0
+            
+        return 0.0
+    
