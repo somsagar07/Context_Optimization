@@ -117,6 +117,15 @@ def load_dataset_with_config(dataset_name: str, split: str):
         data = load_dataset(data_dir, "2023_all", split=split)
         extract_fn = _make_gaia_extractor(data_dir)
     
+    elif dataset_name == "drop":
+        # DROP uses "train" and "validation" splits
+        # Map "test" to "validation" for consistency
+        if split == "test":
+            split = "validation"
+        data = load_dataset("drop", split=split)
+        # Format: passage + question (matches DROPDataset.get_sample)
+        extract_fn = lambda x: f"{x['passage']}\n\nQuestion: {x['question']}"
+    
     elif dataset_name.startswith("mmlu"):
         # MMLU datasets: use the MMLUDataset loader
         from utils.get_dataset import get_dataset_loader
@@ -206,6 +215,9 @@ DATASET_CONFIGS = {
     },
     "gaia": {
         "splits": ["validation"],  # Main split used
+    },
+    "drop": {
+        "splits": ["train", "validation"],
     },
     "tau2_airline": {
         "splits": ["all"],  # Tau2 doesn't have train/test splits

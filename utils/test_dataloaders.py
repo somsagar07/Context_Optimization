@@ -91,6 +91,20 @@ def test_dataset(name: str, num_samples: int = 3):
                 match = "✓" if abs(extracted - expected) < 1e-3 else "✗"
                 print(f"  {match} '{text}' -> {extracted} (expected: {expected})")
         
+        elif name == "drop":
+            print(f"\n[5] Testing DROP evaluation:")
+            test_cases = [
+                ("The answer is 42", "42", 1.0),
+                ("42", "42", 1.0),
+                ("Answer: 3.14", "3.14", 1.0),
+                ("The answer is 42", "43", 0.0),
+                ("Final Answer: 100", "100", 1.0),
+            ]
+            for pred, truth, expected in test_cases:
+                result = dataset_train.evaluate_correctness(pred, truth)
+                match = "✓" if result == expected else "✗"
+                print(f"  {match} '{pred}' vs '{truth}' -> {result} (expected: {expected})")
+        
         elif is_mmlu:
             print(f"\n[5] Testing MMLU-specific features:")
             
@@ -148,6 +162,7 @@ def main():
         "gaia", 
         "medqa", 
         "aime25",
+        "drop",
         "mmlu_math",           # MMLU math category
         "mmlu_math_physics",   # MMLU combined categories
     ]
