@@ -109,13 +109,13 @@ def get_dataset_loader(name: str, is_eval: bool = False, domain: str = None,
         subjects: For MMLU, specify subjects list
         categories: For MMLU, specify categories list (e.g., ["math", "physics"])
     """
-    # Handle tau2 datasets
-    if name.startswith("tau2_"):
-        if domain is None:
-            # Extract domain from name (e.g., "tau2_airline" -> "airline")
-            domain = name.split("_", 1)[1] if "_" in name else "retail"
-        split = "test" if is_eval else "train"
-        return Tau2Dataset(split=split, domain=domain)
+    # # Handle tau2 datasets
+    # if name.startswith("tau2_"):
+    #     if domain is None:
+    #         # Extract domain from name (e.g., "tau2_airline" -> "airline")
+    #         domain = name.split("_", 1)[1] if "_" in name else "retail"
+    #     split = "test" if is_eval else "train"
+    #     return Tau2Dataset(split=split, domain=domain)
     
     # Handle other datasets
     if name == "gsm8k":
