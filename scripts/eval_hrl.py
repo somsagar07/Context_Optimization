@@ -19,7 +19,7 @@ Usage:
 """
 import sys
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -52,18 +52,14 @@ BUDGET_NAMES = ["Low", "Mid", "High"]
 
 # Replace lines 41-47
 def decode_tools(idx, structure_env=None):
-    """Decode tool index to list of tool names. Supports both standard and tau2 tools."""
-    if structure_env and structure_env.is_tau2 and structure_env.tau2_tools:
-        # Use tau2 tool registry
-        return structure_env.tau2_tools.decode_tool_index(idx)
-    else:
-        # Standard tool decoding (4 tools: calculator, web_search, python, ocr_reader)
-        tools = []
-        if idx & 1: tools.append("calculator")
-        if idx & 2: tools.append("web_search")
-        if idx & 4: tools.append("python")
-        if idx & 8: tools.append("ocr_reader")
-        return tools if tools else ["none"]
+    """Decode tool index to list of tool names."""
+    # Standard tool decoding (4 tools: calculator, web_search, python, ocr_reader)
+    tools = []
+    if idx & 1: tools.append("calculator")
+    if idx & 2: tools.append("web_search")
+    if idx & 4: tools.append("python")
+    if idx & 8: tools.append("ocr_reader")
+    return tools if tools else ["none"]
 
 # POLICY NETWORKS 
 class PromptPolicy(nn.Module):
@@ -179,64 +175,54 @@ def run_single_episode(ep, structure_policy, prompt_policy, cfg, deterministic, 
     if sample_idx is not None:
         # Directly access indexed sample instead of random sampling
         dataset = structure_env.dataset
-        if hasattr(dataset, 'tasks'):
-            # Tau2 dataset
-            task = dataset.tasks[sample_idx]
-            question = (
-                f"Customer interaction in {dataset.domain.capitalize()} domain.\n"
-                f"User's request: {task['user_goal']}"
-            )
-            answer = task
-        else:
-            # Standard dataset - extract based on dataset type
-            sample = dataset.data[sample_idx]
-            dataset_name = getattr(dataset, 'name', '').lower()
+        sample = dataset.data[sample_idx]
+        dataset_name = getattr(dataset, 'name', '').lower()
             
-            if dataset_name == 'gaia':
-                # GAIA: 'Question', 'Final answer', optional file attachment
-                question = sample['Question']
-                answer = sample['Final answer']
-                # Handle file attachments (same as gaia_loader.get_sample)
-                rel_path = sample.get('file_path', '')
-                if rel_path and hasattr(dataset, 'data_dir'):
-                    import os
-                    full_path = os.path.join(dataset.data_dir, rel_path)
-                    question += f"\n\n[System Notification]\nFile Attachment: {full_path}\nYou can use your tools to read or process this file."
-            elif dataset_name == 'medqa':
-                # MedQA: nested 'data' dict with 'Question', 'Options', 'Correct Answer'
-                data = sample['data']
-                question = data['Question']
-                options = data['Options']  # Dict: {'A': '...', 'B': '...', etc.}
-                options_text = "\n".join([f"{k}: {v}" for k, v in sorted(options.items())])
-                question = f"{question}\n\nOptions:\n{options_text}"
-                answer = data['Correct Answer']
-            elif dataset_name == 'aime25':
-                # AIME25: 'problem', 'answer'
-                question = sample.get('problem', '')
-                answer = sample.get('answer', '')
-            elif dataset_name.startswith('mmlu'):
-                # MMLU: format options and map answer index to text
-                if hasattr(dataset, "get_question") and hasattr(dataset, "get_answer"):
-                    question = dataset.get_question(sample_idx)
-                    answer = dataset.get_answer(sample_idx)
-                else:
-                    question_text = sample.get('question', '')
-                    choices = sample.get('choices', [])
-                    if choices:
-                        options_text = "\n".join([f"{chr(65+i)}: {choice}" for i, choice in enumerate(choices)])
-                        question = f"{question_text}\n\nOptions:\n{options_text}"
-                        answer_idx = sample.get('answer', None)
-                        if isinstance(answer_idx, int) and 0 <= answer_idx < len(choices):
-                            answer = choices[answer_idx]
-                        else:
-                            answer = sample.get('answer', '')
-                    else:
-                        question = question_text
-                        answer = sample.get('answer', '')
+        if dataset_name == 'gaia':
+            # GAIA: 'Question', 'Final answer', optional file attachment
+            question = sample['Question']
+            answer = sample['Final answer']
+            # Handle file attachments (same as gaia_loader.get_sample)
+            rel_path = sample.get('file_path', '')
+            if rel_path and hasattr(dataset, 'data_dir'):
+                import os
+                full_path = os.path.join(dataset.data_dir, rel_path)
+                question += f"\n\n[System Notification]\nFile Attachment: {full_path}\nYou can use your tools to read or process this file."
+        elif dataset_name == 'medqa':
+            # MedQA: nested 'data' dict with 'Question', 'Options', 'Correct Answer'
+            data = sample['data']
+            question = data['Question']
+            options = data['Options']  # Dict: {'A': '...', 'B': '...', etc.}
+            options_text = "\n".join([f"{k}: {v}" for k, v in sorted(options.items())])
+            question = f"{question}\n\nOptions:\n{options_text}"
+            answer = data['Correct Answer']
+        elif dataset_name == 'aime25':
+            # AIME25: 'problem', 'answer'
+            question = sample.get('problem', '')
+            answer = sample.get('answer', '')
+        elif dataset_name.startswith('mmlu'):
+            # MMLU: format options and map answer index to text
+            if hasattr(dataset, "get_question") and hasattr(dataset, "get_answer"):
+                question = dataset.get_question(sample_idx)
+                answer = dataset.get_answer(sample_idx)
             else:
-                # GSM8K, HotPotQA, and other standard datasets: 'question', 'answer'
-                question = sample.get('question', sample.get('problem', ''))
-                answer = sample.get('answer', '')
+                question_text = sample.get('question', '')
+                choices = sample.get('choices', [])
+                if choices:
+                    options_text = "\n".join([f"{chr(65+i)}: {choice}" for i, choice in enumerate(choices)])
+                    question = f"{question_text}\n\nOptions:\n{options_text}"
+                    answer_idx = sample.get('answer', None)
+                    if isinstance(answer_idx, int) and 0 <= answer_idx < len(choices):
+                        answer = choices[answer_idx]
+                    else:
+                        answer = sample.get('answer', '')
+                else:
+                    question = question_text
+                    answer = sample.get('answer', '')
+        else:
+            # GSM8K, HotPotQA, and other standard datasets: 'question', 'answer'
+            question = sample.get('question', sample.get('problem', ''))
+            answer = sample.get('answer', '')
         
         # Manually set the current sample and get embedding
         structure_env.current_q = question
@@ -578,7 +564,7 @@ def parse_args():
     parser.add_argument("--episodes", type=str, default="20",
                        help="Number of episodes to evaluate, or 'all' for all datapoints")
     parser.add_argument("--dataset", type=validate_dataset_name, required=True, default=None,
-                       help=get_dataset_help_text(include_tau2=True))
+                       help=get_dataset_help_text())
 
     parser.add_argument("--stochastic", action="store_true", help="Sample from policy distribution instead of argmax")
     parser.add_argument("--temperature", type=float, default=1.0, 

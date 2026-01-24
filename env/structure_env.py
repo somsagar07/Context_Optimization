@@ -19,9 +19,6 @@ sys.path.append('..')
 from agents_system import LLMWorker, OpenRouterWorker
 from utils import get_dataset_loader
 
-# Handle tau2 dataset
-from tools.tau2_tool_registry import Tau2ToolRegistry
-
 
 class StructureEnv(gym.Env):
     """
@@ -68,20 +65,7 @@ class StructureEnv(gym.Env):
         # Use provided dataset or load new one
         self.dataset = dataset if dataset is not None else get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
-        # Check if this is a tau2 dataset
-        self.is_tau2 = hasattr(self.dataset, 'domain') and self.dataset.name.startswith('tau2_')
-        
-        # Initialize tau2 tool registry if needed
-        self.tau2_tools = None
-        if self.is_tau2:
-            self.tau2_tools = Tau2ToolRegistry(self.dataset.domain)
-            # Get dynamic tool count
-            num_tools = self.tau2_tools.get_tool_count()
-            # Update tool action space: 2^num_tools combinations
-            max_tool_idx = (1 << num_tools) - 1 if num_tools > 0 else 0
-            tool_action_size = max(16, max_tool_idx + 1)  # At least 16 for backward compatibility
-        else:
-            tool_action_size = 16  # Default: 4 tools = 2^4 = 16 combinations
+        tool_action_size = 16  # Default: 4 tools = 2^4 = 16 combinations
         
         # Store tool_action_size for use in _get_action_mask
         self.tool_action_size = tool_action_size
@@ -126,16 +110,13 @@ class StructureEnv(gym.Env):
 
     def _decode_tools(self, idx: int) -> list:
         """Decode tool index to list of tool names."""
-        if self.is_tau2 and self.tau2_tools:
-            return self.tau2_tools.decode_tool_index(idx)
-        else:
-            # Original tool decoding
-            tools = []
-            if idx & 1: tools.append("calculator")
-            if idx & 2: tools.append("web_search")
-            if idx & 4: tools.append("python")
-            if idx & 8: tools.append("ocr_reader")
-            return tools
+        # Original tool decoding
+        tools = []
+        if idx & 1: tools.append("calculator")
+        if idx & 2: tools.append("web_search")
+        if idx & 4: tools.append("python")
+        if idx & 8: tools.append("ocr_reader")
+        return tools
     
     def _get_observation(self):
         """Build observation: question embedding + statistics."""
@@ -237,9 +218,6 @@ class StructureEnv(gym.Env):
                 "Orchestrator-Workers", "Evaluator-Optimizer", "Autonomous-Agent"
             ][workflow_depth],
         }
-        
-        if self.is_tau2 and isinstance(self.current_a, dict):
-            info["tau2_answer"] = self.current_a
         
         # No reward here - will get real reward after PromptEnv executes
         # This terminates the structure selection (one-step env)

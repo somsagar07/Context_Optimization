@@ -102,40 +102,7 @@ class PromptEnv(gym.Env):
         # Use provided dataset or load new one
         self.dataset = dataset if dataset is not None else get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
-        # Check if this is a tau2 dataset
-        self.is_tau2 = hasattr(self.dataset, 'domain') and self.dataset.name.startswith('tau2_')
-        
-        # Initialize tools based on dataset type
-        if self.is_tau2:
-            self.tools = Tau2ToolRegistry(self.dataset.domain)
-            
-            if isinstance(self.tools, Tau2ToolRegistry):
-                # Load domain policy
-                domain_policy = self.tools.get_domain_policy()
-                if domain_policy:
-                    # Store policy for worker to use
-                    self.worker.domain_policy = domain_policy
-                    print(f"✓ Loaded domain policy for {self.dataset.domain}")
-                else:
-                    print(f"⚠ Warning: Could not load domain policy for {self.dataset.domain}")
-                
-                tau2_descriptions = self.tools.get_tool_prompt_descriptions()
-                if tau2_descriptions:
-                    self.worker.additional_tool_descriptions = tau2_descriptions
-                    print(f"✓ Loaded {len(tau2_descriptions)} tau2 tool descriptions for worker")
-                else:
-                    print(f"⚠ Warning: No tool descriptions returned from tau2 registry")
-            
-            self.tau2_executor = Tau2ExecutionWrapper(
-                self.dataset.domain,
-                self.worker,
-                self.tools,
-                use_api=use_api
-            )
-        else:
-            # Use the already imported ToolRegistry from line 22
-            self.tools = ToolRegistry()
-            self.tau2_executor = None
+        self.tools = ToolRegistry()
         
         # Observation space components
         # Question embedding is 1024D from MetaCLIP-H14
@@ -197,15 +164,12 @@ class PromptEnv(gym.Env):
         self.current_a = answer
         self.question_embedding = embedding
         
-        # # For tau2, store task object if available
-        # if self.is_tau2 and isinstance(answer, dict):
-        #     self.current_task = answer
-        # For tau2, store task object if provided
-        if self.is_tau2:
-            if task is not None:
-                self.current_task = task
-            elif isinstance(answer, dict):
-                self.current_task = answer
+        
+        # if self.is_tau2:
+        #     if task is not None:
+        #         self.current_task = task
+        #     elif isinstance(answer, dict):
+        #         self.current_task = answer
         
         self.workflow_depth = structure["workflow_depth"]
         self.agent1_tools_idx = structure["agent1_tools_idx"]
@@ -256,10 +220,8 @@ class PromptEnv(gym.Env):
     
     def _get_observation(self):
         """Build observation vector."""
-        if self.is_tau2 and isinstance(self.tools, Tau2ToolRegistry):
-            max_tool_idx = self.tools.get_max_tool_index()
-        else:
-            max_tool_idx = 15
+        
+        max_tool_idx = 15
         # Structure decisions (normalized)
         structure_vec = np.array([
             self.workflow_depth / 8.0,  # Normalize for 9 workflows (0-8)
@@ -353,14 +315,8 @@ class PromptEnv(gym.Env):
             final_text, exec_info = self._execute_workflow()
             
             # Calculate correctness
-            # For tau2 datasets, use the correctness from exec_info (evaluated by tau2-bench)
-            # For other datasets, use the dataset's evaluate_correctness method
-            if self.is_tau2:
-                # tau2 correctness is determined by the execution wrapper using tau2-bench's evaluator
-                correct = exec_info.get("correct", False)
-            else:
-                correctness = self.dataset.evaluate_correctness(final_text, self.current_a)
-                correct = correctness == 1.0
+            correctness = self.dataset.evaluate_correctness(final_text, self.current_a)
+            correct = correctness == 1.0
             
             # Dataset-specific bonuses (keep these as they're unique to prompt selection)
             if self.dataset.name in ["gaia"]:
@@ -402,18 +358,6 @@ class PromptEnv(gym.Env):
                 "final_answer": final_text,
                 "ground_truth": self.current_a,
             }
-            
-            # For tau2, pass through additional info from the execution wrapper
-            if self.is_tau2:
-                info["tau2_reward"] = exec_info.get("tau2_reward", 0.0)
-                info["shaped_reward"] = exec_info.get("shaped_reward", 0.0)
-                info["final_reward"] = exec_info.get("final_reward", 0.0)
-                info["task_completed"] = exec_info.get("task_completed", False)
-                info["partial_rewards"] = exec_info.get("partial_rewards", {})
-                info["reward_breakdown"] = exec_info.get("reward_breakdown", {})
-                # Full simulation data for logs
-                info["simulation_run"] = exec_info.get("simulation_run")
-                info["task"] = exec_info.get("task")
         
         return self._get_observation(), reward, terminated, False, info
     
@@ -439,16 +383,14 @@ class PromptEnv(gym.Env):
     
     def _decode_tools(self, idx: int) -> list:
         """Decode tool index to list of tool names."""
-        if self.is_tau2 and isinstance(self.tools, Tau2ToolRegistry):
-            return self.tools.decode_tool_index(idx)
-        else:
-            # Original tool decoding
-            tools = []
-            if idx & 1: tools.append("calculator")
-            if idx & 2: tools.append("web_search")
-            if idx & 4: tools.append("python")
-            if idx & 8: tools.append("ocr_reader")
-            return tools
+        
+        # Original tool decoding
+        tools = []
+        if idx & 1: tools.append("calculator")
+        if idx & 2: tools.append("web_search")
+        if idx & 4: tools.append("python")
+        if idx & 8: tools.append("ocr_reader")
+        return tools
     
     def _process_tool_calls(self, text_response: str, allowed_tools: list) -> tuple:
         """
@@ -506,87 +448,6 @@ class PromptEnv(gym.Env):
     
     def _execute_workflow(self) -> tuple:
         """Execute the configured workflow and return (final_text, info)."""
-        # If tau2, use execution wrapper
-        if self.is_tau2 and self.tau2_executor:
-            # Get task_id from dataset
-            task_obj = getattr(self, 'current_task', None)
-            if task_obj is None:
-                # Fallback: try to get from dataset
-                _, task_obj = self.dataset.get_sample()
-            
-            task_id = task_obj.get('task_id', 'Unknown') if isinstance(task_obj, dict) else 'Unknown'
-            
-            # Execute tau2 conversation
-            pass_k_reward, exec_info = self.tau2_executor.execute_conversation(
-                task_id=task_id,
-                workflow_depth=self.workflow_depth,
-                agent1_tools_idx=self.agent1_tools_idx,
-                agent1_budget_idx=self.agent1_budget_idx,
-                agent2_tools_idx=self.agent2_tools_idx,
-                agent2_budget_idx=self.agent2_budget_idx,
-                answerer_budget_idx=self.answerer_budget_idx,
-                selected_prompts=self.selected_prompts
-            )
-            
-            # Format final text from conversation history
-            conversation_history = exec_info.get("conversation_history", [])
-            final_text = "\n".join([f"{role}: {msg}" for role, msg in conversation_history[-3:]])  # Last 3 turns
-            
-            # Update question embedding to use the output embedding (like standard datasets)
-            # This ensures the next state uses the embedding of the output, not the original question
-            # This matches the behavior in general_env.py where next_obs = embedding(final_text)
-            try:
-                self.question_embedding = self.worker.get_embedding(final_text)
-            except Exception as e:
-                # Fallback: if embedding fails, keep original question embedding
-                print(f"  ⚠ Warning: Could not update embedding from final_text: {e}")
-            
-            # pass_k_reward is now the shaped reward (includes partial credit)
-            # shaped_reward gives partial credit even if final reward is 0
-            shaped_reward = exec_info.get("shaped_reward", pass_k_reward)
-            final_reward = exec_info.get("final_reward", pass_k_reward)
-            partial_rewards = exec_info.get("partial_rewards", {})
-            
-            exec_info["pass_k"] = pass_k_reward
-            exec_info["tau2_reward"] = shaped_reward  # Store Tau2's shaped reward (includes partial credit)
-            exec_info["shaped_reward"] = shaped_reward  # Also store explicitly
-            exec_info["final_reward"] = final_reward  # Keep final_reward from wrapper
-            
-            # Determine correctness: mark as correct if:
-            # 1. Final reward > 0 (full success), OR
-            # 2. Shaped reward > 0.5 (significant partial credit), OR
-            # 3. Task completed (conversation ended) with substantial partial rewards, OR
-            # 4. Task completed with DB match and most actions correct
-            task_completed = exec_info.get("task_completed", False)
-            is_correct = False
-            
-            if final_reward > 0:
-                is_correct = True  # Full success
-            elif shaped_reward > 0.5:
-                is_correct = True  # Significant partial credit
-            elif task_completed and partial_rewards:
-                # Task completed but reward is 0 - check if we have substantial partial success
-                has_db_match = partial_rewards.get("db_match", False)
-                action_ratio = 0.0
-                if partial_rewards.get("total_actions_count", 0) > 0:
-                    action_ratio = (partial_rewards.get("correct_actions_count", 0) / 
-                                   partial_rewards.get("total_actions_count", 1))
-                
-                # Mark as correct if:
-                # - DB matches AND most actions are correct (70%+), OR
-                # - High action ratio (80%+) even without DB match (actions are more important)
-                if (has_db_match and action_ratio >= 0.7) or action_ratio >= 0.8:
-                    is_correct = True
-            elif task_completed and shaped_reward > 0.3:
-                # Task completed with at least some partial credit
-                is_correct = True
-            
-            exec_info["correct"] = is_correct
-            # Pass through partial_rewards for reward calculation in base.py
-            exec_info["partial_rewards"] = partial_rewards
-            
-            return final_text, exec_info
-        
         # Original workflow execution for non-tau2 datasets
         # Build prompt suffixes
         reasoner_suffix = build_prompt_suffix("reasoner", self.selected_prompts["reasoner"])

@@ -9,7 +9,7 @@ from .data_loader import (
     GAIADataset,
     MedQADataset,
     AIME25Dataset,
-    Tau2Dataset,
+    # Tau2Dataset,
     MMLUDataset
 )
 from .data_loader.mmlu_loader import MMLU_SUBJECTS
@@ -76,20 +76,16 @@ def validate_dataset_name(dataset_name):
     )
 
 
-def get_dataset_help_text(include_tau2=True):
+def get_dataset_help_text():
     """
     Get help text for --dataset argument.
     
     Args:
-        include_tau2: Whether to include tau2 datasets in the help text
-        
+        None
     Returns:
         Help text string for argparse
     """
-    if include_tau2:
-        standard = "gsm8k, hotpotqa, gaia, medqa, aime25, tau2_airline, tau2_retail, tau2_telecom"
-    else:
-        standard = "gsm8k, hotpotqa, gaia, medqa, aime25"
+    standard = "gsm8k, hotpotqa, gaia, medqa, aime25"
     
     return (
         f"Dataset name. Standard datasets: {standard}. "

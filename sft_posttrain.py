@@ -435,6 +435,70 @@ def train_prompt_policy_sft(prompt_policy, episodes, prompt_env, epochs=3, lr=5e
     return losses
 
 
+def save_training_log(
+    log_dir,
+    algorithm,
+    model_name,
+    dataset_name,
+    struct_losses,
+    prompt_losses,
+    training_config,
+    timestamp,
+    rl_log_path
+):
+    """
+    Save SFT training logs to JSON file.
+    
+    Args:
+        log_dir: Directory to save logs (e.g., logs/sft_train/ppo)
+        model_name: Model name (sanitized for folder name)
+        dataset_name: Dataset name
+        struct_losses: List of structure policy losses per epoch
+        prompt_losses: List of prompt policy losses per epoch
+        training_config: Dict with training configuration
+        timestamp: Timestamp for filename
+        rl_log_path: Path to source RL training log
+    """
+    # Create log directory structure: logs/sft_train/{algorithm}/{model_name}/
+    log_path = os.path.join(log_dir, algorithm.lower(), model_name)
+    os.makedirs(log_path, exist_ok=True)
+    
+    # Create log filename
+    log_filename = f"sft_training_log_{model_name}_{algorithm.lower()}_{dataset_name}_{timestamp}.json"
+    log_filepath = os.path.join(log_path, log_filename)
+    
+    # Prepare log data
+    log_data = {
+        "algorithm": algorithm.upper(),
+        "model_type": training_config.get("model_type", "HuggingFace"),
+        "model_name": training_config.get("model_name", model_name),
+        "dataset": dataset_name,
+        "timestamp": timestamp,
+        "source_rl_log": rl_log_path,
+        "training_config": {
+            "epochs": training_config.get("epochs", 3),
+            "structure_lr": training_config.get("structure_lr", 1e-4),
+            "prompt_lr": training_config.get("prompt_lr", 5e-6),
+            "entropy_coef": training_config.get("entropy_coef", 0.01),
+            "min_reward": training_config.get("min_reward", 4.0),
+        },
+        "training_stats": {
+            "num_episodes_used": training_config.get("num_episodes", 0),
+            "structure_losses": struct_losses,
+            "prompt_losses": prompt_losses,
+            "final_structure_loss": struct_losses[-1] if struct_losses else None,
+            "final_prompt_loss": prompt_losses[-1] if prompt_losses else None,
+        }
+    }
+    
+    # Save to JSON
+    with open(log_filepath, 'w') as f:
+        json.dump(log_data, f, indent=2)
+    
+    print(f"\nTraining log saved to: {log_filepath}")
+    return log_filepath
+
+
 def main():
     parser = argparse.ArgumentParser(description="SFT Post-training from RL logs")
     parser.add_argument("--config", type=str, default="hierarchical", help="Config to use")
@@ -699,6 +763,35 @@ def main():
         "base_model": model_name,
     }, prompt_save_path)
     
+    # Save training logs
+    log_dir = "logs/sft_train"
+    # Use model name from RL log for consistency (this is the model being post-trained)
+    training_model_name = log_model_name or model_name or "unknown_model"
+    training_model_name_safe = training_model_name.replace("/", "-").replace("\\", "-")
+    training_config = {
+        "model_type": "API" if args.api else "HuggingFace",
+        "model_name": training_model_name,
+        "embedding_model": model_name,  # Model used for embeddings in this run
+        "epochs": args.epochs,
+        "structure_lr": args.lr,
+        "prompt_lr": args.prompt_lr,
+        "entropy_coef": args.entropy_coef,
+        "min_reward": args.min_reward,
+        "num_episodes": len(all_episodes),
+    }
+    
+    log_filepath = save_training_log(
+        log_dir=log_dir,
+        algorithm=algorithm,
+        model_name=training_model_name_safe,
+        dataset_name=dataset_name,
+        struct_losses=struct_losses,
+        prompt_losses=prompt_losses,
+        training_config=training_config,
+        timestamp=timestamp,
+        rl_log_path=args.rl_log
+    )
+    
     print(f"\n{'='*60}")
     print("✓ SFT post-training complete!")
     print(f"{'='*60}")
@@ -706,6 +799,8 @@ def main():
     print(f"  {save_dir}/")
     print(f"    - structure_policy_sft_{timestamp}.pt")
     print(f"    - prompt_policy_sft_{timestamp}.pt")
+    print(f"\nTraining log saved to:")
+    print(f"  {log_filepath}")
     print(f"\nEvaluate with:")
     print(f"  python scripts/eval_hrl.py --structure-model {struct_save_path} --prompt-model {prompt_save_path} --dataset {dataset_name} --api --api-model {model_name}")
 

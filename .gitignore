@@ -15,6 +15,7 @@ venv/
 
 # Logs and models (optional - uncomment if you don't want to track these)
 logs/
+eval_logs/
 models/
 *.csv
 

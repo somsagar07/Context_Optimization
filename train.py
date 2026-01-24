@@ -69,7 +69,7 @@ def parse_args():
     parser.add_argument("--episodes", type=int, default=20000, help="Number of episodes")
     parser.add_argument("--batch-size", type=int, default=32, help="Batch size")
     parser.add_argument("--dataset", type=validate_dataset_name, default=None,
-                       help=get_dataset_help_text(include_tau2=True))
+                       help=get_dataset_help_text())
     
     # Algorithm hyperparameters
     parser.add_argument("--clip-epsilon", type=float, default=0.2, help="Clipping parameter")
