@@ -32,9 +32,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import argparse
 import glob
 import time
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
 
@@ -160,6 +164,307 @@ def parse_args():
         help="Number of parallel workers for evaluation (currently sequential only)"
     )
     return parser.parse_args()
+
+
+def run_single_episode(ep, rl_model, env, sample_idx=None):
+    """
+    Run a single evaluation episode.
+    
+    Args:
+        ep: Episode number
+        rl_model: Trained PPO model
+        env: Environment instance (unwrapped, not VecEnv)
+        sample_idx: If provided, use this specific dataset index
+        
+    Returns:
+        Dict with episode results
+    """
+    # Reset environment and optionally use specific sample
+    if sample_idx is not None and hasattr(env, 'dataset'):
+        # Manually set the sample for deterministic evaluation
+        dataset = env.dataset
+        sample = dataset.data[sample_idx]
+        dataset_name = getattr(dataset, 'name', '').lower()
+        
+        # Extract question and answer based on dataset type
+        if dataset_name == 'gaia':
+            question = sample['Question']
+            answer = sample['Final answer']
+            rel_path = sample.get('file_path', '')
+            if rel_path and hasattr(dataset, 'data_dir'):
+                import os
+                full_path = os.path.join(dataset.data_dir, rel_path)
+                question += f"\n\n[System Notification]\nFile Attachment: {full_path}\nYou can use your tools to read or process this file."
+        elif dataset_name == 'medqa':
+            data = sample['data']
+            question = data['Question']
+            options = data['Options']
+            options_text = "\n".join([f"{k}: {v}" for k, v in sorted(options.items())])
+            question = f"{question}\n\nOptions:\n{options_text}"
+            answer = data['Correct Answer']
+        elif dataset_name == 'aime25':
+            question = sample.get('problem', '')
+            answer = sample.get('answer', '')
+        else:
+            # GSM8K, HotPotQA, and other standard datasets
+            question = sample.get('question', sample.get('problem', ''))
+            answer = sample.get('answer', '')
+        
+        env.current_q = question
+        env.current_a = answer
+        env.question_embedding = env.worker.get_embedding(question)
+        
+        # Reset stage for multi-step env
+        if hasattr(env, 'stage'):
+            env.stage = 0
+            env.workflow_depth = None
+            env.agent1_tools = None
+            env.agent1_budget = None
+            env.agent2_tools = None
+            env.agent2_budget = None
+            env.answerer_budget = None
+            if hasattr(env, 'reasoner_prompt'):
+                env.reasoner_prompt = None
+                env.verifier_prompt = None
+                env.answerer_prompt = None
+        
+        obs = env._get_observation()
+    else:
+        obs, _ = env.reset()
+    
+    done = False
+    episode_reward = 0.0
+    decision_steps = 0
+    
+    while not done:
+        # Add batch dimension for model prediction
+        obs_batch = np.expand_dims(obs, axis=0)
+        action, _ = rl_model.predict(obs_batch, deterministic=True)
+        action = action[0] if isinstance(action, np.ndarray) and len(action.shape) > 0 else action
+        
+        obs, reward, terminated, truncated, info = env.step(action)
+        episode_reward += float(reward)
+        decision_steps += 1
+        done = terminated or truncated
+    
+    return {
+        "episode": ep,
+        "correct": info.get("correct", False),
+        "workflow": info.get("workflow", "Unknown"),
+        "llm_steps": info.get("steps_taken", 0),
+        "decision_steps": decision_steps,
+        "tools": info.get("tools_used", 0),
+        "tokens": info.get("total_tokens", 0),
+        "reward": episode_reward,
+        "agent1_tools": str(info.get("agent1_tools", [])),
+        "agent2_tools": str(info.get("agent2_tools", [])),
+        "agent1_budget": info.get("agent1_budget", "N/A"),
+        "agent2_budget": info.get("agent2_budget", "N/A"),
+        "answerer_budget": info.get("answerer_budget", "N/A"),
+        "reasoner_prompt": info.get("reasoner_prompt"),
+        "verifier_prompt": info.get("verifier_prompt"),
+        "answerer_prompt": info.get("answerer_prompt"),
+        # Add question, prediction, and ground truth for debugging
+        "question": info.get("query", ""),
+        "prediction": info.get("final_answer", ""),
+        "ground_truth": info.get("ground_truth", ""),
+    }
+
+
+def run_eval_parallel(cfg, model_path: str, num_episodes: int, dataset_override: str = None,
+                      use_api: bool = False, api_model: str = None, hf_model: str = None,
+                      learn_prompts: bool = False, num_workers: int = 4):
+    """
+    Run parallel evaluation for RL controller (for API mode).
+    
+    Args:
+        cfg: Configuration module
+        model_path: Path to trained model
+        num_episodes: Number of episodes
+        dataset_override: Optional dataset override
+        use_api: If True, use OpenRouter API
+        api_model: OpenRouter model ID
+        hf_model: HuggingFace model name
+        learn_prompts: If True, enable prompt learning mode
+        num_workers: Number of parallel workers
+    """
+    from utils.get_dataset import get_dataset_loader
+    
+    dataset_name = dataset_override or cfg.DATASET_NAME
+    
+    print(f"\n{'='*70}")
+    print(f"EVALUATION: RL Learned Controller (Parallel)")
+    print(f"{'='*70}")
+    print(f"  Config:     {cfg.ENV_MODE}")
+    print(f"  Dataset:    {dataset_name}")
+    print(f"  Episodes:   {num_episodes}")
+    print(f"  Workers:    {num_workers}")
+    print(f"  Model:      {os.path.basename(model_path)}")
+    if learn_prompts:
+        print(f"  Prompts:    Learning enabled")
+    print(f"  LLM:        API - {api_model}")
+    print(f"{'='*70}\n")
+    
+    # Load dataset ONCE and share across all environments
+    print("Loading dataset...")
+    shared_dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=True)
+    dataset_size = len(shared_dataset.tasks) if hasattr(shared_dataset, 'tasks') else len(shared_dataset.data)
+    print(f"  Dataset loaded: {dataset_size} samples")
+    
+    if num_episodes > dataset_size:
+        print(f"  Warning: Requested {num_episodes} episodes but only {dataset_size} samples.")
+        num_episodes = dataset_size
+    
+    # Load the model once
+    real_path = model_path if model_path.endswith('.zip') else model_path + ".zip"
+    if not os.path.exists(real_path):
+        print(f"Error: Model file not found: {real_path}")
+        return None
+    
+    print(f"Loading model: {real_path}")
+    rl_model = PPO.load(model_path, device='cpu')
+    model_obs_shape = rl_model.observation_space.shape
+    print(f"  Model observation space: {model_obs_shape}")
+    
+    # Pre-create environments for each worker
+    print(f"\nPre-creating {num_workers} environments...")
+    env_pools = []
+    for i in range(num_workers):
+        print(f"  Creating environment {i+1}/{num_workers}...")
+        if cfg.ENV_MODE == "multi_step":
+            env = MultiStepAgentEnv(
+                cfg=cfg,
+                is_eval=True,
+                use_api=use_api,
+                api_model=api_model,
+                hf_model=hf_model,
+                learn_prompts=learn_prompts
+            )
+        else:
+            env = GeneralAgentEnv(
+                cfg=cfg,
+                is_eval=True,
+                use_api=use_api,
+                api_model=api_model,
+                hf_model=hf_model
+            )
+        env.dataset = shared_dataset  # Share dataset
+        env_pools.append(env)
+    
+    # Check observation space matches
+    env_obs_shape = env_pools[0].observation_space.shape
+    print(f"  Environment observation space: {env_obs_shape}")
+    
+    if model_obs_shape != env_obs_shape:
+        print(f"\n  ⚠️  OBSERVATION SPACE MISMATCH!")
+        print(f"    Model expects {model_obs_shape}, environment provides {env_obs_shape}")
+        if model_obs_shape[0] == 1154:
+            print(f"    → Model was trained WITH --learn-prompts, you MUST use --learn-prompts")
+        elif model_obs_shape[0] == 1133:
+            print(f"    → Model was trained WITHOUT --learn-prompts")
+        return None
+    
+    # Pre-initialize embedders
+    print(f"\n  Pre-initializing embedders...")
+    for i, env in enumerate(env_pools):
+        if hasattr(env, 'worker') and hasattr(env.worker, 'embedder'):
+            embedder = env.worker.embedder
+            if hasattr(embedder, '_init_embedder') and not embedder._initialized:
+                embedder._init_embedder()
+    print(f"  ✓ Embedders initialized")
+    
+    # Thread locks for each environment
+    env_locks = [threading.Lock() for _ in range(num_workers)]
+    
+    # Results containers (thread-safe)
+    results_lock = threading.Lock()
+    all_results = []
+    completed = [0]
+    correct_count = [0]
+    total_reward = [0.0]
+    
+    def worker_fn(ep):
+        """Worker function to run a single episode."""
+        env_idx = ep % num_workers
+        env = env_pools[env_idx]
+        
+        with env_locks[env_idx]:
+            return run_single_episode(ep, rl_model, env, sample_idx=ep)
+    
+    print(f"\nEvaluating {num_episodes} episodes with {num_workers} workers...")
+    
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = {executor.submit(worker_fn, ep): ep for ep in range(num_episodes)}
+        
+        with tqdm(total=num_episodes, desc=f"Evaluating ({num_workers} workers)") as pbar:
+            for future in as_completed(futures):
+                ep = futures[future]
+                try:
+                    result = future.result()
+                    
+                    with results_lock:
+                        all_results.append(result)
+                        completed[0] += 1
+                        correct_count[0] += int(result["correct"])
+                        total_reward[0] += result["reward"]
+                        
+                        acc = correct_count[0] / completed[0] * 100
+                        avg_rew = total_reward[0] / completed[0]
+                        pbar.set_postfix({"acc": f"{acc:.1f}%", "reward": f"{avg_rew:.2f}"})
+                        pbar.update(1)
+                        
+                except Exception as e:
+                    print(f"\nError in episode {ep}: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    pbar.update(1)
+    
+    # Sort by episode number
+    all_results.sort(key=lambda x: x["episode"])
+    
+    # Create DataFrame
+    detailed_df = pd.DataFrame(all_results)
+    
+    # Print results
+    avg_acc = detailed_df["correct"].mean()
+    avg_reward = detailed_df["reward"].mean()
+    avg_steps = detailed_df["llm_steps"].mean()
+    avg_tools = detailed_df["tools"].mean()
+    avg_tokens = detailed_df["tokens"].mean()
+    
+    print("\n" + "="*70)
+    print("FINAL RESULTS")
+    print("="*70)
+    print(f"  Accuracy:           {avg_acc:.1%} ({detailed_df['correct'].sum()}/{num_episodes})")
+    print(f"  Avg Reward:         {avg_reward:.3f}")
+    print(f"  Avg LLM Steps:      {avg_steps:.2f}")
+    print(f"  Avg Tools Used:     {avg_tools:.2f}")
+    print(f"  Avg Tokens:         {avg_tokens:.0f}")
+    print("="*70)
+    
+    # Workflow distribution
+    print("\nWorkflow Distribution:")
+    print(detailed_df["workflow"].value_counts().to_string())
+    
+    # Save results
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    model_folder = "default"
+    if model_path:
+        path_parts = os.path.normpath(model_path).split(os.sep)
+        if "flat_rl" in path_parts:
+            idx = path_parts.index("flat_rl")
+            if idx + 1 < len(path_parts) - 1:
+                model_folder = path_parts[idx + 1]
+    
+    log_dir = os.path.join(project_root, "logs", "eval", model_folder)
+    os.makedirs(log_dir, exist_ok=True)
+    
+    output_filename = f"eval_results_{cfg.ENV_MODE}_{dataset_name}_{int(time.time())}.csv"
+    output_path = os.path.join(log_dir, output_filename)
+    detailed_df.to_csv(output_path, index=False)
+    print(f"\nDetailed results saved to: {output_path}")
+    
+    return detailed_df
 
 
 def run_eval(cfg, model_path: str = None, num_episodes: int = 30, dataset_override: str = None,
@@ -301,6 +606,10 @@ def run_eval(cfg, model_path: str = None, num_episodes: int = 30, dataset_overri
             "agent1_budget": info.get("agent1_budget", "N/A"),
             "agent2_budget": info.get("agent2_budget", "N/A"),
             "answerer_budget": info.get("answerer_budget", "N/A"),
+            # Add question, prediction, and ground truth for debugging
+            "question": info.get("query", ""),
+            "prediction": info.get("final_answer", ""),
+            "ground_truth": info.get("ground_truth", ""),
         }
         
         # Add prompt info if learning prompts
@@ -342,7 +651,7 @@ def run_eval(cfg, model_path: str = None, num_episodes: int = 30, dataset_overri
     print("\nWorkflow Distribution:")
     print(detailed_df["workflow"].value_counts().to_string())
     
-    # Save detailed results to logs/flat_rl/{model_folder}/
+    # Save detailed results to logs/eval/{model_folder}/
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
     # Determine model folder from model_path (e.g., models/flat_rl/gpt-4o/model.zip -> gpt-4o)
@@ -355,7 +664,7 @@ def run_eval(cfg, model_path: str = None, num_episodes: int = 30, dataset_overri
             if idx + 1 < len(path_parts) - 1:  # There's a subfolder between flat_rl and the file
                 model_folder = path_parts[idx + 1]
     
-    log_dir = os.path.join(project_root, "logs", "flat_rl", model_folder)
+    log_dir = os.path.join(project_root, "logs", "eval", model_folder)
     os.makedirs(log_dir, exist_ok=True)
     
     output_filename = f"eval_results_{cfg.ENV_MODE}_{dataset_name}_{int(time.time())}.csv"
@@ -430,17 +739,33 @@ if __name__ == "__main__":
         print("Error: --learn-prompts is only supported with --config multi_step")
         sys.exit(1)
     
-    # Run evaluation
-    detailed_df = run_eval(
-        cfg=cfg,
-        model_path=args.model,
-        num_episodes=num_episodes,
-        dataset_override=args.dataset,
-        use_api=args.api,
-        api_model=args.api_model,
-        hf_model=args.hf_model,
-        learn_prompts=args.learn_prompts
-    )
+    # Run evaluation (parallel for API mode with workers > 1)
+    if args.api and args.workers > 1:
+        print(f"Using parallel evaluation with {args.workers} workers")
+        detailed_df = run_eval_parallel(
+            cfg=cfg,
+            model_path=args.model,
+            num_episodes=num_episodes,
+            dataset_override=args.dataset,
+            use_api=args.api,
+            api_model=args.api_model,
+            hf_model=args.hf_model,
+            learn_prompts=args.learn_prompts,
+            num_workers=args.workers
+        )
+    else:
+        if args.workers > 1 and not args.api:
+            print("Warning: Parallel workers only supported with --api mode. Using sequential evaluation.")
+        detailed_df = run_eval(
+            cfg=cfg,
+            model_path=args.model,
+            num_episodes=num_episodes,
+            dataset_override=args.dataset,
+            use_api=args.api,
+            api_model=args.api_model,
+            hf_model=args.hf_model,
+            learn_prompts=args.learn_prompts
+        )
     
     if detailed_df is not None:
         analyze_results(detailed_df)
