@@ -111,9 +111,9 @@ def parse_args():
     )
     parser.add_argument(
         "--episodes",
-        type=int,
-        default=30,
-        help="Number of episodes to evaluate"
+        type=str,
+        default="30",
+        help="Number of episodes to evaluate, or 'all' for all datapoints"
     )
     from utils import validate_dataset_name, get_dataset_help_text
     
@@ -121,7 +121,7 @@ def parse_args():
         "--dataset",
         type=validate_dataset_name,
         default=None,
-        help=get_dataset_help_text(include_tau2=False)
+        help=get_dataset_help_text()
     )
     
     # LLM configuration
@@ -150,6 +150,14 @@ def parse_args():
         action="store_true",
         default=False,
         help="Enable prompt learning mode (multi_step only). Must match how model was trained!"
+    )
+    
+    # Parallel workers (for future parallel API evaluation)
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Number of parallel workers for evaluation (currently sequential only)"
     )
     return parser.parse_args()
 
@@ -196,18 +204,47 @@ def run_eval(cfg, model_path: str = None, num_episodes: int = 30, dataset_overri
     
     # Setup environment based on mode
     print(f"Using {'MultiStepAgentEnv' if cfg.ENV_MODE == 'multi_step' else 'GeneralAgentEnv'}")
+    print(f"  learn_prompts={learn_prompts}")
     env = DummyVecEnv([make_env(cfg, is_eval=True, use_api=use_api, 
                                  api_model=api_model, hf_model=hf_model, 
                                  env_mode=cfg.ENV_MODE, learn_prompts=learn_prompts)])
+    print(f"  Environment observation space: {env.observation_space.shape}")
     
-    # Load RL model
+    # Load RL model with the environment (needed for correct observation space)
     real_path = model_path if model_path.endswith('.zip') else model_path + ".zip"
     if not os.path.exists(real_path):
         print(f"Error: Model file not found: {real_path}")
         return None
         
     print(f"Loading model: {real_path}")
-    rl_model = PPO.load(model_path, device='cpu')
+    
+    # First load model WITHOUT env to check its original observation space
+    rl_model_check = PPO.load(model_path, device='cpu')
+    model_obs_shape = rl_model_check.observation_space.shape
+    env_obs_shape = env.observation_space.shape
+    print(f"  Model trained with obs space: {model_obs_shape}")
+    print(f"  Eval env observation space:   {env_obs_shape}")
+    
+    if model_obs_shape != env_obs_shape:
+        print(f"\n  ⚠️  OBSERVATION SPACE MISMATCH!")
+        print(f"    Model expects {model_obs_shape}, environment provides {env_obs_shape}")
+        # Detect if it's a learn_prompts mismatch
+        # With learn_prompts=True:  1024 + 7 + 9 + 48 + 48 + 7 + 6 + 5 = 1154
+        # With learn_prompts=False: 1024 + 4 + 9 + 48 + 48 = 1133
+        if model_obs_shape[0] == 1154 and env_obs_shape[0] != 1154:
+            print(f"    → Model was trained WITH --learn-prompts, you MUST use --learn-prompts during eval")
+            return None
+        elif model_obs_shape[0] == 1133 and env_obs_shape[0] != 1133:
+            print(f"    → Model was trained WITHOUT --learn-prompts, do NOT use --learn-prompts during eval")
+            return None
+        else:
+            print(f"    → Check that --config and other args match training configuration")
+            return None
+    
+    del rl_model_check  # Free memory
+    
+    # Now load with env for proper prediction
+    rl_model = PPO.load(model_path, env=env, device='cpu')
     
     # Results container
     detailed_results = []
@@ -364,6 +401,25 @@ if __name__ == "__main__":
     cfg = load_config(args.config)
     print(f"Loaded config: {args.config}")
     
+    # Override dataset if specified
+    if args.dataset:
+        cfg.DATASET_NAME = args.dataset
+    
+    # Handle "all" episodes - evaluate on entire dataset
+    if args.episodes.lower() == "all":
+        from utils.get_dataset import get_dataset_loader
+        dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=True)
+        # Get dataset size - different datasets use different attributes
+        if hasattr(dataset, 'tasks'):
+            num_episodes = len(dataset.tasks)
+        elif hasattr(dataset, 'data'):
+            num_episodes = len(dataset.data)
+        else:
+            num_episodes = len(dataset)
+        print(f"Evaluating on ALL {num_episodes} datapoints from {cfg.DATASET_NAME}")
+    else:
+        num_episodes = int(args.episodes)
+    
     # Validate LLM configuration
     if args.api and not args.api_model:
         print("Error: --api-model is required when using --api")
@@ -378,7 +434,7 @@ if __name__ == "__main__":
     detailed_df = run_eval(
         cfg=cfg,
         model_path=args.model,
-        num_episodes=args.episodes,
+        num_episodes=num_episodes,
         dataset_override=args.dataset,
         use_api=args.api,
         api_model=args.api_model,
