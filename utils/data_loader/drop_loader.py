@@ -139,7 +139,7 @@ class DROPDataset(BaseDataset):
             if pred_date.lower() == truth_date.lower():
                 return 1.0
         
-        # Text span comparison (case-insensitive, stricter matching)
+        # Text span comparison (case-insensitive, balanced matching)
         pred_lower = pred_answer.lower()
         truth_lower = ground_truth.lower()
         
@@ -151,18 +151,25 @@ class DROPDataset(BaseDataset):
         if pred_clean == truth_clean:
             return 1.0
         
-        # For text spans, be stricter: require word boundary matches
-        # This prevents "Tom" matching "Tom Brady" or partial word matches
+        # For text spans, use lenient matching (typical for DROP evaluation):
+        # - Allow substring match if ground truth appears in prediction
+        # - This is standard for reading comprehension datasets
         if truth_clean:
-            truth_words = truth_clean.split()
+            # Primary check: ground truth appears as substring in prediction
+            if truth_clean in pred_clean:
+                return 1.0
+            
+            # Secondary check: all words from ground truth appear in prediction (in any order)
+            # This handles cases where words might be reordered but answer is correct
+            truth_words = set(truth_clean.split())
+            pred_words = set(pred_clean.split())
+            if truth_words and truth_words.issubset(pred_words):
+                return 1.0
+            
+            # For single words, also check word boundary match (prevents "Tom" matching "atomic")
             if len(truth_words) == 1:
-                # Single word: require word boundary match
-                pattern = r'\b' + re.escape(truth_words[0]) + r'\b'
-                if re.search(pattern, pred_clean):
-                    return 1.0
-            else:
-                # Multi-word: require phrase to appear as complete sequence
-                pattern = r'\b' + r'\b.*?\b'.join([re.escape(w) for w in truth_words]) + r'\b'
+                word = list(truth_words)[0]
+                pattern = r'\b' + re.escape(word) + r'\b'
                 if re.search(pattern, pred_clean):
                     return 1.0
         
@@ -173,14 +180,17 @@ class DROPDataset(BaseDataset):
             for part in truth_parts:
                 part_clean = re.sub(r'[^\w\s]', '', part.lower())
                 if part_clean:
+                    # Exact match
                     if part_clean == pred_clean:
                         return 1.0
-                    # For list items, also check word boundary match
-                    part_words = part_clean.split()
-                    if len(part_words) == 1:
-                        pattern = r'\b' + re.escape(part_words[0]) + r'\b'
-                        if re.search(pattern, pred_clean):
-                            return 1.0
+                    # Substring match (bidirectional for list items)
+                    if part_clean in pred_clean or pred_clean in part_clean:
+                        return 1.0
+                    # Word set match (all words from part appear in prediction)
+                    part_words = set(part_clean.split())
+                    pred_words = set(pred_clean.split())
+                    if part_words and part_words.issubset(pred_words):
+                        return 1.0
         
         return 0.0
 

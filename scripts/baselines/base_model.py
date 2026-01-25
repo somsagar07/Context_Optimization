@@ -84,6 +84,20 @@ def run_single_episode(ep, worker, dataset, sample_idx=None):
                 # AIME25: 'problem', 'answer'
                 question = sample.get('problem', '')
                 answer = sample.get('answer', '')
+            elif dataset_name == 'drop':
+                # DROP has passage + question structure (same format as get_sample())
+                passage = sample.get('passage', '')
+                question_text = sample.get('question', '')
+                # Format exactly like DROPDataset.get_sample() does
+                question = f"{passage}\n\nQuestion: {question_text}"
+                # Extract answer from answers_spans (same logic as get_sample())
+                answer_spans = sample.get('answers_spans', {})
+                if 'spans' in answer_spans and len(answer_spans['spans']) > 0:
+                    # Use first answer (usually there's one primary answer)
+                    answer = answer_spans['spans'][0]
+                else:
+                    # Fallback: try to find answer in other fields
+                    answer = sample.get('answer', '')
             elif dataset_name.startswith('mmlu'):
                 # MMLU: format options and map answer index to text
                 if hasattr(dataset, "get_question") and hasattr(dataset, "get_answer"):
