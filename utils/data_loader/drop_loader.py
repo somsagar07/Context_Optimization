@@ -139,25 +139,48 @@ class DROPDataset(BaseDataset):
             if pred_date.lower() == truth_date.lower():
                 return 1.0
         
-        # Text span comparison (case-insensitive, allow substring match)
+        # Text span comparison (case-insensitive, stricter matching)
         pred_lower = pred_answer.lower()
         truth_lower = ground_truth.lower()
         
-        # Exact match
-        if pred_lower == truth_lower:
+        # Remove punctuation for fair comparison
+        pred_clean = re.sub(r'[^\w\s]', '', pred_lower)
+        truth_clean = re.sub(r'[^\w\s]', '', truth_lower)
+        
+        # Exact match (after cleaning)
+        if pred_clean == truth_clean:
             return 1.0
         
-        # Substring match (prediction contains ground truth or vice versa)
-        if truth_lower in pred_lower or pred_lower in truth_lower:
-            return 1.0
+        # For text spans, be stricter: require word boundary matches
+        # This prevents "Tom" matching "Tom Brady" or partial word matches
+        if truth_clean:
+            truth_words = truth_clean.split()
+            if len(truth_words) == 1:
+                # Single word: require word boundary match
+                pattern = r'\b' + re.escape(truth_words[0]) + r'\b'
+                if re.search(pattern, pred_clean):
+                    return 1.0
+            else:
+                # Multi-word: require phrase to appear as complete sequence
+                pattern = r'\b' + r'\b.*?\b'.join([re.escape(w) for w in truth_words]) + r'\b'
+                if re.search(pattern, pred_clean):
+                    return 1.0
         
         # Check if ground truth is a list (multiple valid answers)
         # DROP sometimes has multiple valid answer formats
         if ',' in ground_truth or ';' in ground_truth:
             truth_parts = [t.strip() for t in re.split(r'[,;]', ground_truth)]
             for part in truth_parts:
-                if part.lower() in pred_lower or pred_lower in part.lower():
-                    return 1.0
+                part_clean = re.sub(r'[^\w\s]', '', part.lower())
+                if part_clean:
+                    if part_clean == pred_clean:
+                        return 1.0
+                    # For list items, also check word boundary match
+                    part_words = part_clean.split()
+                    if len(part_words) == 1:
+                        pattern = r'\b' + re.escape(part_words[0]) + r'\b'
+                        if re.search(pattern, pred_clean):
+                            return 1.0
         
         return 0.0
 

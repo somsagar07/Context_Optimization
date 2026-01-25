@@ -34,7 +34,6 @@ import glob
 import time
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -156,12 +155,12 @@ def parse_args():
         help="Enable prompt learning mode (multi_step only). Must match how model was trained!"
     )
     
-    # Parallel workers (for future parallel API evaluation)
+    # Parallel workers (for API evaluation)
     parser.add_argument(
         "--workers",
         type=int,
         default=1,
-        help="Number of parallel workers for evaluation (currently sequential only)"
+        help="Number of parallel workers for evaluation (only works with --api mode)"
     )
     return parser.parse_args()
 
@@ -192,7 +191,6 @@ def run_single_episode(ep, rl_model, env, sample_idx=None):
             answer = sample['Final answer']
             rel_path = sample.get('file_path', '')
             if rel_path and hasattr(dataset, 'data_dir'):
-                import os
                 full_path = os.path.join(dataset.data_dir, rel_path)
                 question += f"\n\n[System Notification]\nFile Attachment: {full_path}\nYou can use your tools to read or process this file."
         elif dataset_name == 'medqa':
@@ -205,6 +203,20 @@ def run_single_episode(ep, rl_model, env, sample_idx=None):
         elif dataset_name == 'aime25':
             question = sample.get('problem', '')
             answer = sample.get('answer', '')
+        elif dataset_name == 'drop':
+            # DROP has passage + question structure (same format as get_sample())
+            passage = sample.get('passage', '')
+            question_text = sample.get('question', '')
+            # Format exactly like DROPDataset.get_sample() does
+            question = f"{passage}\n\nQuestion: {question_text}"
+            # Extract answer from answers_spans (same logic as get_sample())
+            answer_spans = sample.get('answers_spans', {})
+            if 'spans' in answer_spans and len(answer_spans['spans']) > 0:
+                # Use first answer (usually there's one primary answer)
+                answer = answer_spans['spans'][0]
+            else:
+                # Fallback: try to find answer in other fields
+                answer = sample.get('answer', '')
         else:
             # GSM8K, HotPotQA, and other standard datasets
             question = sample.get('question', sample.get('problem', ''))
@@ -212,10 +224,11 @@ def run_single_episode(ep, rl_model, env, sample_idx=None):
         
         env.current_q = question
         env.current_a = answer
-        env.question_embedding = env.worker.get_embedding(question)
         
-        # Reset stage for multi-step env
-        if hasattr(env, 'stage'):
+        # Get observation based on environment type
+        if hasattr(env, '_get_observation'):
+            # MultiStepAgentEnv: need to set embedding and reset stage, then get observation
+            env.question_embedding = env.worker.get_embedding(question)
             env.stage = 0
             env.workflow_depth = None
             env.agent1_tools = None
@@ -227,8 +240,10 @@ def run_single_episode(ep, rl_model, env, sample_idx=None):
                 env.reasoner_prompt = None
                 env.verifier_prompt = None
                 env.answerer_prompt = None
-        
-        obs = env._get_observation()
+            obs = env._get_observation()
+        else:
+            # GeneralAgentEnv: observation is just the embedding
+            obs = env.worker.get_embedding(question)
     else:
         obs, _ = env.reset()
     

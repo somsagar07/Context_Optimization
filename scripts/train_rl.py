@@ -152,7 +152,7 @@ def parse_args():
     
     # Dataset (required)
     parser.add_argument("--dataset", type=str, required=True,
-                       choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25"],
+                       choices=["gsm8k", "hotpotqa", "gaia", "medqa", "aime25", "drop"],
                        help="Dataset to train on")
     
     # Training parameters
