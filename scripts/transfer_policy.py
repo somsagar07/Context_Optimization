@@ -72,8 +72,11 @@ def evaluate_zero_shot(source_structure_path, source_prompt_path, target_dataset
     # This ensures environments use the correct dataset
     cfg.DATASET_NAME = target_dataset
     
-    # Load pre-trained policies
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # Load pre-trained policies (handle edge case where CUDA detected but no devices)
+    if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+        device = "cuda"
+    else:
+        device = "cpu"
     print(f"\nLoading pre-trained policies (device: {device})...")
     structure_policy, struct_algo = load_structure_policy(source_structure_path, device)
     prompt_policy, prompt_algo = load_prompt_policy(source_prompt_path, device)

@@ -46,6 +46,13 @@ from scripts.eval_hrl import evaluate, load_structure_policy, load_prompt_policy
 import torch
 
 
+def get_device():
+    """Get device, handling edge case where CUDA is detected but no devices available."""
+    if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+        return "cuda"
+    return "cpu"
+
+
 # Define all transfer experiments for Table 2
 TRANSFER_EXPERIMENTS = {
     "reasoning": [
@@ -136,8 +143,9 @@ def evaluate_source_accuracy(source_dataset, structure_path, prompt_path, cfg,
     # Set config to source dataset
     cfg.DATASET_NAME = source_dataset
     
-    # Load policies
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # Load policies (use CPU if no CUDA devices available)
+    device = get_device()
+    print(f"  Loading policies on device: {device}")
     structure_policy, _ = load_structure_policy(structure_path, device)
     prompt_policy, _ = load_prompt_policy(prompt_path, device)
     

@@ -655,7 +655,11 @@ def main():
             args.workers = 1
     print("=" * 60)
     
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # Handle edge case where CUDA is detected but no devices available
+    if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+        device = "cuda"
+    else:
+        device = "cpu"
     print(f"\nLoading models (device: {device})...")
     
     structure_policy, struct_algo = load_structure_policy(args.structure_model, device)
