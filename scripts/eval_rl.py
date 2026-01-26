@@ -242,8 +242,9 @@ def run_single_episode(ep, rl_model, env, sample_idx=None):
                 env.answerer_prompt = None
             obs = env._get_observation()
         else:
-            # GeneralAgentEnv: observation is just the embedding
-            obs = env.worker.get_embedding(question)
+            # GeneralAgentEnv: observation is just the question embedding
+            env.question_embedding = env.worker.get_embedding(question)
+            obs = env.question_embedding
     else:
         obs, _ = env.reset()
     
@@ -432,6 +433,31 @@ def run_eval_parallel(cfg, model_path: str, num_episodes: int, dataset_override:
                     print(f"\nError in episode {ep}: {e}")
                     import traceback
                     traceback.print_exc()
+                    # Add error result to maintain consistency
+                    error_result = {
+                        "episode": ep,
+                        "correct": False,
+                        "workflow": "Error",
+                        "llm_steps": 0,
+                        "decision_steps": 0,
+                        "tools": 0,
+                        "tokens": 0,
+                        "reward": 0.0,
+                        "agent1_tools": "[]",
+                        "agent2_tools": "[]",
+                        "agent1_budget": "N/A",
+                        "agent2_budget": "N/A",
+                        "answerer_budget": "N/A",
+                        "reasoner_prompt": None,
+                        "verifier_prompt": None,
+                        "answerer_prompt": None,
+                        "question": "",
+                        "prediction": "",
+                        "ground_truth": "",
+                    }
+                    with results_lock:
+                        all_results.append(error_result)
+                        completed[0] += 1
                     pbar.update(1)
     
     # Sort by episode number
@@ -439,6 +465,11 @@ def run_eval_parallel(cfg, model_path: str, num_episodes: int, dataset_override:
     
     # Create DataFrame
     detailed_df = pd.DataFrame(all_results)
+    
+    # Check if we have any results
+    if len(detailed_df) == 0:
+        print("\n⚠️  No results collected! All episodes failed.")
+        return None
     
     # Print results
     avg_acc = detailed_df["correct"].mean()

@@ -233,6 +233,18 @@ def run_single_episode(ep, structure_policy, prompt_policy, cfg, deterministic, 
                 else:
                     question = question_text
                     answer = sample.get('answer', '')
+        elif dataset_name == 'drop':
+            # DROP: 'passage', 'question', 'answers_spans'
+            passage = sample.get('passage', '')
+            question_text = sample.get('question', '')
+            # Format: passage + question (similar to how models see it)
+            question = f"{passage}\n\nQuestion: {question_text}"
+            # Extract answer from answers_spans
+            answer_spans = sample.get('answers_spans', {})
+            if 'spans' in answer_spans and len(answer_spans['spans']) > 0:
+                answer = answer_spans['spans'][0]
+            else:
+                answer = sample.get('answer', '')
         else:
             # GSM8K, HotPotQA, and other standard datasets: 'question', 'answer'
             question = sample.get('question', sample.get('problem', ''))

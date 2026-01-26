@@ -117,6 +117,20 @@ def run_single_episode(ep, worker, dataset, sample_idx=None):
                     else:
                         question = question_text
                         answer = sample.get('answer', '')
+            elif dataset_name == 'drop':
+                # DROP has passage + question structure (same format as get_sample())
+                passage = sample.get('passage', '')
+                question_text = sample.get('question', '')
+                # Format exactly like DROPDataset.get_sample() does
+                question = f"{passage}\n\nQuestion: {question_text}"
+                # Extract answer from answers_spans (same logic as get_sample())
+                answer_spans = sample.get('answers_spans', {})
+                if 'spans' in answer_spans and len(answer_spans['spans']) > 0:
+                    # Use first answer (usually there's one primary answer)
+                    answer = answer_spans['spans'][0]
+                else:
+                    # Fallback: try to find answer in other fields
+                    answer = sample.get('answer', '')
             else:
                 # GSM8K, HotPotQA, and other standard datasets: 'question', 'answer'
                 question = sample.get('question', sample.get('problem', ''))
@@ -144,6 +158,7 @@ def run_single_episode(ep, worker, dataset, sample_idx=None):
     max_iterations = 10  # Prevent infinite loops
     conversation_history = question
     full_response = ""
+    last_response = ""  # Track the last LLM response (like workflow.execute() returns)
     total_tokens_used = 0
     
     for iteration in range(max_iterations):
@@ -156,6 +171,7 @@ def run_single_episode(ep, worker, dataset, sample_idx=None):
         )
         
         full_response += response
+        last_response = response  # Keep track of the last response (matches workflow.execute() behavior)
         total_tokens_used += len(response.split()) * 1.3  # Approximate token count
         
         # Parse tool calls from response
@@ -191,9 +207,12 @@ def run_single_episode(ep, worker, dataset, sample_idx=None):
             # No valid tools executed, we're done
             break
     
-    prediction = full_response
+    # Use last_response (matches workflow.execute() behavior - it returns the last LLM response)
+    # evaluate_correctness() will extract the answer internally, just like in the environment
+    # This ensures evaluation is consistent with eval_hrl.py
+    prediction = last_response if last_response else full_response
     
-    # Evaluate correctness
+    # Evaluate correctness (evaluate_correctness will extract the answer internally)
     correct = dataset.evaluate_correctness(prediction, answer)
     
     # Use the token count from the loop (includes all iterations)

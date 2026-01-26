@@ -12,17 +12,20 @@ Current System Configuration:
 - Action Space: MultiDiscrete([9, 16, 3, 16, 3, 3])
 
 Usage:
-    # Run all baselines on hotpotqa
-    python scripts/config_search_benchmark.py --dataset hotpotqa --episodes 50 --api --api-model "gemma"
+    # Run all baselines on full dataset with parallel workers
+    python scripts/config_search_benchmark.py --dataset hotpotqa --episodes all --api --api-model "gemma" --workers 8
     
-    # Run only Direct workflow baselines
-    python scripts/config_search_benchmark.py --baseline direct --dataset hotpotqa --episodes 50 --api --api-model "gemma"
+    # Run only Direct workflow baselines on full dataset
+    python scripts/config_search_benchmark.py --baseline direct --dataset hotpotqa --episodes all --api --api-model "gemma" --workers 8
     
     # Run only search algorithms (Grid, Greedy, Best-First, Evolutionary)
     python scripts/config_search_benchmark.py --baseline search --dataset hotpotqa --episodes 50 --api --api-model "gemma"
     
-    # Run a specific fixed config
-    python scripts/config_search_benchmark.py --baseline "Direct-Web-Mid" --dataset hotpotqa --episodes 50 --api --api-model "gemma"
+    # Run a specific fixed config on full dataset
+    python scripts/config_search_benchmark.py --baseline "Direct-Web-Mid" --dataset drop --episodes all --api --api-model "gemma" --workers 8
+    
+    # Run with limited episodes (useful for testing)
+    python scripts/config_search_benchmark.py --baseline direct --dataset hotpotqa --episodes 50 --api --api-model "gemma"
     
     # List all available baselines
     python scripts/config_search_benchmark.py --list-baselines
@@ -39,16 +42,20 @@ import argparse
 import gc
 import heapq
 import time
+import threading
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import redirect_stdout, redirect_stderr
 from io import StringIO
 
 import numpy as np
 import pandas as pd
 import torch
+from tqdm import tqdm
 
 from configs import load_config
 from env import StructureEnv, PromptEnv
+from utils import get_dataset_loader
 
 
 # ============================================================
@@ -311,24 +318,29 @@ BASELINE_GROUPS = {
 # ============================================================
 
 def generate_grid_search_configs(max_configs=50):
-    """Generate configurations for grid search over key dimensions."""
-    configs = []
-    workflows = list(range(9))  # All 9 workflows
-    tool_sets = [0, 1, 2, 3, 15]  # None, Calc, Web, Calc+Web, All
-    budgets = [0, 1, 2]
+    """Generate configurations for grid search over the full action space.
     
-    for wf in workflows:
-        for r_tools in tool_sets:
-            for r_budget in budgets:
+    Standard grid search: systematically explores the action space in order.
+    No prioritization or heuristics - just enumerates configurations.
+    Action space: [workflow(0-8), agent1_tools(0-15), agent1_budget(0-2), 
+                   agent2_tools(0-15), agent2_budget(0-2), answerer_budget(0-2)]
+    """
+    configs = []
+    
+    # Enumerate in order: workflow -> tools -> budgets
+    # This is a naive grid search without any optimization
+    for wf in range(9):  # All 9 workflows
+        for r_tools in range(16):  # All 16 tool combinations
+            for r_budget in range(3):  # All 3 budget levels
                 if wf in WORKFLOWS_WITH_AGENT2:  # Workflows that use agent2
-                    for v_tools in tool_sets:
-                        for v_budget in budgets:
-                            for a_budget in budgets:
+                    for v_tools in range(16):
+                        for v_budget in range(3):
+                            for a_budget in range(3):
                                 configs.append([wf, r_tools, r_budget, v_tools, v_budget, a_budget])
                                 if len(configs) >= max_configs:
                                     return configs
                 else:
-                    for a_budget in budgets:
+                    for a_budget in range(3):
                         configs.append([wf, r_tools, r_budget, 0, 0, a_budget])
                         if len(configs) >= max_configs:
                             return configs
@@ -336,14 +348,19 @@ def generate_grid_search_configs(max_configs=50):
 
 
 def generate_greedy_configs():
-    """Generate configurations ordered by expected quality (heuristic)."""
+    """Generate configurations for greedy search in sequential order.
+    
+    Standard greedy: tries configurations in a fixed sequential order.
+    No heuristic prioritization - just enumerates workflow by workflow.
+    This is a naive baseline without any "smart" ordering.
+    """
     configs = []
     
-    # Priority: More complex workflows with tools, then simpler ones
-    # Complex workflows first
-    for wf in [8, 7, 6, 2, 4, 3, 1, 5, 0]:  # Autonomous -> Direct
-        for tools in [15, 3, 2, 1, 0]:  # All -> None
-            for budget in [2, 1, 0]:  # High -> Low
+    # Sequential order: workflow 0 -> 8, tools 0 -> 15, budget 0 -> 2
+    # No prioritization - just enumerate in natural order
+    for wf in range(9):  # 0, 1, 2, ... 8
+        for tools in range(16):  # 0, 1, 2, ... 15
+            for budget in range(3):  # 0, 1, 2
                 if wf in WORKFLOWS_WITH_AGENT2:
                     configs.append([wf, tools, budget, tools, budget, budget])
                 else:
@@ -353,68 +370,95 @@ def generate_greedy_configs():
 
 
 def generate_neighbors(config):
-    """Generate neighboring configurations."""
+    """Generate neighboring configurations (naive: no expert knowledge).
+    
+    Simply generates neighbors by changing each dimension by +/- 1.
+    No special handling for different action types.
+    Action space bounds: [9, 16, 3, 16, 3, 3]
+    """
+    import random
+    action_bounds = [9, 16, 3, 16, 3, 3]
     neighbors = []
+    
     for i in range(len(config)):
-        if i == 0:  # workflow
-            for val in range(9):
-                if val != config[i]:
-                    neighbor = config.copy()
-                    neighbor[i] = val
-                    neighbors.append(neighbor)
-        elif i in [1, 3]:  # tools
-            for tool_bit in [1, 2, 4, 8]:
+        # Generate neighbors by +1 and -1 for each dimension
+        for delta in [-1, 1]:
+            new_val = config[i] + delta
+            if 0 <= new_val < action_bounds[i] and new_val != config[i]:
                 neighbor = config.copy()
-                neighbor[i] = int(config[i]) ^ tool_bit
+                neighbor[i] = new_val
                 neighbors.append(neighbor)
-        else:  # budgets
-            for val in [0, 1, 2]:
-                if val != config[i]:
-                    neighbor = config.copy()
-                    neighbor[i] = val
-                    neighbors.append(neighbor)
+    
+    # Shuffle to avoid bias toward any dimension
+    random.shuffle(neighbors)
     return neighbors[:10]
 
 
 def run_search_algorithm(structure_env, prompt_env, method, num_episodes=50):
-    """Run a search algorithm and return results."""
+    """Run a search algorithm and return results with progress tracking (sequential)."""
     import random
     results_list = []
+    correct_count = 0
+    total_tokens = 0
+    
+    method_names = {
+        "grid": "Grid Search",
+        "greedy": "Greedy Search", 
+        "best_first": "Best-First Search",
+        "evolutionary": "Evolutionary Search"
+    }
+    method_name = method_names.get(method, method)
+    
+    def update_stats(result):
+        nonlocal correct_count, total_tokens
+        if result["correct"]:
+            correct_count += 1
+        total_tokens += result.get("total_tokens", 0)
+        acc = correct_count / len(results_list) * 100 if results_list else 0
+        avg_tok = total_tokens / len(results_list) if results_list else 0
+        return acc, avg_tok
     
     if method == "grid":
         configs = generate_grid_search_configs(max_configs=num_episodes)
-        for i, config in enumerate(configs[:num_episodes]):
+        pbar = tqdm(enumerate(configs[:num_episodes]), total=min(len(configs), num_episodes), 
+                    desc=f"  {method_name}")
+        for i, config in pbar:
             result = run_fixed_config_episode(structure_env, prompt_env, config)
-            results_list.append({"strategy": "Grid Search", "episode": i, **result})
+            results_list.append({"strategy": method_name, "episode": i, **result})
+            acc, avg_tok = update_stats(result)
+            pbar.set_postfix({"acc": f"{acc:.1f}%", "tokens": f"{avg_tok:.0f}"})
             
     elif method == "greedy":
         configs = generate_greedy_configs()
-        for i, config in enumerate(configs[:num_episodes]):
+        pbar = tqdm(enumerate(configs[:num_episodes]), total=min(len(configs), num_episodes),
+                    desc=f"  {method_name}")
+        for i, config in pbar:
             result = run_fixed_config_episode(structure_env, prompt_env, config)
-            results_list.append({"strategy": "Greedy Search", "episode": i, **result})
+            results_list.append({"strategy": method_name, "episode": i, **result})
+            acc, avg_tok = update_stats(result)
+            pbar.set_postfix({"acc": f"{acc:.1f}%", "tokens": f"{avg_tok:.0f}"})
             
     elif method == "best_first":
-        def heuristic(config):
-            # Prefer complex workflows with tools
-            score = config[0] * 1.5  # workflow complexity
-            score += bin(config[1]).count('1') * 2  # agent1 tools count
-            score += bin(config[3]).count('1')  # agent2 tools count
-            score += config[2] + config[4] + config[5]  # budgets
-            return score
+        # Naive best-first: no expert heuristic, just exploration order
+        # Uses a simple counter as priority (FIFO-like exploration)
+        # No domain knowledge about which configs are "better"
         
         pq = []
         visited = set()
-        # Start with promising configs across different workflows
+        counter = [0]  # Simple counter for insertion order (no heuristic)
+        
+        # Start with random initial configs (no expert knowledge)
+        random.seed(42)  # Reproducible
         initial_configs = [
-            [8, 15, 2, 0, 0, 2],   # Autonomous, all tools, high
-            [7, 15, 2, 15, 2, 2],  # EvalOpt, all tools, high
-            [2, 15, 2, 15, 2, 2],  # Verify, all tools, high
-            [1, 15, 2, 0, 0, 2],   # Reason, all tools, high
-            [0, 3, 2, 0, 0, 2],    # Direct, calc+web, high
+            [random.randint(0, 8), random.randint(0, 15), random.randint(0, 2),
+             random.randint(0, 15), random.randint(0, 2), random.randint(0, 2)]
+            for _ in range(5)
         ]
         for config in initial_configs:
-            heapq.heappush(pq, (-heuristic(config), tuple(config)))
+            heapq.heappush(pq, (counter[0], tuple(config)))
+            counter[0] += 1
         
+        pbar = tqdm(total=num_episodes, desc=f"  {method_name}")
         while len(results_list) < num_episodes and pq:
             _, config_tuple = heapq.heappop(pq)
             if config_tuple in visited:
@@ -422,18 +466,27 @@ def run_search_algorithm(structure_env, prompt_env, method, num_episodes=50):
             visited.add(config_tuple)
             config = list(config_tuple)
             result = run_fixed_config_episode(structure_env, prompt_env, config)
-            results_list.append({"strategy": "Best-First Search", "episode": len(results_list), **result})
+            results_list.append({"strategy": method_name, "episode": len(results_list), **result})
+            acc, avg_tok = update_stats(result)
+            pbar.update(1)
+            pbar.set_postfix({"acc": f"{acc:.1f}%", "tokens": f"{avg_tok:.0f}", "queue": len(pq)})
             for neighbor in generate_neighbors(config):
                 if tuple(neighbor) not in visited:
-                    heapq.heappush(pq, (-heuristic(neighbor), tuple(neighbor)))
+                    heapq.heappush(pq, (counter[0], tuple(neighbor)))
+                    counter[0] += 1
+        pbar.close()
                     
     elif method == "evolutionary":
         pop_size = 20
+        generation = 0
         population = [[random.randint(0, 8), random.randint(0, 15), random.randint(0, 2),
                        random.randint(0, 15), random.randint(0, 2), random.randint(0, 2)] 
                       for _ in range(pop_size)]
         population_scores = {}
         
+        pbar = tqdm(total=num_episodes, desc=f"  {method_name}")
+        
+        # Initial population evaluation
         for config in population:
             if len(results_list) >= num_episodes:
                 break
@@ -441,9 +494,14 @@ def run_search_algorithm(structure_env, prompt_env, method, num_episodes=50):
             if config_key not in population_scores:
                 result = run_fixed_config_episode(structure_env, prompt_env, config)
                 population_scores[config_key] = result["reward"]
-                results_list.append({"strategy": "Evolutionary Search", "episode": len(results_list), **result})
+                results_list.append({"strategy": method_name, "episode": len(results_list), **result})
+                acc, avg_tok = update_stats(result)
+                pbar.update(1)
+                pbar.set_postfix({"acc": f"{acc:.1f}%", "tokens": f"{avg_tok:.0f}", "gen": generation})
         
+        # Evolution loop
         while len(results_list) < num_episodes:
+            generation += 1
             sorted_pop = sorted(population, key=lambda c: population_scores.get(tuple(c), -10), reverse=True)
             elite = sorted_pop[:pop_size // 2]
             new_population = elite.copy()
@@ -469,8 +527,12 @@ def run_search_algorithm(structure_env, prompt_env, method, num_episodes=50):
                 if config_key not in population_scores:
                     result = run_fixed_config_episode(structure_env, prompt_env, config)
                     population_scores[config_key] = result["reward"]
-                    results_list.append({"strategy": "Evolutionary Search", "episode": len(results_list), **result})
+                    results_list.append({"strategy": method_name, "episode": len(results_list), **result})
+                    acc, avg_tok = update_stats(result)
+                    pbar.update(1)
+                    pbar.set_postfix({"acc": f"{acc:.1f}%", "tokens": f"{avg_tok:.0f}", "gen": generation})
             population = new_population
+        pbar.close()
     
     return results_list
 
@@ -479,25 +541,34 @@ def run_search_algorithm(structure_env, prompt_env, method, num_episodes=50):
 # MAIN BENCHMARK FUNCTION
 # ============================================================
 
-def run_baseline_benchmark(cfg, baseline, num_episodes=50, verbose=True):
-    """Run benchmark for specified baseline(s)."""
+def run_baseline_benchmark(cfg, baseline, num_episodes=50, verbose=True, 
+                           num_workers=1, use_api=False, api_model=None, hf_model=None):
+    """Run benchmark for specified baseline(s).
+    
+    Args:
+        cfg: Configuration object
+        baseline: Baseline name or group to run
+        num_episodes: Number of episodes (or 'all' resolved to int)
+        verbose: Print per-episode progress
+        num_workers: Number of parallel workers
+        use_api: Use OpenRouter API
+        api_model: API model name
+        hf_model: HuggingFace model name
+    """
     print(f"\n{'='*70}")
     print(f"BASELINE BENCHMARK")
     print(f"{'='*70}")
     print(f"  Dataset:   {cfg.DATASET_NAME}")
     print(f"  Baseline:  {baseline}")
     print(f"  Episodes:  {num_episodes}")
+    print(f"  Workers:   {num_workers}")
     print(f"{'='*70}\n")
     
     results = []
     detailed_results = []
     
-    # Initialize environments
-    print("Initializing environments...", end=" ", flush=True)
-    with SuppressOutput():
-        structure_env = StructureEnv(cfg)
-        prompt_env = PromptEnv(cfg)
-    print("Done!\n")
+    # Individual search methods that can be selected
+    INDIVIDUAL_SEARCH_METHODS = ["grid", "greedy", "best_first", "evolutionary"]
     
     # Determine which configs to run
     if baseline == "all":
@@ -506,6 +577,10 @@ def run_baseline_benchmark(cfg, baseline, num_episodes=50, verbose=True):
     elif baseline == "search":
         configs_to_run = {}
         search_methods = ["grid", "greedy", "best_first", "evolutionary"]
+    elif baseline in INDIVIDUAL_SEARCH_METHODS:
+        # Run only the specified search method
+        configs_to_run = {}
+        search_methods = [baseline]
     elif baseline in BASELINE_GROUPS:
         configs_to_run = BASELINE_GROUPS[baseline]
         search_methods = []
@@ -515,39 +590,59 @@ def run_baseline_benchmark(cfg, baseline, num_episodes=50, verbose=True):
     else:
         print(f"Unknown baseline: {baseline}")
         print("Use --list-baselines to see available options.")
+        print("\nAvailable search methods: grid, greedy, best_first, evolutionary")
         return None, None
     
     # Run fixed configurations
     for config_name, fixed_action in configs_to_run.items():
-        print(f"[{config_name}]")
+        print(f"\n[{config_name}]")
         start_time = time.time()
         
-        accuracies = []
-        rewards = []
-        tokens = []
-        
-        for ep in range(num_episodes):
-            result = run_fixed_config_episode(structure_env, prompt_env, fixed_action)
+        if num_workers > 1 and use_api:
+            # Parallel evaluation
+            config_results = run_config_parallel(
+                cfg, fixed_action, config_name, num_episodes, num_workers,
+                use_api, api_model, hf_model
+            )
+            detailed_results.extend(config_results)
             
-            accuracies.append(1 if result["correct"] else 0)
-            rewards.append(result["reward"])
-            tokens.append(result["total_tokens"])
+            accuracies = [1 if r["correct"] else 0 for r in config_results]
+            rewards = [r["reward"] for r in config_results]
+            tokens = [r["total_tokens"] for r in config_results]
+        else:
+            # Sequential evaluation
+            print("Initializing environments...", end=" ", flush=True)
+            with SuppressOutput():
+                structure_env = StructureEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
+                prompt_env = PromptEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
+            print("Done!")
             
-            detailed_results.append({
-                "strategy": config_name,
-                "search_method": "Fixed Config",
-                "episode": ep,
-                **result
-            })
+            accuracies = []
+            rewards = []
+            tokens = []
             
-            if verbose:
+            pbar = tqdm(range(num_episodes), desc=f"  {config_name}", leave=True)
+            for ep in pbar:
+                result = run_fixed_config_episode(structure_env, prompt_env, fixed_action)
+                
+                accuracies.append(1 if result["correct"] else 0)
+                rewards.append(result["reward"])
+                tokens.append(result["total_tokens"])
+                
+                detailed_results.append({
+                    "strategy": config_name,
+                    "search_method": "Fixed Config",
+                    "episode": ep,
+                    **result
+                })
+                
+                # Update progress bar
                 acc_so_far = np.mean(accuracies)
-                status = "Y" if result["correct"] else "X"
-                print(f"\r  {ep+1}/{num_episodes} | Acc: {acc_so_far:.1%} | Last: {status}", end="", flush=True)
-            
-            if (ep + 1) % 10 == 0 and torch.cuda.is_available():
-                torch.cuda.empty_cache()
-                gc.collect()
+                pbar.set_postfix({"acc": f"{acc_so_far:.1%}", "tokens": f"{np.mean(tokens):.0f}"})
+                
+                if (ep + 1) % 50 == 0 and torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                    gc.collect()
         
         elapsed = time.time() - start_time
         avg_acc = np.mean(accuracies)
@@ -564,16 +659,47 @@ def run_baseline_benchmark(cfg, baseline, num_episodes=50, verbose=True):
             "Time (s)": f"{elapsed:.1f}",
         })
         
-        print(f"\r  Final: Accuracy={avg_acc:.1%} +/- {std_acc:.3f}, Reward={avg_reward:.3f}, Tokens={avg_tokens:.0f}")
+        print(f"  Final: Accuracy={avg_acc:.1%} +/- {std_acc:.3f}, Reward={avg_reward:.3f}, Tokens={avg_tokens:.0f}, Time={elapsed:.1f}s")
     
     # Run search algorithms
+    if search_methods:
+        # For parallel methods (grid/greedy), we'll create workers
+        # For sequential methods (best_first/evolutionary), we use single env
+        parallel_methods = ["grid", "greedy"]  # These can run in parallel
+        sequential_methods = ["best_first", "evolutionary"]  # These require sequential execution
+        
+        # Check if we have any sequential methods
+        has_sequential = any(m in search_methods for m in sequential_methods)
+        if has_sequential:
+            print("\nInitializing environment for sequential search algorithms...", end=" ", flush=True)
+            with SuppressOutput():
+                structure_env = StructureEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
+                prompt_env = PromptEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
+            print("Done!")
+        
     for method in search_methods:
         method_name = {"grid": "Grid Search", "greedy": "Greedy Search", 
                        "best_first": "Best-First Search", "evolutionary": "Evolutionary Search"}[method]
-        print(f"\n[{method_name}]")
+        print(f"\n[{method_name}] - {num_episodes} episodes")
         start_time = time.time()
         
-        search_results = run_search_algorithm(structure_env, prompt_env, method, num_episodes)
+        # Use parallel execution for grid/greedy when workers > 1 and API mode
+        if method in ["grid", "greedy"] and num_workers > 1 and use_api:
+            search_results = run_search_parallel(
+                cfg, method, num_episodes, num_workers,
+                use_api, api_model, hf_model
+            )
+        else:
+            # Sequential execution
+            if method in ["grid", "greedy"] and not has_sequential:
+                # Need to create env for sequential grid/greedy
+                print("  Initializing environment...", end=" ", flush=True)
+                with SuppressOutput():
+                    structure_env = StructureEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
+                    prompt_env = PromptEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
+                print("Done!")
+            search_results = run_search_algorithm(structure_env, prompt_env, method, num_episodes)
+        
         detailed_results.extend(search_results)
         
         if search_results:
@@ -587,6 +713,8 @@ def run_baseline_benchmark(cfg, baseline, num_episodes=50, verbose=True):
             avg_reward = np.mean(rewards)
             avg_tokens = np.mean(tokens)
             
+            print(f"  ✓ Complete: Accuracy={avg_acc:.1%} ± {std_acc:.3f}, Tokens={avg_tokens:.0f}, Time={elapsed:.1f}s")
+            
             results.append({
                 "Strategy": method_name,
                 "Accuracy": f"{avg_acc:.1%}",
@@ -595,8 +723,6 @@ def run_baseline_benchmark(cfg, baseline, num_episodes=50, verbose=True):
                 "Avg Tokens": f"{avg_tokens:.0f}",
                 "Time (s)": f"{elapsed:.1f}",
             })
-            
-            print(f"  Final: Accuracy={avg_acc:.1%} +/- {std_acc:.3f}, Reward={avg_reward:.3f}, Tokens={avg_tokens:.0f}")
     
     # Print results table
     if results:
@@ -612,14 +738,232 @@ def run_baseline_benchmark(cfg, baseline, num_episodes=50, verbose=True):
         print("="*70)
         
         # Save results
+        os.makedirs("results", exist_ok=True)
         timestamp = int(time.time())
-        output_path = f"benchmark_{cfg.DATASET_NAME}_{baseline}_{timestamp}.csv"
+        output_path = f"results/benchmark_{cfg.DATASET_NAME}_{baseline}_{timestamp}.csv"
         pd.DataFrame(detailed_results).to_csv(output_path, index=False)
         print(f"\nDetailed results saved to: {output_path}")
         
         return df, pd.DataFrame(detailed_results)
     
     return None, None
+
+
+def run_config_parallel(cfg, fixed_action, config_name, num_episodes, num_workers,
+                        use_api, api_model, hf_model):
+    """Run a single configuration with parallel workers.
+    
+    Each worker has its own environment pair to avoid thread conflicts.
+    """
+    print(f"  Pre-creating {num_workers} worker pairs...")
+    
+    # Create worker environments
+    workers = []
+    workers_lock = threading.Lock()
+    
+    for i in range(num_workers):
+        print(f"    Creating worker pair {i+1}/{num_workers}...", end="\r")
+        with SuppressOutput():
+            struct_env = StructureEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
+            prompt_env = PromptEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
+        workers.append((struct_env, prompt_env))
+    print(f"    Done! All {num_workers} worker pairs ready.              ")
+    
+    # Pre-initialize embedders to avoid race conditions during parallel execution
+    print(f"    Pre-initializing embedders...", end="\r")
+    with SuppressOutput():
+        for struct_env, prompt_env in workers:
+            for env in [struct_env, prompt_env]:
+                if hasattr(env, 'worker') and hasattr(env.worker, 'embedder'):
+                    embedder = env.worker.embedder
+                    if hasattr(embedder, '_init_embedder') and not getattr(embedder, '_initialized', False):
+                        try:
+                            embedder._init_embedder()
+                        except Exception:
+                            pass  # Suppress errors during pre-init
+    print(f"    Pre-initialized embedders.                              ")
+    
+    # Thread-local worker assignment
+    worker_assignment = {}
+    worker_idx = [0]  # Use list to allow modification in nested function
+    
+    def get_worker():
+        thread_id = threading.current_thread().ident
+        with workers_lock:
+            if thread_id not in worker_assignment:
+                worker_assignment[thread_id] = workers[worker_idx[0] % len(workers)]
+                worker_idx[0] += 1
+            return worker_assignment[thread_id]
+    
+    def worker_fn(ep_idx):
+        struct_env, prompt_env = get_worker()
+        result = run_fixed_config_episode(struct_env, prompt_env, fixed_action)
+        return {
+            "strategy": config_name,
+            "search_method": "Fixed Config",
+            "episode": ep_idx,
+            **result
+        }
+    
+    results = []
+    correct_count = 0
+    total_tokens = 0
+    
+    print(f"  Evaluating {num_episodes} episodes with {num_workers} parallel workers...")
+    
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = {executor.submit(worker_fn, ep): ep for ep in range(num_episodes)}
+        
+        with tqdm(total=num_episodes, desc=f"  {config_name} ({num_workers} workers)") as pbar:
+            for future in as_completed(futures):
+                ep = futures[future]
+                try:
+                    result = future.result()
+                    results.append(result)
+                    
+                    if result["correct"]:
+                        correct_count += 1
+                    total_tokens += result.get("total_tokens", 0)
+                    
+                    # Update progress bar
+                    acc = correct_count / len(results) * 100
+                    avg_tok = total_tokens / len(results)
+                    pbar.set_postfix({"acc": f"{acc:.1f}%", "tokens": f"{avg_tok:.0f}"})
+                    pbar.update(1)
+                    
+                except Exception as e:
+                    print(f"\n  Error on episode {ep}: {e}")
+                    results.append({
+                        "strategy": config_name,
+                        "search_method": "Fixed Config",
+                        "episode": ep,
+                        "correct": False,
+                        "reward": -1.0,
+                        "workflow": "Error",
+                        "total_tokens": 0,
+                        "error": str(e)
+                    })
+                    pbar.update(1)
+    
+    # Sort by episode for consistency
+    results.sort(key=lambda x: x["episode"])
+    return results
+
+
+def run_search_parallel(cfg, method, num_episodes, num_workers,
+                        use_api, api_model, hf_model):
+    """Run grid or greedy search with parallel workers.
+    
+    Each worker has its own environment pair to avoid thread conflicts.
+    Only works for grid and greedy search (independent per config).
+    """
+    method_names = {
+        "grid": "Grid Search",
+        "greedy": "Greedy Search"
+    }
+    method_name = method_names.get(method, method)
+    
+    # Generate configs based on method
+    if method == "grid":
+        configs = generate_grid_search_configs(max_configs=num_episodes)[:num_episodes]
+    elif method == "greedy":
+        configs = generate_greedy_configs()[:num_episodes]
+    else:
+        raise ValueError(f"Parallel search not supported for method: {method}")
+    
+    actual_episodes = len(configs)
+    print(f"  Pre-creating {num_workers} worker pairs...")
+    
+    # Create worker environments
+    workers = []
+    workers_lock = threading.Lock()
+    
+    for i in range(num_workers):
+        print(f"    Creating worker pair {i+1}/{num_workers}...", end="\r")
+        with SuppressOutput():
+            struct_env = StructureEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
+            prompt_env = PromptEnv(cfg, use_api=use_api, api_model=api_model, hf_model=hf_model)
+        workers.append((struct_env, prompt_env))
+    print(f"    Done! All {num_workers} worker pairs ready.              ")
+    
+    # Pre-initialize embedders to avoid race conditions during parallel execution
+    print(f"    Pre-initializing embedders...", end="\r")
+    with SuppressOutput():
+        for struct_env, prompt_env in workers:
+            for env in [struct_env, prompt_env]:
+                if hasattr(env, 'worker') and hasattr(env.worker, 'embedder'):
+                    embedder = env.worker.embedder
+                    if hasattr(embedder, '_init_embedder') and not getattr(embedder, '_initialized', False):
+                        try:
+                            embedder._init_embedder()
+                        except Exception:
+                            pass
+    print(f"    Pre-initialized embedders.                              ")
+    
+    # Thread-local worker assignment
+    worker_assignment = {}
+    worker_idx = [0]
+    
+    def get_worker():
+        thread_id = threading.current_thread().ident
+        with workers_lock:
+            if thread_id not in worker_assignment:
+                worker_assignment[thread_id] = workers[worker_idx[0] % len(workers)]
+                worker_idx[0] += 1
+            return worker_assignment[thread_id]
+    
+    def worker_fn(idx):
+        config = configs[idx]
+        struct_env, prompt_env = get_worker()
+        result = run_fixed_config_episode(struct_env, prompt_env, config)
+        return {
+            "strategy": method_name,
+            "episode": idx,
+            "config": format_config(config),
+            **result
+        }
+    
+    results = []
+    correct_count = 0
+    total_tokens = 0
+    
+    print(f"  Evaluating {actual_episodes} configs with {num_workers} parallel workers...")
+    
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = {executor.submit(worker_fn, i): i for i in range(actual_episodes)}
+        
+        with tqdm(total=actual_episodes, desc=f"  {method_name} ({num_workers} workers)") as pbar:
+            for future in as_completed(futures):
+                idx = futures[future]
+                try:
+                    result = future.result()
+                    results.append(result)
+                    
+                    if result["correct"]:
+                        correct_count += 1
+                    total_tokens += result.get("total_tokens", 0)
+                    
+                    acc = correct_count / len(results) * 100
+                    avg_tok = total_tokens / len(results)
+                    pbar.set_postfix({"acc": f"{acc:.1f}%", "tokens": f"{avg_tok:.0f}"})
+                    pbar.update(1)
+                    
+                except Exception as e:
+                    print(f"\n  Error on config {idx}: {e}")
+                    results.append({
+                        "strategy": method_name,
+                        "episode": idx,
+                        "correct": False,
+                        "reward": -1.0,
+                        "workflow": "Error",
+                        "total_tokens": 0,
+                        "error": str(e)
+                    })
+                    pbar.update(1)
+    
+    # Sort by episode for consistency
+    results.sort(key=lambda x: x["episode"])
+    return results
 
 
 def list_baselines():
@@ -630,7 +974,15 @@ def list_baselines():
     
     print("\nBaseline Groups (use with --baseline):")
     print("  all            - Run all fixed configs + search algorithms")
-    print("  search         - Run only search algorithms")
+    print("  search         - Run all search algorithms (grid, greedy, best_first, evolutionary)")
+    print("")
+    print("Individual Search Methods:")
+    print("  grid           - Grid Search only (parallel supported)")
+    print("  greedy         - Greedy Search only (parallel supported)")
+    print("  best_first     - Best-First Search only (sequential)")
+    print("  evolutionary   - Evolutionary Search only (sequential)")
+    print("")
+    print("Workflow Groups:")
     print("  direct         - Direct workflow (workflow=0)")
     print("  reason         - Reason+Answer workflow (workflow=1)")
     print("  verify         - Reason+Verify+Answer workflow (workflow=2)")
@@ -682,20 +1034,32 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run all baselines
-  python scripts/config_search_benchmark.py --dataset hotpotqa --episodes 50 --api --api-model "gemma"
+  # Run all baselines on full dataset
+  python scripts/config_search_benchmark.py --dataset hotpotqa --episodes all --api --api-model "gemma" --workers 8
 
-  # Run only Direct workflow baselines
+  # Run only Direct workflow baselines with 50 episodes
   python scripts/config_search_benchmark.py --baseline direct --dataset hotpotqa --episodes 50 --api --api-model "gemma"
 
-  # Run only Autonomous workflow baselines
-  python scripts/config_search_benchmark.py --baseline autonomous --dataset hotpotqa --episodes 50 --api --api-model "gemma"
+  # Run only Autonomous workflow baselines on full dataset
+  python scripts/config_search_benchmark.py --baseline autonomous --dataset hotpotqa --episodes all --api --api-model "gemma" --workers 8
 
   # Run a specific config
-  python scripts/config_search_benchmark.py --baseline "Direct-Web-Mid" --dataset hotpotqa --episodes 50 --api --api-model "gemma"
+  python scripts/config_search_benchmark.py --baseline "Direct-Web-Mid" --dataset hotpotqa --episodes all --api --api-model "gemma" --workers 8
 
-  # Run only search algorithms
+  # Run all search algorithms
   python scripts/config_search_benchmark.py --baseline search --dataset hotpotqa --episodes 50 --api --api-model "gemma"
+
+  # Run only Grid Search (parallel supported)
+  python scripts/config_search_benchmark.py --baseline grid --dataset drop --episodes all --api --api-model "qwen/qwen-2.5-7b-instruct" --workers 8
+
+  # Run only Greedy Search (parallel supported)
+  python scripts/config_search_benchmark.py --baseline greedy --dataset drop --episodes all --api --api-model "qwen/qwen-2.5-7b-instruct" --workers 8
+
+  # Run only Best-First Search (sequential)
+  python scripts/config_search_benchmark.py --baseline best_first --dataset drop --episodes 100 --api --api-model "qwen/qwen-2.5-7b-instruct"
+
+  # Run only Evolutionary Search (sequential)
+  python scripts/config_search_benchmark.py --baseline evolutionary --dataset drop --episodes 100 --api --api-model "qwen/qwen-2.5-7b-instruct"
 
   # List available baselines
   python scripts/config_search_benchmark.py --list-baselines
@@ -703,13 +1067,15 @@ Examples:
     )
     
     parser.add_argument("--baseline", type=str, default="all",
-                       help="Baseline to run: all, search, direct, reason, verify, routing, parallel_section, parallel_vote, orchestrator, eval_opt, autonomous, or specific config name")
+                       help="Baseline to run: all, search, grid, greedy, best_first, evolutionary, direct, reason, verify, routing, parallel_section, parallel_vote, orchestrator, eval_opt, autonomous, or specific config name")
     from utils import validate_dataset_name, get_dataset_help_text
     
     parser.add_argument("--dataset", type=validate_dataset_name, default="hotpotqa",
-                       help=get_dataset_help_text(include_tau2=False))
-    parser.add_argument("--episodes", type=int, default=50,
-                       help="Number of episodes per configuration")
+                       help=get_dataset_help_text())
+    parser.add_argument("--episodes", type=str, default="50",
+                       help="Number of episodes per configuration, or 'all' for full dataset")
+    parser.add_argument("--workers", type=int, default=1,
+                       help="Number of parallel workers (requires --api)")
     parser.add_argument("--list-baselines", action="store_true",
                        help="List all available baseline configurations and exit")
     parser.add_argument("--quiet", action="store_true",
@@ -737,33 +1103,46 @@ def main():
     cfg = load_config("hierarchical")
     cfg.DATASET_NAME = args.dataset
     
+    # Handle "all" episodes - get dataset size
+    if args.episodes.lower() == "all":
+        dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=True)
+        if hasattr(dataset, 'tasks'):
+            num_episodes = len(dataset.tasks)
+        elif hasattr(dataset, 'data'):
+            num_episodes = len(dataset.data)
+        else:
+            num_episodes = len(dataset)
+        print(f"\nEvaluating on ALL {num_episodes} datapoints from {cfg.DATASET_NAME}")
+    else:
+        num_episodes = int(args.episodes)
+    
+    # Validate workers
+    if args.workers > 1 and not args.api:
+        print("Warning: Parallel workers require --api mode. Using workers=1.")
+        args.workers = 1
+    
     # Print mode info
     if args.api:
         model_name = args.api_model or os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")
         print(f"\nMode: API (OpenRouter)")
         print(f"Model: {model_name}")
+        if args.workers > 1:
+            print(f"Workers: {args.workers} (parallel)")
     else:
         model_name = args.hf_model or "default"
         print(f"\nMode: HuggingFace (local)")
         print(f"Model: {model_name}")
     
-    # Patch environment initialization to use API mode
-    original_init = StructureEnv.__init__
-    def patched_struct_init(self, cfg, is_eval=False, use_api=False, api_model=None, hf_model=None):
-        original_init(self, cfg, is_eval=is_eval, use_api=args.api, api_model=args.api_model, hf_model=args.hf_model)
-    StructureEnv.__init__ = patched_struct_init
-    
-    original_prompt_init = PromptEnv.__init__
-    def patched_prompt_init(self, cfg, is_eval=False, use_api=False, api_model=None, hf_model=None):
-        original_prompt_init(self, cfg, is_eval=is_eval, use_api=args.api, api_model=args.api_model, hf_model=args.hf_model)
-    PromptEnv.__init__ = patched_prompt_init
-    
     # Run benchmark
     run_baseline_benchmark(
         cfg=cfg,
         baseline=args.baseline,
-        num_episodes=args.episodes,
-        verbose=not args.quiet
+        num_episodes=num_episodes,
+        verbose=not args.quiet,
+        num_workers=args.workers,
+        use_api=args.api,
+        api_model=args.api_model,
+        hf_model=args.hf_model
     )
 
 
