@@ -113,6 +113,10 @@ def parse_args():
     parser.add_argument("--save-every", type=int, default=2000, help="Checkpoint frequency")
     parser.add_argument("--save-log-every", type=int, default=100, help="Save log file frequency (default: 100)")
     
+    # Parallel execution (only for API mode)
+    parser.add_argument("--num-workers", type=int, default=1,
+                       help="Number of parallel workers for API mode training (default: 1, recommended: 4-8 for API). Only used with --api flag.")
+    
     # Pretrained models (e.g., from SFT)
     parser.add_argument("--pretrain-structure", type=str, default=None,
                        help="Path to pretrained structure policy (e.g., from SFT)")
@@ -191,6 +195,12 @@ def main():
     struct_ent = args.struct_entropy_coef or args.entropy_coef
     prompt_ent = args.prompt_entropy_coef or args.entropy_coef
     
+    # Validate num_workers usage
+    if args.num_workers > 1 and not args.api:
+        print(f"\n⚠ Warning: --num-workers={args.num_workers} specified but --api flag not set.")
+        print("  Parallel workers are only supported for API mode. Using sequential training.")
+        args.num_workers = 1
+    
     # Train
     trainer.train(
         num_episodes=args.episodes,
@@ -198,6 +208,7 @@ def main():
         log_every=args.log_every,
         save_every=args.save_every,
         save_log_every=args.save_log_every,
+        num_workers=args.num_workers,
         # Algorithm params
         gamma=cfg.PROMPT_GAMMA,
         clip_epsilon=args.clip_epsilon,
