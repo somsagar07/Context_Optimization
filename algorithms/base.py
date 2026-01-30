@@ -568,16 +568,12 @@ class BaseTrainer(ABC):
     
     def _decode_tools(self, idx: int) -> list:
         """Decode tool bitmask to tool names."""
-        # Use structure environment's decode method if it's tau2 (it knows about tau2 tools)
-        if hasattr(self.structure_env, 'is_tau2') and self.structure_env.is_tau2:
-            return self.structure_env._decode_tools(idx)
-        else:
-            tools = []
-            if idx & 1: tools.append("calculator")
-            if idx & 2: tools.append("web_search")
-            if idx & 4: tools.append("python")
-            if idx & 8: tools.append("ocr_reader")
-            return tools
+        tools = []
+        if idx & 1: tools.append("calculator")
+        if idx & 2: tools.append("web_search")
+        if idx & 4: tools.append("python")
+        if idx & 8: tools.append("ocr_reader")
+        return tools
     
     def run_episode(self, deterministic=False):
         """Run a single hierarchical episode."""
@@ -609,8 +605,6 @@ class BaseTrainer(ABC):
         # Set up prompt env
         self.prompt_env.current_q = question
         self.prompt_env.current_a = answer
-        if hasattr(self.prompt_env, 'is_tau2') and self.prompt_env.is_tau2:
-            self.prompt_env.current_task = answer  # Store task object for tau2
         self.prompt_env.question_embedding = self.structure_env.question_embedding.copy()
         self.prompt_env.workflow_depth = workflow_depth
         self.prompt_env.agent1_tools_idx = agent1_tools_idx
@@ -651,21 +645,11 @@ class BaseTrainer(ABC):
         correct = info.get("correct", False)
         tools_used = info.get("tools_used", 0)
         
-        # Check if this is a Tau2 dataset - use Tau2's shaped reward as base
-        is_tau2 = hasattr(self.prompt_env, 'is_tau2') and self.prompt_env.is_tau2
-        tau2_reward = info.get("tau2_reward") if is_tau2 else None
+        # Use binary correctness reward
+        final_reward = (1.0 if correct else 0.0) * 5.0 * self.reward_scale
+        final_reward += accumulated_reward
         
-        if tau2_reward is not None:
-            # Use Tau2's shaped reward as the base (already includes task completion, action success, etc.)
-            # Scale it appropriately and add our efficiency penalties/bonuses
-            final_reward = tau2_reward * self.reward_scale
-            final_reward += accumulated_reward  # Prompt selection intermediate rewards
-        else:
-            # For non-Tau2 datasets, use binary correctness reward
-            final_reward = (1.0 if correct else 0.0) * 5.0 * self.reward_scale
-            final_reward += accumulated_reward
-        
-        # Apply efficiency penalties (steps, tokens) - these apply to both Tau2 and non-Tau2
+        # Apply efficiency penalties (steps, tokens)
         final_reward -= info.get("steps_taken", 1) * self.cfg.COST_PER_STEP
         
         # Check if tools were selected (from structure action)
@@ -782,8 +766,6 @@ class BaseTrainer(ABC):
         # Set up prompt env
         prompt_env.current_q = question
         prompt_env.current_a = answer
-        if hasattr(prompt_env, 'is_tau2') and prompt_env.is_tau2:
-            prompt_env.current_task = answer
         prompt_env.question_embedding = structure_env.question_embedding.copy()
         prompt_env.workflow_depth = workflow_depth
         prompt_env.agent1_tools_idx = agent1_tools_idx
@@ -823,15 +805,8 @@ class BaseTrainer(ABC):
         correct = info.get("correct", False)
         tools_used = info.get("tools_used", 0)
         
-        is_tau2 = hasattr(prompt_env, 'is_tau2') and prompt_env.is_tau2
-        tau2_reward = info.get("tau2_reward") if is_tau2 else None
-        
-        if tau2_reward is not None:
-            final_reward = tau2_reward * self.reward_scale
-            final_reward += accumulated_reward
-        else:
-            final_reward = (1.0 if correct else 0.0) * 5.0 * self.reward_scale
-            final_reward += accumulated_reward
+        final_reward = (1.0 if correct else 0.0) * 5.0 * self.reward_scale
+        final_reward += accumulated_reward
         
         final_reward -= info.get("steps_taken", 1) * self.cfg.COST_PER_STEP
         

@@ -29,3 +29,6 @@ embeddings_cache/
 test/
 
 .env
+
+# Generated prompts from dspy and gepa
+gen_prompts/

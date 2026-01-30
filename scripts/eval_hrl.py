@@ -283,7 +283,6 @@ def run_single_episode(ep, structure_policy, prompt_policy, cfg, deterministic, 
         answer=struct_exec_info["answer"],
         embedding=struct_exec_info["embedding"],
         structure=struct_exec_info["structure"],
-        task=struct_exec_info.get("task")
     )
     
     # Prompt rollout
@@ -355,7 +354,7 @@ def evaluate_parallel(structure_policy, prompt_policy, cfg, num_episodes=20,
     # Load dataset ONCE and share across all environments
     print(f"\nLoading dataset once...")
     shared_dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=True)
-    dataset_size = len(shared_dataset.tasks) if hasattr(shared_dataset, 'tasks') else len(shared_dataset.data)
+    dataset_size = len(shared_dataset.data)
     print(f"  Dataset loaded: {dataset_size} samples")
     
     # Create list of indices to evaluate (iterate through unique datapoints)
@@ -508,7 +507,7 @@ def evaluate(structure_policy, prompt_policy, cfg, num_episodes=20,
     
     # Get dataset size and cap num_episodes if needed
     dataset = structure_env.dataset
-    dataset_size = len(dataset.tasks) if hasattr(dataset, 'tasks') else len(dataset.data)
+    dataset_size = len(dataset.data)
     
     if num_episodes > dataset_size:
         print(f"  Warning: Requested {num_episodes} episodes but only {dataset_size} samples. Evaluating all {dataset_size}.")
@@ -623,10 +622,8 @@ def main():
     if args.episodes.lower() == "all":
         from utils.get_dataset import get_dataset_loader
         dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=True)
-        # Get dataset size - tau2 uses .tasks, others use .data
-        if hasattr(dataset, 'tasks'):
-            num_episodes = len(dataset.tasks)
-        elif hasattr(dataset, 'data'):
+        # Get dataset size - use .data
+        if hasattr(dataset, 'data'):
             num_episodes = len(dataset.data)
         else:
             num_episodes = len(dataset)

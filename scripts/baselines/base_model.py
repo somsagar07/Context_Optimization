@@ -54,12 +54,7 @@ def run_single_episode(ep, worker, dataset, sample_idx=None):
         # Directly access indexed sample instead of random sampling
         dataset_name = getattr(dataset, 'name', '').lower()
         
-        if hasattr(dataset, 'tasks'):
-            # Tau2 dataset uses .tasks
-            sample = dataset.tasks[sample_idx]
-            question = sample.get('question', '')
-            answer = sample.get('answer', '')
-        elif hasattr(dataset, 'data'):
+        if hasattr(dataset, 'data'):
             # Standard datasets use .data
             sample = dataset.data[sample_idx]
             
@@ -244,7 +239,7 @@ def evaluate_parallel(worker_class, cfg, num_episodes=20, use_api=False,
     # Load dataset ONCE and share across all workers
     print(f"\nLoading dataset once...")
     shared_dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=True)
-    dataset_size = len(shared_dataset.tasks) if hasattr(shared_dataset, 'tasks') else len(shared_dataset.data)
+    dataset_size = len(shared_dataset.data)
     print(f"  Dataset loaded: {dataset_size} samples")
     
     # Create list of indices to evaluate (iterate through unique datapoints)
@@ -442,10 +437,8 @@ def main():
     # Handle "all" episodes - evaluate on entire dataset
     if args.episodes.lower() == "all":
         dataset = get_dataset_loader(cfg.DATASET_NAME, is_eval=True)
-        # Get dataset size - tau2 uses .tasks, others use .data
-        if hasattr(dataset, 'tasks'):
-            num_episodes = len(dataset.tasks)
-        elif hasattr(dataset, 'data'):
+        # Get dataset size - use .data
+        if hasattr(dataset, 'data'):
             num_episodes = len(dataset.data)
         else:
             num_episodes = len(dataset)

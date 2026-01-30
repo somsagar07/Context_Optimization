@@ -51,36 +51,6 @@ def _make_gaia_extractor(data_dir: str):
         return question
     return extract_fn
 
-
-def _make_tau2_extractor(domain: str):
-    """Create Tau2 question extractor (matches Tau2Dataset.get_sample)."""
-    def extract_fn(task):
-        # Extract user_goal from normalized task structure
-        user_goal = task.get('user_goal', 'No explicit goal found.')
-        question = (
-            f"Customer interaction in {domain.capitalize()} domain.\n"
-            f"User's request: {user_goal}"
-        )
-        return question
-    return extract_fn
-
-
-def _normalize_tau2_task(raw_task):
-    """Normalize tau2 task structure (matches Tau2Dataset._normalize_task)."""
-    scenario = raw_task.get("user_scenario", {})
-    instructions = scenario.get("instructions", {})
-    
-    goal = instructions.get("reason_for_call")
-    if not goal:
-        goal = (
-            raw_task.get("description") or 
-            raw_task.get("goal") or 
-            "No explicit goal found."
-        )
-    
-    return {"user_goal": goal, "task_id": raw_task.get("id", "Unknown")}
-
-
 def compute_question_hash(question: str) -> str:
     """Compute a short hash for a question (for deduplication and lookup)."""
     return hashlib.md5(question.encode()).hexdigest()[:16]
@@ -163,36 +133,6 @@ def load_dataset_with_config(dataset_name: str, split: str):
         data = MMLUDataWrapper(mmlu_dataset)
         extract_fn = lambda x: x["question"]
     
-    elif dataset_name.startswith("tau2_"):
-        # Tau2 datasets: tau2_airline, tau2_retail, tau2_telecom
-        domain = dataset_name.split("_", 1)[1]
-        
-        # Load tau2 tasks from local cache or download
-        import json
-        import requests
-        
-        cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_cache", "tau2")
-        os.makedirs(cache_dir, exist_ok=True)
-        
-        cache_path = os.path.join(cache_dir, f"{domain}_tasks.json")
-        
-        if os.path.exists(cache_path):
-            with open(cache_path, 'r') as f:
-                raw_tasks = json.load(f)
-        else:
-            # Download from GitHub
-            url = f"https://raw.githubusercontent.com/sierra-research/tau2-bench/main/data/tau2/domains/{domain}/tasks.json"
-            print(f"Downloading Tau2 {domain} from {url}...")
-            response = requests.get(url)
-            response.raise_for_status()
-            raw_tasks = response.json()
-            with open(cache_path, 'w') as f:
-                json.dump(raw_tasks, f)
-        
-        # Normalize tasks and create a list-like structure
-        data = [_normalize_tau2_task(t) for t in raw_tasks]
-        extract_fn = _make_tau2_extractor(domain)
-        
     else:
         raise ValueError(f"Unknown dataset: {dataset_name}")
     
@@ -218,15 +158,6 @@ DATASET_CONFIGS = {
     },
     "drop": {
         "splits": ["train", "validation"],
-    },
-    "tau2_airline": {
-        "splits": ["all"],  # Tau2 doesn't have train/test splits
-    },
-    "tau2_retail": {
-        "splits": ["all"],
-    },
-    "tau2_telecom": {
-        "splits": ["all"],
     },
     # MMLU category presets (MMLU has no train split, uses dev/test)
     "mmlu_math": {

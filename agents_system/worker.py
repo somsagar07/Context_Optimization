@@ -319,10 +319,6 @@ class LLMWorker:
                 self.hidden_size = hidden_size  # Override hidden_size
                 self.is_encoder_decoder = getattr(original_config, 'is_encoder_decoder', False)
             
-            def get_text_config(self):
-                """Return text config (for compatibility with tau2 library)."""
-                return self
-            
             def __getattr__(self, name):
                 """Delegate all other attributes to original config."""
                 return getattr(self._original_config, name)
@@ -350,7 +346,7 @@ class LLMWorker:
             active_tools: List of tool names to enable
             max_tokens: Maximum tokens to generate
             prompt_suffix: Additional instructions to add to system prompt (from RL)
-            additional_tool_descriptions: Optional dict of additional tool descriptions (e.g., from tau2)
+            additional_tool_descriptions: Optional dict of additional tool descriptions
         """
         # Tool descriptions with usage examples - made more compelling and specific
         TOOL_DESCRIPTIONS = {
@@ -386,11 +382,7 @@ class LLMWorker:
             )
         }
         
-        # Change default tool descriptions with additional tool descriptions (e.g., from tau2)
-        if additional_tool_descriptions:
-            TOOL_DESCRIPTIONS.update(additional_tool_descriptions)
-        
-        # Change default tool descriptions with additional tool descriptions (e.g., from tau2)
+        # Change default tool descriptions with additional tool descriptions
         if additional_tool_descriptions:
             TOOL_DESCRIPTIONS.update(additional_tool_descriptions)
         
@@ -557,10 +549,6 @@ class OpenRouterWorker:
             def __init__(self, hidden_size):
                 self.hidden_size = hidden_size
                 self.is_encoder_decoder = False
-            
-            def get_text_config(self):
-                """Return text config (for compatibility with tau2 library)."""
-                return self
             
         self.model = type('obj', (object,), {'config': FakeConfig(self.embedding_dim)})()
         
@@ -821,7 +809,7 @@ class OpenRouterWorker:
             active_tools: List of tool names to enable
             max_tokens: Maximum tokens to generate
             prompt_suffix: Additional instructions to add to system prompt (from RL)
-            additional_tool_descriptions: Optional dict of additional tool descriptions (e.g., from tau2)
+            additional_tool_descriptions: Optional dict of additional tool descriptions
         """
         # Tool descriptions with usage examples - made more compelling and specific (same as LLMWorker)
         TOOL_DESCRIPTIONS = {
@@ -857,11 +845,7 @@ class OpenRouterWorker:
             )
         }
         
-        # Change default tool descriptions with additional tool descriptions (e.g., from tau2)
-        if additional_tool_descriptions:
-            TOOL_DESCRIPTIONS.update(additional_tool_descriptions)
-        
-        # Change default tool descriptions with additional tool descriptions (e.g., from tau2)
+        # Change default tool descriptions with additional tool descriptions
         if additional_tool_descriptions:
             TOOL_DESCRIPTIONS.update(additional_tool_descriptions)
         

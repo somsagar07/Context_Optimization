@@ -16,14 +16,6 @@ import os
 import sys
 from datetime import datetime
 
-# Suppress verbose tau2 logging
-os.environ.setdefault("LOGURU_LEVEL", "WARNING")
-try:
-    from loguru import logger
-    logger.remove()  # Remove default handler
-    logger.add(lambda msg: None, level="WARNING")  # Only show WARNING and above
-except (ImportError, Exception):
-    pass
 
 # Load .env file FIRST (before any imports that might need env vars)
 try:

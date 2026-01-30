@@ -148,7 +148,7 @@ class PromptEnv(gym.Env):
         # Flag to track if structure has been set
         self._structure_set = False
         
-    def set_structure(self, question: str, answer: str, embedding: np.ndarray, structure: dict, task=None):
+    def set_structure(self, question: str, answer: str, embedding: np.ndarray, structure: dict):
         """
         Set the structure decision from the high-level policy.
         Must be called before reset() when using externally.
@@ -158,18 +158,10 @@ class PromptEnv(gym.Env):
             answer: The ground truth answer
             embedding: Pre-computed question embedding
             structure: Dict with workflow_depth, tools, budgets
-            task: Task object for tau2 datasets
         """
         self.current_q = question
         self.current_a = answer
         self.question_embedding = embedding
-        
-        
-        # if self.is_tau2:
-        #     if task is not None:
-        #         self.current_task = task
-        #     elif isinstance(answer, dict):
-        #         self.current_task = answer
         
         self.workflow_depth = structure["workflow_depth"]
         self.agent1_tools_idx = structure["agent1_tools_idx"]
@@ -448,7 +440,7 @@ class PromptEnv(gym.Env):
     
     def _execute_workflow(self) -> tuple:
         """Execute the configured workflow and return (final_text, info)."""
-        # Original workflow execution for non-tau2 datasets
+        # Original workflow execution
         # Build prompt suffixes
         reasoner_suffix = build_prompt_suffix("reasoner", self.selected_prompts["reasoner"])
         verifier_suffix = build_prompt_suffix("verifier", self.selected_prompts["verifier"])

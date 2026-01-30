@@ -10,7 +10,6 @@ from .data_loader import (
     MedQADataset,
     AIME25Dataset,
     DROPDataset,
-    # Tau2Dataset,
     MMLUDataset
 )
 from .data_loader.mmlu_loader import MMLU_SUBJECTS
@@ -19,7 +18,6 @@ from .data_loader.mmlu_loader import MMLU_SUBJECTS
 # Standard datasets (exact match required)
 STANDARD_DATASETS = [
     "gsm8k", "hotpotqa", "gaia", "medqa", "aime25", "drop",
-    "tau2_airline", "tau2_retail", "tau2_telecom"
 ]
 
 
@@ -96,28 +94,18 @@ def get_dataset_help_text():
     )
 
 
-def get_dataset_loader(name: str, is_eval: bool = False, domain: str = None,
+def get_dataset_loader(name: str, is_eval: bool = False,
                       subjects: Optional[List[str]] = None,
                       categories: Optional[List[str]] = None):
     """
     Factory function to get the right dataset loader.
     
     Args:
-        name: Dataset name (e.g., "tau2_airline", "tau2_retail", "tau2_telecom", "gsm8k", etc.)
+        name: Dataset name (e.g., "gsm8k", etc.)
         is_eval: If True, loads evaluation dataset
-        domain: For tau2 datasets, specify domain (airline, retail, telecom)
-                If name starts with "tau2_", domain is extracted from name
         subjects: For MMLU, specify subjects list
         categories: For MMLU, specify categories list (e.g., ["math", "physics"])
     """
-    # # Handle tau2 datasets
-    # if name.startswith("tau2_"):
-    #     if domain is None:
-    #         # Extract domain from name (e.g., "tau2_airline" -> "airline")
-    #         domain = name.split("_", 1)[1] if "_" in name else "retail"
-    #     split = "test" if is_eval else "train"
-    #     return Tau2Dataset(split=split, domain=domain)
-    
     # Handle other datasets
     if name == "gsm8k":
         split = "test" if is_eval else "train"
@@ -161,4 +149,4 @@ def get_dataset_loader(name: str, is_eval: bool = False, domain: str = None,
         
         return MMLUDataset(split=split, subjects=subjects, categories=categories)
     else:
-        raise ValueError(f"Unknown dataset: {name}. Available: gsm8k, hotpotqa, gaia, medqa, aime25, drop, tau2_airline, tau2_retail, tau2_telecom, mmlu, mmlu_math, mmlu_physics, mmlu_bio, etc.")
+        raise ValueError(f"Unknown dataset: {name}. Available: gsm8k, hotpotqa, gaia, medqa, aime25, drop, mmlu, mmlu_math, mmlu_physics, mmlu_bio, etc.")

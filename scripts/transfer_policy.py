@@ -159,9 +159,9 @@ def parse_args():
     
     # Source and target domains
     parser.add_argument("--source-dataset", type=validate_dataset_name, required=True,
-                       help="Source domain dataset. " + get_dataset_help_text(include_tau2=True))
+                       help="Source domain dataset. " + get_dataset_help_text())
     parser.add_argument("--target-dataset", type=validate_dataset_name, required=True,
-                       help="Target domain dataset. " + get_dataset_help_text(include_tau2=True))
+                       help="Target domain dataset. " + get_dataset_help_text())
     
     # Pre-trained model paths
     parser.add_argument("--source-structure", type=str, required=True,

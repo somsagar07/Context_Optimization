@@ -44,3 +44,10 @@ opencv-python-headless
 
 # Benchmarking
 git+https://github.com/sierra-research/tau2-bench.git
+
+#Dspy and gepa baseline
+dspy
+
+# Autogen baseline
+autogen-agentchat
+autogen-ext[magentic-one,openai,ollama] # Need to also install ``playwright install --with-deps chromium``
