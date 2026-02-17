@@ -120,3 +120,16 @@ Results and workflow counts are printed to the console; logs are saved under `ev
 | `scripts/eval_hrl.py` | Hierarchical policy evaluation |
 | `ReadMe_Instructions/` | ACTION_MASKING, WORKFLOWS, SFT_POSTTRAIN docs |
 
+
+## Citation
+
+If you find this repository useful in your research, please consider citing our paper:
+
+```bibtex
+@article{taparia2026learning,
+  title={Learning to Configure Agentic AI Systems},
+  author={Taparia, Aditya and Sagar, Som and Senanayake, Ransalu},
+  journal={arXiv preprint arXiv:2602.11574},
+  year={2026}
+}
+```
