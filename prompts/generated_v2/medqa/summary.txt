@@ -1,0 +1,23 @@
+# Analysis of the MedQA Dataset
+
+## (1) Reasoning Patterns Required
+
+This dataset consists of USMLE-style clinical vignettes requiring multi-step medical reasoning. Each question presents a patient scenario with demographics, history, symptoms, physical exam findings, and sometimes lab/imaging results, then asks for a diagnosis, treatment, mechanism, or embryologic/pathophysiologic explanation. The reasoning pattern typically requires: (a) identifying the key clinical syndrome from a constellation of findings, (b) narrowing a differential diagnosis using discriminating features, and (c) mapping that diagnosis to the specific question being asked (treatment choice, underlying mechanism, preventive measure, etc.). For example, Example 1 requires recognizing uncomplicated UTI in pregnancy and then knowing pregnancy-safe antibiotics; Example 3 requires recognizing bilious vomiting in a neonate and linking it to annular pancreas embryology.
+
+## (2) Discriminating Features
+
+Correct answers hinge on small but critical details in the vignette: gestational age (22 weeks rules out nitrofurantoin risk near term but also rules out other contraindications), age of patient (3-week-old vs older infant points to different GI malformations), timing of symptoms (post-op day 90 with sudden dyspnea → PE/thromboembolism), family history (maternal bleeding → autosomal pattern → vWD over X-linked hemophilia A), and lab patterns (normal platelets + normal PT + prolonged PTT → intrinsic pathway issue; combined with easy bruising and autosomal inheritance → vWD). Distractors are typically plausible conditions that share *some* features but fail on one key discriminator (e.g., hemophilia A is X-linked recessive and wouldn't typically manifest in a mother).
+
+## (3) Typical LLM Failure Modes
+
+LLMs often: (a) pattern-match on surface features and pick the "classic" answer without weighing contraindications (e.g., picking ampicillin for UTI without considering resistance patterns), (b) confuse similar embryologic origins (ventral vs. dorsal pancreatic bud, duodenal atresia vs. malrotation vs. annular pancreas), (c) miss subtle inheritance clues (autosomal dominant vWD vs X-linked hemophilia when a female relative is affected), (d) over-weight a single symptom instead of the whole picture, and (e) fail to distinguish between the *final mechanism* vs. the *upstream cause* (e.g., pulmonary thromboembolism vs. pulmonary hypertension as the pathogenesis).
+
+## (4) Expert vs. Naive Solver
+
+A naive solver picks the most frequently-associated answer for a keyword. An expert solver: systematically extracts each clinical clue, constructs a prioritized differential, eliminates options using the most specific discriminators (age, sex, inheritance, timing, lab values, imaging), and double-checks that the chosen option answers the exact question asked (treatment vs. mechanism vs. prevention). Experts also know pharmacology nuances (trimester-specific drug safety: nitrofurantoin is fine in 2nd trimester but avoided near term; TMP-SMX avoided in 1st and 3rd) and embryology specifics (annular pancreas = abnormal ventral pancreatic bud migration causing duodenal obstruction with bilious vomiting).
+
+## (5) Format / Output Constraints
+
+Each example has a `Correct Answer` (text) and `Correct Option` (letter A–D). The Target Output in the prompt is blank, suggesting the task is to produce the correct answer — most likely the **letter of the correct option** (A, B, C, or D), or possibly the answer text. Given typical MedQA conventions and the presence of both fields, the safest output is the single letter corresponding to the correct option. The final answer should be formatted exactly as `Final Answer: <letter>` (e.g., `Final Answer: D`). Answers should be concise, single-choice, and never include explanations in the final answer line.
+
+Final Answer: This is an analysis task; the dataset is USMLE-style multiple-choice medical QA where outputs are single option letters (A–D) selected via careful clinical reasoning over vignette details.

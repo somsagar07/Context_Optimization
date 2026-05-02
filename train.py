@@ -65,7 +65,8 @@ def parse_args():
     
     # Algorithm hyperparameters
     parser.add_argument("--clip-epsilon", type=float, default=0.2, help="Clipping parameter")
-    parser.add_argument("--epochs", type=int, default=4, help="Update epochs per batch")
+    parser.add_argument("--batchsize", "--batch-epochs", "--epochs", dest="epochs", type=int, default=4,
+                       help="Number of PPO/GRPO gradient-update passes over each collected rollout batch (not dataset epochs). Default: 4")
     parser.add_argument("--entropy-coef", type=float, default=0.05, help="Entropy coefficient")
     parser.add_argument("--struct-entropy-coef", type=float, default=None, help="Structure entropy")
     parser.add_argument("--prompt-entropy-coef", type=float, default=None, help="Prompt entropy")
@@ -97,8 +98,8 @@ def parse_args():
                        help="HuggingFace model name (e.g., 'Qwen/Qwen2.5-7B-Instruct'). Defaults to LLM_MODEL_NAME from config")
     
     # Prompt generation model (for generating prompt atoms)
-    parser.add_argument("--prompt-gen-model", type=str, default="openai/gpt-5.2",
-                       help="Model to use for prompt generation (OpenRouter model ID, e.g., 'openai/gpt-4o'). Defaults to 'openai/gpt-4o'")
+    parser.add_argument("--prompt-gen-model", type=str, default="anthropic/claude-opus-4.7",
+                       help="Model to use for prompt generation (OpenRouter model ID). Defaults to 'anthropic/claude-opus-4.7' (used by AtomGeneratorV2).")
     
     # Logging
     parser.add_argument("--log-every", type=int, default=50, help="Log frequency")

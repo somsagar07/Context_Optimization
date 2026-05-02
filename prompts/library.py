@@ -93,51 +93,81 @@ NUM_ATOMS = {
 # ANSWERER_DONE = 0
 # NUM_ANSWERER_ATOMS = 5  # 4 prompts + 1 DONE
 
-def _get_atoms_path(dataset_name: str) -> str:
-    """Returns the path where generated atoms for this dataset should be stored."""
-    # Saves to: prompts/generated/<dataset_name>/atoms.json
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(base_dir, "generated", dataset_name, "atoms.json")
+def _version_folder(version: str) -> str:
+    """Map a version string to its on-disk folder name under prompts/."""
+    if version == "v1":
+        return "generated"
+    return f"generated_{version}"
 
-def load_or_create_atoms(dataset_name: str, worker=None):
+
+def _get_atoms_path(dataset_name: str, version: str = "v2") -> str:
+    """Returns the path where generated atoms for this dataset should be stored.
+
+    v1 -> prompts/generated/<dataset>/atoms.json (legacy)
+    v2 -> prompts/generated_v2/<dataset>/atoms.json (default)
+    """
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_dir, _version_folder(version), dataset_name, "atoms.json")
+
+
+def _get_summary_path(dataset_name: str, version: str = "v2") -> str:
+    """Returns the path where the cached dataset summary lives (v2+ only)."""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_dir, _version_folder(version), dataset_name, "summary.txt")
+
+
+def load_or_create_atoms(dataset_name: str, worker=None, version: str = "v2"):
     """
     Core function to manage dynamic atoms.
-    1. Checks if atoms exist for this dataset.
+    1. Checks if atoms exist for this dataset+version.
     2. If yes, loads them into the global dictionaries.
     3. If no and worker provided, generates them, saves them, then loads.
+
+    Args:
+        dataset_name: Dataset identifier (e.g., 'gsm8k').
+        worker: LLMWorker / OpenRouterWorker used for generation if needed.
+        version: Generator version. 'v2' (default) uses AtomGeneratorV2 and writes
+                 to prompts/generated_v2/. 'v1' uses the legacy AtomGenerator.
     """
-    file_path = _get_atoms_path(dataset_name)
-    
+    file_path = _get_atoms_path(dataset_name, version=version)
+
     # 1. Try to load existing
     if os.path.exists(file_path):
-        print(f"[Prompts] Found existing atoms for '{dataset_name}'. Loading...")
+        print(f"[Prompts {version}] Found existing atoms for '{dataset_name}'. Loading...")
         _load_from_file(file_path)
         return
 
     # 2. If missing and we have a worker, Generate
     if worker:
-        print(f"[Prompts] No atoms found for '{dataset_name}'. Generating new ones...")
+        print(f"[Prompts {version}] No atoms found for '{dataset_name}'. Generating new ones...")
         try:
             # Import here to avoid circular dependency at module level
-            from .generator import AtomGenerator
-            
-            generator = AtomGenerator(worker)
+            if version == "v2":
+                from .generator_v2 import AtomGeneratorV2
+                summary_path = _get_summary_path(dataset_name, version=version)
+                generator = AtomGeneratorV2(worker, summary_cache_path=summary_path)
+            elif version == "v1":
+                from .generator import AtomGenerator
+                generator = AtomGenerator(worker)
+            else:
+                raise ValueError(f"Unknown atom-generator version: {version!r}")
+
             new_atoms = generator.generate_all_atoms(dataset_name)
-            
+
             # Save to disk
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             with open(file_path, 'w') as f:
                 json.dump(new_atoms, f, indent=4)
-            
-            print(f"[Prompts] Saved generated atoms to {file_path}")
-            
+
+            print(f"[Prompts {version}] Saved generated atoms to {file_path}")
+
             # Load the newly created file
             _load_from_file(file_path)
-            
+
         except Exception as e:
-            print(f"[Prompts] Error generating atoms: {e}")
+            print(f"[Prompts {version}] Error generating atoms: {e}")
     else:
-        print(f"[Prompts] Warning: No atoms found for {dataset_name} and no worker provided to generate them.")
+        print(f"[Prompts {version}] Warning: No atoms found for {dataset_name} and no worker provided to generate them.")
 
 
 def _load_from_file(file_path: str):

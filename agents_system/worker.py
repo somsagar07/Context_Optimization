@@ -134,23 +134,57 @@ class MetaCLIPEmbedder:
             "hit_rate": f"{hit_rate:.1f}%"
         }
     
+    @staticmethod
+    def _to_text_feature_tensor(outputs):
+        """
+        Normalize the output of ``model.get_text_features(...)`` to a 2D tensor
+        of shape (batch, dim).
+
+        Older transformers versions return a tensor directly; newer ones may
+        return a ``BaseModelOutputWithPooling`` (or similar ModelOutput) when
+        ``AutoModel`` resolves the metaclip checkpoint to a text-only model.
+        """
+        if isinstance(outputs, torch.Tensor):
+            return outputs
+        # ModelOutput-style: try the projection-style attrs first, then pooler.
+        for attr in ("text_embeds", "pooler_output"):
+            t = getattr(outputs, attr, None)
+            if isinstance(t, torch.Tensor):
+                return t
+        # Last resort: take the [CLS] token from last_hidden_state.
+        last_hidden = getattr(outputs, "last_hidden_state", None)
+        if isinstance(last_hidden, torch.Tensor):
+            return last_hidden[:, 0, :]
+        raise RuntimeError(
+            f"MetaCLIP returned an unexpected output type: {type(outputs)}. "
+            "Cannot locate text feature tensor."
+        )
+
+    def _get_text_features(self, inputs):
+        """Run the model's text head and return a feature tensor regardless of API shape."""
+        if hasattr(self.model, "get_text_features"):
+            out = self.model.get_text_features(**inputs)
+        else:
+            out = self.model(**inputs)
+        return self._to_text_feature_tensor(out)
+
     def _init_embedder(self):
         """Initialize the MetaCLIP model (only when needed for cache misses)."""
         if self._initialized:
             return
-        
+
         try:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
             print(f"Loading MetaCLIP-H14 embedder: {self.model_name}...", end=" ", flush=True)
-            
+
             self.processor = AutoProcessor.from_pretrained(self.model_name)
             self.model = AutoModel.from_pretrained(self.model_name)
             self.model.to(self.device).eval()
-            
+
             # Get embedding dimension
             with torch.no_grad():
                 inputs = self.processor(text=["test"], return_tensors="pt").to(self.device)
-                outputs = self.model.get_text_features(**inputs)
+                outputs = self._get_text_features(inputs)
                 self.embedding_dim = outputs.shape[1]
             
             # Get max sequence length from tokenizer
@@ -220,7 +254,7 @@ class MetaCLIPEmbedder:
                 padding=False,
                 max_length=max_len
             ).to(self.device)
-            outputs = self.model.get_text_features(**inputs)
+            outputs = self._get_text_features(inputs)
             embedding = outputs.cpu().numpy().flatten()
         
         # Normalize to unit length
