@@ -19,7 +19,7 @@ Usage:
 """
 import sys
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -617,7 +617,87 @@ def main():
     cfg = load_config(args.config)
     if args.dataset:
         cfg.DATASET_NAME = args.dataset
-    
+
+    # Eval defaults: paper-faithful tau2 reward (no shaping). The training-time
+    # shaping uses the gold action set as an oracle signal — leakage at eval.
+    # Custom reward components are still computed in info for logging/comparison
+    # but the scalar reward used to score the run is raw tau2.
+    cfg.USE_SHAPED_REWARDS = True   # still wrap so per-turn diagnostics get logged
+    cfg.SHAPING_MODE = "eval"        # zeros oracle weights; terminal_scale=1.0
+    cfg.SHAPING_CFG = None
+
+    # Atom-loading at eval is conditional on the trained policy's expected obs_dim.
+    #
+    # PromptEnv's observation includes a one-hot vector sized to
+    # (num_reasoner_atoms + num_verifier_atoms + num_answerer_atoms). Older
+    # policies were trained when PromptEnv was reading a stale NUM_ATOMS snapshot
+    # (base atoms only: 7+6+5=18 dims). Newer policies trained after the fix
+    # used the full v2 atom count (e.g. 17+13+12=42 dims). If we always load v2
+    # here, old checkpoints crash with a matmul-shape mismatch on the prompt
+    # policy's input layer.
+    #
+    # Solution: peek at the prompt checkpoint's saved obs_dim, infer which atom
+    # set the policy was trained against, and load v2 atoms only if they match.
+    from prompts import library
+    atoms_path = library._get_atoms_path(cfg.DATASET_NAME)
+
+    def _expected_prompt_obs_dim(num_atoms_total: int) -> int:
+        # Mirrors PromptEnv.__init__ obs_size:
+        # hidden + 6 (structure) + 3 (stage) + MAX_PROMPTS_PER_AGENT (default 3) + atom dims
+        from configs.base import LLM_MODEL_NAME  # noqa: F401  (only to confirm import works)
+        # MetaCLIP-H14 native dim is 1024 for OpenRouterWorker; for HF workers it's
+        # the model's hidden_size, which we don't know without instantiating the worker.
+        # 1024 is correct for --api mode (the only mode that makes sense for parallel eval).
+        hidden = 1024
+        max_prompts = int(getattr(cfg, "MAX_PROMPTS_PER_AGENT", 3))
+        return hidden + 6 + 3 + max_prompts + num_atoms_total
+
+    base_counts = dict(library.NUM_ATOMS)            # snapshot before v2 load
+    base_total = sum(base_counts.values())
+    if os.path.exists(atoms_path):
+        # Briefly peek at the prompt checkpoint to read its expected obs_dim.
+        try:
+            _ckpt_peek = torch.load(args.prompt_model, map_location="cpu", weights_only=False)
+            ckpt_obs_dim = int(_ckpt_peek.get("obs_dim", -1))
+            del _ckpt_peek
+        except Exception as _e:
+            print(f"  ⚠ Could not peek at prompt checkpoint to decide atom loading: {_e}")
+            ckpt_obs_dim = -1
+
+        # Tentatively load v2, then validate against the checkpoint.
+        library.load_or_create_atoms(cfg.DATASET_NAME, worker=None)
+        v2_total = sum(library.NUM_ATOMS.values())
+
+        if ckpt_obs_dim < 0:
+            print(f"  Loaded v2 atoms (total={v2_total}). Could not verify against checkpoint.")
+        else:
+            v2_expected = _expected_prompt_obs_dim(v2_total)
+            base_expected = _expected_prompt_obs_dim(base_total)
+            if ckpt_obs_dim == v2_expected:
+                print(f"  Loaded v2 atoms (total={v2_total}); matches checkpoint obs_dim={ckpt_obs_dim}.")
+            elif ckpt_obs_dim == base_expected:
+                # Checkpoint expects base atoms only — undo the v2 load by clearing the
+                # generated entries. Walk PROMPT_ATOMS dicts and trim back to the base
+                # counts (keys 0..base_count-1).
+                print(
+                    f"  ⚠ Checkpoint expects obs_dim={ckpt_obs_dim} (base atoms only, total={base_total}), "
+                    f"but v2 atoms file gives obs_dim={v2_expected}. Reverting to base atoms for eval "
+                    f"so the trained policy can run."
+                )
+                for role, target in base_counts.items():
+                    role_dict = library.PROMPT_ATOMS[role]
+                    extras = [k for k in list(role_dict.keys()) if isinstance(k, int) and k >= target]
+                    for k in extras:
+                        del role_dict[k]
+                library.refresh_counts()
+            else:
+                print(
+                    f"  ⚠ Checkpoint obs_dim={ckpt_obs_dim} matches neither base ({base_expected}) "
+                    f"nor v2 ({v2_expected}). Eval will likely fail. Investigate."
+                )
+    else:
+        print(f"  No atoms cache at {atoms_path}; using base atoms only.")
+
     # Handle "all" episodes - evaluate on entire dataset
     if args.episodes.lower() == "all":
         from utils.get_dataset import get_dataset_loader

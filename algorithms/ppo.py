@@ -12,7 +12,8 @@ import torch.nn as nn
 
 from algorithms.base import (
     Algorithm, BaseTrainer,
-    MultiDiscretePolicyPPO, PolicyNetworkPPO
+    MultiDiscretePolicyPPO, PolicyNetworkPPO,
+    flatten_per_turn_structure,
 )
 
 
@@ -53,21 +54,20 @@ class PPOTrainer(BaseTrainer):
         max_grad_norm = 0.5
         
         # ========== STRUCTURE POLICY ==========
-        struct_obs = [ep["struct_obs"] for ep in episodes]
-        struct_actions = [ep["struct_action"] for ep in episodes]
-        struct_log_probs_old = torch.FloatTensor([ep["struct_log_prob"] for ep in episodes]).to(self.device).detach()
-        struct_values_old = torch.FloatTensor([ep["struct_value"] for ep in episodes]).to(self.device).detach()
-        struct_returns = torch.FloatTensor([ep["reward"] for ep in episodes]).to(self.device).detach()
-        
+        # flatten_per_turn_structure handles both single-config (scalar) and
+        # per-turn (list) episodes, producing flat lists ready for batching.
+        struct_obs, struct_actions, struct_lp_list, struct_val_list, struct_action_masks, struct_ret_list = \
+            flatten_per_turn_structure(episodes, gamma)
+        struct_log_probs_old = torch.FloatTensor(struct_lp_list).to(self.device).detach()
+        struct_values_old = torch.FloatTensor(struct_val_list).to(self.device).detach()
+        struct_returns = torch.FloatTensor(struct_ret_list).to(self.device).detach()
+
         struct_obs_tensor = torch.FloatTensor(np.array(struct_obs)).to(self.device)
-        
+
         # Compute advantages
         struct_advantages = (struct_returns - struct_values_old).detach()
         if len(struct_advantages) > 1:
             struct_advantages = (struct_advantages - struct_advantages.mean()) / (struct_advantages.std() + 1e-8)
-        
-        # Get action masks from episodes
-        struct_action_masks = [ep.get("struct_action_mask", None) for ep in episodes]
         
         for _ in range(epochs):
             log_probs_new, values_new = [], []

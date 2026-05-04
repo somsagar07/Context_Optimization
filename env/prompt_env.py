@@ -22,7 +22,7 @@ from agents_system.workflows import get_workflow, get_openrouter_workflow
 from tools import ToolRegistry
 from utils import get_dataset_loader
 from prompts.library import (
-    PROMPT_ATOMS, NUM_ATOMS, build_prompt_suffix,
+    PROMPT_ATOMS, build_prompt_suffix,
 )
 import re
 
@@ -81,10 +81,14 @@ class PromptEnv(gym.Env):
         # Prompt configuration
         self.MAX_PROMPTS_PER_AGENT = getattr(cfg, 'MAX_PROMPTS_PER_AGENT', 3)
         
-        # Number of prompt atoms per agent
-        self.num_reasoner_atoms = NUM_ATOMS["reasoner"]
-        self.num_verifier_atoms = NUM_ATOMS["verifier"]
-        self.num_answerer_atoms = NUM_ATOMS["answerer"]
+        # Number of prompt atoms per agent. Read from PROMPT_ATOMS directly (mutated
+        # in place by load_or_create_atoms) rather than from library.NUM_ATOMS, since
+        # NUM_ATOMS is rebound by refresh_counts() — the imported binding here would
+        # otherwise point to the pre-load snapshot and the action space would be sized
+        # to base atoms only, making v2 atoms unreachable by the policy.
+        self.num_reasoner_atoms = len(PROMPT_ATOMS["reasoner"])
+        self.num_verifier_atoms = len(PROMPT_ATOMS["verifier"])
+        self.num_answerer_atoms = len(PROMPT_ATOMS["answerer"])
         self.max_prompt_atoms = max(self.num_reasoner_atoms, self.num_verifier_atoms, self.num_answerer_atoms)
         
         # Action space: Discrete for prompt selection
@@ -102,7 +106,20 @@ class PromptEnv(gym.Env):
         # Use provided dataset or load new one
         self.dataset = dataset if dataset is not None else get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
         
-        self.tools = ToolRegistry()
+        # Dataset-aware tool registry: tau2_* datasets get a domain-scoped registry
+        # exposing the domain's task-relevant tools; everything else gets the default 4-tool registry.
+        from tools import get_tool_registry
+        self.tools = get_tool_registry(getattr(self.dataset, "name", None))
+
+        # Tool action decoder: tau2 datasets bitmask over semantic groups via the
+        # registry; default datasets use the 4-tool bitmask in _decode_tools.
+        ds_name = getattr(self.dataset, "name", "") or getattr(cfg, "DATASET_NAME", "") or ""
+        if ds_name.startswith("tau2_"):
+            self._tau2_registry = self.tools  # Tau2ToolRegistry
+            self._tau2_num_groups = self._tau2_registry.num_groups()
+        else:
+            self._tau2_registry = None
+            self._tau2_num_groups = 0
         
         # Observation space components
         # Question embedding is 1024D from MetaCLIP-H14
@@ -147,6 +164,12 @@ class PromptEnv(gym.Env):
         
         # Flag to track if structure has been set
         self._structure_set = False
+
+        # When True, the multi-step atom-selection loop terminates without
+        # invoking _execute_workflow. Used by per-turn-config rollout: that
+        # rollout runs the workflow itself once per dialog turn and only
+        # needs PromptEnv's atom-selection state machine, not its execution.
+        self.skip_execute = False
         
     def set_structure(self, question: str, answer: str, embedding: np.ndarray, structure: dict):
         """
@@ -212,14 +235,19 @@ class PromptEnv(gym.Env):
     
     def _get_observation(self):
         """Build observation vector."""
-        
-        max_tool_idx = 15
+
+        # Tool index ranges over 2^G for tau2 datasets (group bitmask) or 2^4=16
+        # for default datasets. Normalize so the value stays in [0,1].
+        if self._tau2_registry is not None:
+            max_tool_idx = (2 ** self._tau2_num_groups) - 1
+        else:
+            max_tool_idx = 15
         # Structure decisions (normalized)
         structure_vec = np.array([
             self.workflow_depth / 8.0,  # Normalize for 9 workflows (0-8)
-            self.agent1_tools_idx / max(max_tool_idx, 1.0),  # Normalize for 16 tool options (0-15)
+            self.agent1_tools_idx / max(max_tool_idx, 1.0),
             self.agent1_budget_idx / 2.0,
-            self.agent2_tools_idx / max(max_tool_idx, 1.0),  # Normalize for 16 tool options (0-15)
+            self.agent2_tools_idx / max(max_tool_idx, 1.0),
             self.agent2_budget_idx / 2.0,
             self.answerer_budget_idx / 2.0,
         ], dtype=np.float32)
@@ -304,6 +332,13 @@ class PromptEnv(gym.Env):
         
         # Check if we should execute
         if self._all_prompts_done():
+            if self.skip_execute:
+                # Per-turn-config mode: terminate here. Caller drives the
+                # actual workflow execution and env.step itself.
+                return self._get_observation(), reward, True, False, {
+                    "selected_prompts": dict(self.selected_prompts),
+                    "skipped_execute": True,
+                }
             final_text, exec_info = self._execute_workflow()
             
             # Calculate correctness
@@ -332,6 +367,7 @@ class PromptEnv(gym.Env):
             info = {
                 "question": self.current_q,
                 "correct": correct,  # Use the correctly computed correctness
+                "correctness": float(correctness),  # raw fractional [0,1] (= tau2 product reward for tau2 datasets)
                 "workflow": [
                     "Direct", "Reason+Ans", "Reason+Verify+Ans",
                     "Routing", "Parallel-Sectioning", "Parallel-Voting",
@@ -350,6 +386,10 @@ class PromptEnv(gym.Env):
                 "final_answer": final_text,
                 "ground_truth": self.current_a,
             }
+            # Forward tau2 per-component breakdown (only present when running a tau2 dataset)
+            for k, v in (exec_info or {}).items():
+                if k.startswith("tau2_"):
+                    info[k] = v
         
         return self._get_observation(), reward, terminated, False, info
     
@@ -374,9 +414,15 @@ class PromptEnv(gym.Env):
         return self.prompt_stage == -1
     
     def _decode_tools(self, idx: int) -> list:
-        """Decode tool index to list of tool names."""
-        
-        # Original tool decoding
+        """Decode tool action index to a list of tool names.
+
+        Tau2 datasets: bit i selects semantic group i; all tools in selected
+        groups are returned (deduped, in registry order).
+        Default datasets: 4-bit mask over [calculator, web_search, python, ocr_reader].
+        """
+        if self._tau2_registry is not None:
+            return self._tau2_registry.decode_group_mask(idx)
+
         tools = []
         if idx & 1: tools.append("calculator")
         if idx & 2: tools.append("web_search")
@@ -445,16 +491,27 @@ class PromptEnv(gym.Env):
         reasoner_suffix = build_prompt_suffix("reasoner", self.selected_prompts["reasoner"])
         verifier_suffix = build_prompt_suffix("verifier", self.selected_prompts["verifier"])
         answerer_suffix = build_prompt_suffix("answerer", self.selected_prompts["answerer"])
-        
+
         # Get token counts
         agent1_tokens = self.TOKEN_BUDGETS["reasoner"][self.agent1_budget_idx]
         agent2_tokens = self.TOKEN_BUDGETS["verifier"][self.agent2_budget_idx]
         answerer_tokens = self.TOKEN_BUDGETS["answerer"][self.answerer_budget_idx]
-        
+
+        # Tau2 datasets: workflow runs as a black-box agent inside a multi-turn gym env
+        # rather than as a single-shot Q&A. The structure policy still picks a
+        # per-agent tool subset (2^N action space over the domain's N tools), and that
+        # selection is honored inside _execute_tau2_workflow.
+        ds_name = getattr(self.dataset, "name", "") or ""
+        if ds_name.startswith("tau2_"):
+            return self._execute_tau2_workflow(
+                reasoner_suffix, verifier_suffix, answerer_suffix,
+                agent1_tokens, agent2_tokens, answerer_tokens,
+            )
+
         # Get tools
         agent1_tools = self._decode_tools(self.agent1_tools_idx)
         agent2_tools = self._decode_tools(self.agent2_tools_idx)
-        
+
         # Get workflow instance using the appropriate function (HuggingFace or OpenRouter)
         workflow = self.get_workflow_func(
             self.workflow_depth, self.worker, self.tools
@@ -493,6 +550,74 @@ class PromptEnv(gym.Env):
         except Exception as e:
             # Fallback: if embedding fails, keep original question embedding
             print(f"  ⚠ Warning: Could not update embedding from final_text: {e}")
-        
+
         return final_text, exec_info
+
+    def _execute_tau2_workflow(
+        self,
+        reasoner_suffix, verifier_suffix, answerer_suffix,
+        agent1_tokens, agent2_tokens, answerer_tokens,
+    ) -> tuple:
+        """Tau2 dialog rollout: configured workflow acts as the agent in a multi-turn
+        conversation with tau2's user simulator. Reward comes from evaluate_simulation."""
+        from tau2_code.src import ConfiguredAgent, tau2_dialog_rollout
+
+        # task_id occupies the 'answer' slot for tau2 datasets (see Tau2Dataset.get_sample).
+        task_id = self.current_a
+        domain = self.dataset.domain
+
+        workflow = self.get_workflow_func(self.workflow_depth, self.worker, self.tools)
+        if self.workflow_depth == 2 and hasattr(workflow, "use_verifier"):
+            workflow.use_verifier = True
+
+        # The structure policy chooses a tool subset per agent (2^N action space
+        # over the domain's N tools). We respect that selection here so the policy
+        # can actually learn which tools matter for which task.
+        agent1_tools = self._decode_tools(self.agent1_tools_idx)
+        agent2_tools = self._decode_tools(self.agent2_tools_idx)
+
+        agent = ConfiguredAgent(
+            workflow=workflow,
+            worker=self.worker,
+            tool_registry=self.tools,
+            prompt_suffixes={
+                "reasoner": reasoner_suffix,
+                "verifier": verifier_suffix,
+                "answerer": answerer_suffix,
+            },
+            agent1_tools=agent1_tools,
+            agent2_tools=agent2_tools,
+            agent1_tokens=agent1_tokens,
+            agent2_tokens=agent2_tokens,
+            answerer_tokens=answerer_tokens,
+            agent1_budget=self.agent1_budget_idx,
+            agent2_budget=self.agent2_budget_idx,
+            answerer_budget=self.answerer_budget_idx,
+        )
+
+        max_turns = int(getattr(self.cfg, "TAU2_MAX_TURNS", 12))
+        # Shaping toggles read off cfg (set by train.py / eval scripts).
+        # Defaults match: training=ON, mode=training. Eval scripts override.
+        use_shaped = bool(getattr(self.cfg, "USE_SHAPED_REWARDS", True))
+        shaping_mode = str(getattr(self.cfg, "SHAPING_MODE", "training"))
+        shaping_cfg = getattr(self.cfg, "SHAPING_CFG", None)
+        transcript, exec_info, reward = tau2_dialog_rollout(
+            agent, domain=domain, task_id=task_id, max_turns=max_turns,
+            use_shaped_rewards=use_shaped,
+            shaping_mode=shaping_mode,
+            shaping_cfg=shaping_cfg,
+        )
+        # Cache the reward on the dataset so evaluate_correctness can return it.
+        if hasattr(self.dataset, "cache_reward"):
+            self.dataset.cache_reward(task_id, reward)
+
+        # NOTE: we deliberately DO NOT re-embed the transcript here.
+        # Transcripts are unique per episode -> always a precomputed-cache miss ->
+        # forces MetaCLIP-H14 to load on GPU inside every API worker process and
+        # run a forward pass per episode (huge wall-clock cost, and the trigger
+        # for prior CUDA OOM with --num-workers > 1). The task-description
+        # embedding (already in self.question_embedding from set_structure) is a
+        # good enough state representation for the next obs.
+
+        return transcript, exec_info
 

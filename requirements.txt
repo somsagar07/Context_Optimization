@@ -43,7 +43,8 @@ pdf2image
 opencv-python-headless
 
 # Benchmarking
-git+https://github.com/sierra-research/tau2-bench.git
+# tau2-bench: install editable from tau2_code/_tau2_upstream after cloning
+# pip install -e "tau2_code/_tau2_upstream[gym]"
 
 #Dspy and gepa baseline
 dspy

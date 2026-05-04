@@ -1,0 +1,23 @@
+# Analysis of the tau2_telecom Dataset
+
+## (1) Reasoning Patterns Required
+
+This dataset tests an agent's ability to diagnose and resolve **mobile data / slow internet issues** by selecting the correct sequence of troubleshooting actions. The reasoning is fundamentally **conditional on context**: the same surface-level complaint ("slow mobile data, want excellent speed") yields different correct action sets depending on (a) the user's **location** (at home in US vs. abroad in France), and (b) the **underlying root cause** of the slow data (needs roaming enabled, airplane-mode reset, network-mode change, data toggle, or data refuel). The agent must map symptoms + context → the minimal set of corrective actions drawn from a fixed vocabulary: `toggle_airplane_mode`, `toggle_roaming`, `toggle_data`, `set_network_mode_preference`, `refuel_data`.
+
+## (2) Discriminating Features
+
+The **location field** is the strongest discriminator: when the user is "abroad in France," `toggle_roaming` is almost always among the expected actions (Examples 1, 4, 5). When the user is "at home in the United States," roaming is irrelevant, and instead `toggle_data` or `set_network_mode_preference` appears (Examples 2, 3). `refuel_data` is reserved for cases where the user has exhausted their data allowance (Example 5 — note the task says the user is "willing to refuel 2.0 GB if necessary"). `toggle_airplane_mode` is a generic reset and appears in many but not all cases. The expected output is always **exactly two actions** in these examples, never one or three.
+
+## (3) Typical LLM Failure Modes
+
+A naive LLM will (a) **over-predict** by listing every plausible troubleshooting step (all five actions), (b) **ignore the location cue** and predict `toggle_roaming` for US-based users or omit it for abroad users, (c) **hallucinate action names** not in the canonical tool vocabulary, (d) fail to recognize that the dataset expects a specific *pair* of actions tied to a hidden ground-truth device state the agent can only discover through tool calls, and (e) confuse `toggle_data` with `refuel_data` — they address different root causes (data disabled vs. data depleted).
+
+## (4) Expert vs. Naive Solver
+
+An expert recognizes that the prompt is essentially identical across examples except for the **known_info location**, meaning location alone cannot fully determine the answer — the underlying simulated device state (discoverable via `get_status_bar`, speed tests, etc.) drives which two actions resolve the issue. Without access to that tool state, the expert must make a probabilistic guess constrained by location: for "abroad," pick two from {`toggle_roaming`, `toggle_airplane_mode`, `set_network_mode_preference`, `refuel_data`}; for "at home," pick two from {`toggle_airplane_mode`, `toggle_data`, `set_network_mode_preference`, `refuel_data`}. A naive solver will either list all tools or ignore location entirely.
+
+## (5) Format Constraints
+
+The final answer must follow the exact format: `Expected actions: <action1>, <action2>` using snake_case tool names drawn strictly from the canonical set. No prose, no extra actions, no reordering with different separators. Typically two actions, comma-separated, preceded by the literal prefix "Expected actions:".
+
+Final Answer: The task requires predicting a pair of troubleshooting tool-calls (from {toggle_airplane_mode, toggle_roaming, toggle_data, set_network_mode_preference, refuel_data}) conditioned primarily on user location (abroad ⇒ roaming likely; at-home ⇒ roaming excluded) and the latent device fault state, formatted as `Expected actions: <a>, <b>`.

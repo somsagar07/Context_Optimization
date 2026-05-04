@@ -1,0 +1,27 @@
+# Analysis of the tau2_airline Dataset
+
+## (1) Reasoning Patterns Required
+
+This dataset tests an **airline customer-service agent's policy compliance** under adversarial user pressure. Each example is a *test specification* for a simulated conversation: it describes a user persona, their goal, and what the agent should do. The core reasoning pattern is **policy-grounded verification**: the agent must (a) look up ground-truth data via tool calls (`get_user_details`, `get_reservation_details`, flight status, etc.), (b) compare user claims against that data, and (c) apply airline policies (24-hour cancellation window, membership tier baggage allowances, compensation eligibility rules) to decide what actions are permitted. The expected output typically enumerates **Expected actions** (tool calls the agent must make), **Must communicate** values (specific facts/numbers the agent must convey), and **NL assertions** (behavioral requirements, usually about refusing improper requests or correctly identifying user status).
+
+## (2) Discriminating Features
+
+Correct answers hinge on noticing **deception or mistaken claims by the user** that only surface after tool-based verification. Examples: user claims Gold but is Silver/Regular (Ex 3, 5); user claims a flight was cancelled and in business class when neither is true (Ex 4); user claims a supervisor pre-approved an out-of-policy cancellation (Ex 2); user claims insurance waiver based on prior bookings (Ex 1). The correct output requires the agent to **refuse the improper action** while still performing the lookup actions needed to confirm the truth. Numeric "Must communicate" values come from policy tables (e.g., Silver + economy = 2 free bags × 2 passengers = 4 total).
+
+## (3) Typical LLM Failure Modes
+
+- **Sycophancy**: agreeing to user demands under social pressure (insistence, threats, claims of prior approval) instead of holding the policy line.
+- **Skipping verification**: answering based on user-stated status rather than calling `get_user_details`.
+- **Hallucinating policy**: inventing compensation amounts or cancellation carve-outs not in the policy.
+- **Miscounting tool calls**: Example 4 requires *five* `get_reservation_details` calls (checking multiple reservations to disprove the lie); naive solvers underspecify.
+- **Confusing "should refuse" with "should not call tools"**: agents must still gather data before refusing.
+
+## (4) Expert vs. Naive Solver
+
+An expert recognizes that the `Purpose` field is the ground truth label for what the test is checking, and maps it to (i) the minimum set of tool calls needed to verify the user's claims, (ii) the policy rule being tested, and (iii) the correct refusal or numeric answer. An expert also knows the **airline policy book** details: 24-hour free cancellation, membership baggage table (Regular/Silver/Gold × economy/business), and that compensation requires an actual disruption plus cabin-tier eligibility. A naive solver treats each example as free-form and misses that expected actions are a near-deterministic function of the claims to verify.
+
+## (5) Format Constraints
+
+Outputs use three labeled sections (any subset): `Expected actions:` (comma-separated tool names, possibly repeated), `Must communicate:` (specific values, often numeric), and `NL assertions:` (semicolon-separated natural-language behavioral assertions, typically beginning "Agent should..." or "Agent identifies..."). The final answer must follow this structured template, not prose. Order of actions reflects natural conversational flow (user lookup before reservation lookup).
+
+Final Answer: The tau2_airline dataset consists of adversarial test specifications for an airline customer-service agent, where each item provides a user persona, a goal (often involving deception or mistaken beliefs about membership/policy), and expects a structured output listing required tool calls (Expected actions), specific values to communicate (Must communicate), and behavioral assertions (NL assertions) — with correct answers requiring the agent to verify claims via tool calls and refuse policy-violating requests rather than capitulate to user pressure.

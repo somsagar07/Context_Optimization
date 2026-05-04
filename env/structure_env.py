@@ -24,16 +24,20 @@ class StructureEnv(gym.Env):
     """
     High-level policy environment for structure decisions.
     
-    Action Space: MultiDiscrete([9, 16, 3, 16, 3, 3])
+    Action Space: MultiDiscrete([9, T, 3, T, 3, 3]) where T = 2^N tool subsets:
         - workflow: 9 options
             0=Direct, 1=Reason+Ans, 2=Reason+Verify+Ans,
             3=Routing, 4=Parallel-Sectioning, 5=Parallel-Voting,
             6=Orchestrator-Workers, 7=Evaluator-Optimizer, 8=Autonomous-Agent
-        - agent1_tools: 16 options (binary encoding of 4 tools)
+        - agent1_tools: T options (bitmask over capability groups)
         - agent1_budget: 3 options (Low=0, Mid=1, High=2)
-        - agent2_tools: 16 options (binary encoding of 4 tools)
+        - agent2_tools: T options (bitmask over capability groups)
         - agent2_budget: 3 options
         - answerer_budget: 3 options
+    Default datasets: bitmask over the 4 base tools, T = 16.
+    Tau2 datasets: bitmask over G semantic groups (e.g., customer_lookup,
+    billing, escalation), T = 2^G with G ~= 4. Selecting a group makes every
+    tool in that group available.
     
     This env does NOT execute the workflow - it only selects the structure.
     The PromptEnv handles the actual LLM execution after prompt selection.
@@ -64,9 +68,26 @@ class StructureEnv(gym.Env):
         
         # Use provided dataset or load new one
         self.dataset = dataset if dataset is not None else get_dataset_loader(cfg.DATASET_NAME, is_eval=is_eval)
-        
-        tool_action_size = 16  # Default: 4 tools = 2^4 = 16 combinations
-        
+
+        # Dataset-aware tool action space.
+        # Default datasets use a fixed 4-tool toolkit (calculator/web_search/python/ocr_reader)
+        # encoded as a 4-bit bitmask -> 2^4 = 16 actions.
+        # Tau2 datasets group their domain-specific toolkit into G semantic groups
+        # (e.g., customer_lookup / billing / escalation). The structure policy picks
+        # a bitmask over groups (2^G actions, with G ~= 4) and every tool in each
+        # selected group is made available to the agent.
+        ds_name = getattr(cfg, "DATASET_NAME", "") or ""
+        if ds_name.startswith("tau2_"):
+            from tau2_code.src.tool_registry import Tau2ToolRegistry
+            domain = ds_name.removeprefix("tau2_")
+            self._tau2_registry = Tau2ToolRegistry(domain)
+            self._tau2_groups = self._tau2_registry.list_groups()
+            tool_action_size = 2 ** len(self._tau2_groups)
+        else:
+            self._tau2_registry = None
+            self._tau2_groups = None
+            tool_action_size = 16  # 4 tools = 2^4 = 16 combinations
+
         # Store tool_action_size for use in _get_action_mask
         self.tool_action_size = tool_action_size
         
@@ -109,8 +130,15 @@ class StructureEnv(gym.Env):
         return self._get_observation(), info
 
     def _decode_tools(self, idx: int) -> list:
-        """Decode tool index to list of tool names."""
-        # Original tool decoding
+        """Decode tool action index to a list of tool names.
+
+        Tau2 datasets: bit i selects semantic group i. All tools in selected
+        groups are returned (deduped, in registry order).
+        Default datasets: 4-bit mask over [calculator, web_search, python, ocr_reader].
+        """
+        if self._tau2_registry is not None:
+            return self._tau2_registry.decode_group_mask(idx)
+
         tools = []
         if idx & 1: tools.append("calculator")
         if idx & 2: tools.append("web_search")
@@ -174,7 +202,7 @@ class StructureEnv(gym.Env):
             agent2_tools_mask[0] = True  # Keep "no tools" as valid (will be ignored anyway)
             agent2_budget_mask = np.zeros(3, dtype=bool)
             agent2_budget_mask[0] = True  # Keep "Low" as valid (will be ignored anyway)
-        
+
         return [
             workflow_mask,
             agent1_tools_mask,

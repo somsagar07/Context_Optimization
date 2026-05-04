@@ -4,10 +4,47 @@ import numpy as np
 import sys
 import os
 import requests
+import threading
 import time
 import hashlib
 sys.path.append('..')
 from configs.base import LLM_MODEL_NAME, DEVICE
+
+# Global semaphore caps concurrent OpenRouter API calls across all workers in
+# this process. Prevents thundering-herd at high --num-workers from triggering
+# rate limits or TLS handshake failures. Tunable via env var (default 16).
+_OR_MAX_CONCURRENT = int(os.environ.get("OPENROUTER_MAX_CONCURRENT", "16"))
+_OR_API_SEMAPHORE = threading.BoundedSemaphore(_OR_MAX_CONCURRENT)
+
+# Per-thread requests.Session for connection reuse. Avoids cross-thread TLS
+# state corruption (a known cause of spurious SSLError under high parallelism).
+_OR_THREAD_LOCAL = threading.local()
+
+
+def _or_get_session() -> requests.Session:
+    """Return a per-thread requests.Session, creating one on first use."""
+    sess = getattr(_OR_THREAD_LOCAL, "session", None)
+    if sess is None:
+        sess = requests.Session()
+        # Slightly larger HTTPS pool for the rare case a single thread issues
+        # back-to-back calls before the first response is closed.
+        adapter = requests.adapters.HTTPAdapter(pool_connections=4, pool_maxsize=4)
+        sess.mount("https://", adapter)
+        sess.mount("http://", adapter)
+        _OR_THREAD_LOCAL.session = sess
+    return sess
+
+
+def _or_reset_session():
+    """Drop the current thread's Session — call this after an SSLError so the
+    next request opens a fresh TLS connection."""
+    sess = getattr(_OR_THREAD_LOCAL, "session", None)
+    if sess is not None:
+        try:
+            sess.close()
+        except Exception:
+            pass
+    _OR_THREAD_LOCAL.session = None
 
 # Load environment variables from .env file
 try:
@@ -83,38 +120,45 @@ class MetaCLIPEmbedder:
                 cache_dir = abs_d
                 break
         
+        _quiet = bool(os.environ.get("CO_QUIET"))
         if not cache_dir:
-            print("No precomputed embeddings found. Will compute embeddings on-the-fly.")
+            if not _quiet:
+                print("No precomputed embeddings found. Will compute embeddings on-the-fly.")
             cls._cache_loaded = True  # Mark as loaded (no cache found)
             return
-        
-        print(f"Loading precomputed embeddings from {cache_dir}...")
+
+        if not _quiet:
+            print(f"Loading precomputed embeddings from {cache_dir}...")
         cls._precomputed_cache = {}
-        
+
         # Load all embedding .npz files
         npz_files = [f for f in os.listdir(cache_dir) if f.endswith("_embeddings.npz")]
-        
+
         if not npz_files:
-            print("  No embedding files found in cache directory.")
+            if not _quiet:
+                print("  No embedding files found in cache directory.")
             cls._cache_loaded = True
             return
-        
+
         for filename in npz_files:
             filepath = os.path.join(cache_dir, filename)
             try:
                 data = np.load(filepath, allow_pickle=True)
                 hashes = data["hashes"]
                 embeddings = data["embeddings"]
-                
+
                 for h, emb in zip(hashes, embeddings):
                     cls._precomputed_cache[str(h)] = emb
-                
-                print(f"  ✓ Loaded {len(hashes)} embeddings from {filename}")
+
+                if not _quiet:
+                    print(f"  ✓ Loaded {len(hashes)} embeddings from {filename}")
             except Exception as e:
+                # Always print errors, even in quiet mode
                 print(f"  ✗ Failed to load {filename}: {e}")
-        
+
         total = len(cls._precomputed_cache) if cls._precomputed_cache else 0
-        print(f"Total precomputed embeddings loaded: {total}")
+        if not _quiet:
+            print(f"Total precomputed embeddings loaded: {total}")
         cls._cache_loaded = True
     
     @staticmethod
@@ -175,7 +219,9 @@ class MetaCLIPEmbedder:
 
         try:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
-            print(f"Loading MetaCLIP-H14 embedder: {self.model_name}...", end=" ", flush=True)
+            _quiet = bool(os.environ.get("CO_QUIET"))
+            if not _quiet:
+                print(f"Loading MetaCLIP-H14 embedder: {self.model_name}...", end=" ", flush=True)
 
             self.processor = AutoProcessor.from_pretrained(self.model_name)
             self.model = AutoModel.from_pretrained(self.model_name)
@@ -186,19 +232,20 @@ class MetaCLIPEmbedder:
                 inputs = self.processor(text=["test"], return_tensors="pt").to(self.device)
                 outputs = self._get_text_features(inputs)
                 self.embedding_dim = outputs.shape[1]
-            
+
             # Get max sequence length from tokenizer
             if hasattr(self.processor, 'tokenizer') and hasattr(self.processor.tokenizer, 'model_max_length'):
                 self.max_length = self.processor.tokenizer.model_max_length
             else:
                 self.max_length = 77  # Default for CLIP-like models
-            
+
             # Initialize projection if needed
             if self.target_dim and self.embedding_dim != self.target_dim:
                 self._init_projection(self.embedding_dim)
-            
+
             output_dim = self.target_dim if self.target_dim else self.embedding_dim
-            print(f"✓ Loaded. Dimension: {self.embedding_dim} -> {output_dim}")
+            if not _quiet:
+                print(f"✓ Loaded. Dimension: {self.embedding_dim} -> {output_dim}")
             self._initialized = True
             
         except Exception as e:
@@ -270,6 +317,12 @@ class MetaCLIPEmbedder:
         
         return embedding.astype(np.float32)
     
+    def ensure_loaded(self):
+        """Eagerly load the model to GPU. Call this before per-turn rollouts
+        where cache misses are guaranteed (conversation transcripts are unique)."""
+        if not self._initialized:
+            self._init_embedder()
+
     def get_dimension(self) -> int:
         """Get the output embedding dimension."""
         if self.target_dim:
@@ -337,10 +390,13 @@ class LLMWorker:
         print(f"Model device verified: {first_param_device}")
         
         # Initialize MetaCLIP-H14 embedder for embeddings (native 1024D, no projection)
-        print("Initializing MetaCLIP-H14 embedder for question embeddings...")
+        _quiet = bool(os.environ.get("CO_QUIET"))
+        if not _quiet:
+            print("Initializing MetaCLIP-H14 embedder for question embeddings...")
         self.embedder = MetaCLIPEmbedder(target_dim=None)  # Use native 1024D
         self.embedding_dim = self.embedder.get_dimension()
-        print(f"MetaCLIP-H14 embedder initialized. Embedding dimension: {self.embedding_dim}")
+        if not _quiet:
+            print(f"MetaCLIP-H14 embedder initialized. Embedding dimension: {self.embedding_dim}")
         
         # Update model.config.hidden_size for compatibility with observation spaces
         # Preserve original config but update hidden_size to match embedding dimension
@@ -572,21 +628,25 @@ class OpenRouterWorker:
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
         
         # Initialize MetaCLIP-H14 embedder for embeddings (native 1024D, no projection)
-        print("Initializing MetaCLIP-H14 embedder for question embeddings...")
+        _quiet = bool(os.environ.get("CO_QUIET"))
+        if not _quiet:
+            print("Initializing MetaCLIP-H14 embedder for question embeddings...")
         self.embedder = MetaCLIPEmbedder(target_dim=None)  # Use native 1024D
         self.embedding_dim = self.embedder.get_dimension()
-        print(f"MetaCLIP-H14 embedder initialized. Embedding dimension: {self.embedding_dim}")
-        
+        if not _quiet:
+            print(f"MetaCLIP-H14 embedder initialized. Embedding dimension: {self.embedding_dim}")
+
         # Fake model.config for compatibility with existing code that expects model.config.hidden_size
-        
+
         class FakeConfig:
             def __init__(self, hidden_size):
                 self.hidden_size = hidden_size
                 self.is_encoder_decoder = False
-            
+
         self.model = type('obj', (object,), {'config': FakeConfig(self.embedding_dim)})()
-        
-        print(f"OpenRouter Worker initialized with model: {self.model_name}")
+
+        if not _quiet:
+            print(f"OpenRouter Worker initialized with model: {self.model_name}")
         
         # Store additional tool descriptions
         self.additional_tool_descriptions = {}
@@ -619,7 +679,7 @@ class OpenRouterWorker:
         
         return False
     
-    def _call_api(self, messages: list, max_tokens: int = 512, temperature: float = 0.0, max_retries: int = 15) -> str:
+    def _call_api(self, messages: list, max_tokens: int = 512, temperature: float = 0.0, max_retries: int = 30) -> str:
         """
         Call OpenRouter API for text generation with retry logic and exponential backoff.
         
@@ -653,12 +713,16 @@ class OpenRouterWorker:
         
         for attempt in range(max_retries):
             try:
-                response = requests.post(
-                    self.api_url, 
-                    headers=headers, 
-                    json=payload, 
-                    timeout=120  # 2 minute timeout
-                )
+                # Cap global concurrency: blocks here if too many workers are
+                # already mid-call. Tunable via OPENROUTER_MAX_CONCURRENT env var.
+                with _OR_API_SEMAPHORE:
+                    session = _or_get_session()
+                    response = session.post(
+                        self.api_url,
+                        headers=headers,
+                        json=payload,
+                        timeout=(10, 120),  # (connect_timeout, read_timeout)
+                    )
                 
                 # Check status code before calling raise_for_status to handle edge cases
                 status_code = response.status_code
@@ -714,6 +778,21 @@ class OpenRouterWorker:
                 else:
                     print(f"API timeout after {max_retries} attempts")
                     
+            except requests.exceptions.SSLError as e:
+                # SSL handshake failures under high concurrency: reset this
+                # thread's session so the next attempt opens a fresh TLS
+                # connection. Wait longer than for plain ConnectionError
+                # because a fast retry on a corrupt TLS state just fails again.
+                last_exception = e
+                _or_reset_session()
+                if attempt < max_retries - 1:
+                    wait_time = min(15 * (attempt + 1), 180)  # 15s, 30s, 45s, ..., cap 3min
+                    print(f"SSL error (attempt {attempt + 1}/{max_retries}): {type(e).__name__}. "
+                          f"Resetting session, waiting {wait_time}s.")
+                    time.sleep(wait_time)
+                else:
+                    print(f"SSL error after {max_retries} attempts: {e}")
+
             except requests.exceptions.ConnectionError as e:
                 last_exception = e
                 # Network errors (DNS, connection refused, etc.) need longer recovery time

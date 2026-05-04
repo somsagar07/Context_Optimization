@@ -15,7 +15,8 @@ import torch
 
 from algorithms.base import (
     Algorithm, BaseTrainer,
-    MultiDiscretePolicyGRPO, PolicyNetworkGRPO
+    MultiDiscretePolicyGRPO, PolicyNetworkGRPO,
+    flatten_per_turn_structure,
 )
 
 
@@ -92,18 +93,16 @@ class GRPOTrainer(BaseTrainer):
                 self.episodes_since_ref_update = 0
         
         # ========== STRUCTURE POLICY ==========
-        struct_obs = [ep["struct_obs"] for ep in episodes]
-        struct_actions = [ep["struct_action"] for ep in episodes]
-        struct_log_probs_old = torch.FloatTensor([ep["struct_log_prob"] for ep in episodes]).to(self.device).detach()
-        struct_rewards = [ep["reward"] for ep in episodes]
-        
+        # flatten_per_turn_structure handles both single-config (scalar) and
+        # per-turn (list) episodes, producing flat lists ready for batching.
+        struct_obs, struct_actions, struct_lp_list, _, struct_action_masks, struct_ret_list = \
+            flatten_per_turn_structure(episodes, gamma)
+        struct_log_probs_old = torch.FloatTensor(struct_lp_list).to(self.device).detach()
+
         struct_obs_tensor = torch.FloatTensor(np.array(struct_obs)).to(self.device)
-        
+
         # GRPO: Group-relative advantages (NO value function)
-        struct_advantages = self._compute_group_advantages(struct_rewards)
-        
-        # Get action masks from episodes
-        struct_action_masks = [ep.get("struct_action_mask", None) for ep in episodes]
+        struct_advantages = self._compute_group_advantages(struct_ret_list)
         
         for _ in range(epochs):
             log_probs_new = torch.stack([

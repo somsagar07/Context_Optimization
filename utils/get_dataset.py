@@ -20,6 +20,10 @@ STANDARD_DATASETS = [
     "gsm8k", "hotpotqa", "gaia", "medqa", "aime25", "drop",
 ]
 
+# Tau2-bench domain datasets. Loaded via tau2_code/src/dataset.py (lazy import).
+TAU2_DOMAINS = ["mock", "airline", "retail", "telecom"]
+TAU2_DATASETS = [f"tau2_{d}" for d in TAU2_DOMAINS]
+
 
 def validate_dataset_name(dataset_name):
     """
@@ -49,7 +53,11 @@ def validate_dataset_name(dataset_name):
     # Standard datasets (exact match required)
     if dataset_name in STANDARD_DATASETS:
         return dataset_name
-    
+
+    # Tau2-bench datasets: tau2_<domain>
+    if dataset_name in TAU2_DATASETS:
+        return dataset_name
+
     # MMLU datasets: allow any combination starting with "mmlu"
     if dataset_name.startswith("mmlu"):
         # Validate that categories after "mmlu_" are valid
@@ -85,9 +93,11 @@ def get_dataset_help_text():
         Help text string for argparse
     """
     standard = "gsm8k, hotpotqa, gaia, medqa, aime25, drop"
-    
+    tau2 = ", ".join(TAU2_DATASETS)
+
     return (
         f"Dataset name. Standard datasets: {standard}. "
+        f"Tau2-bench datasets: {tau2}. "
         "For MMLU, use 'mmlu' (all) or 'mmlu_<category1>_<category2>...' "
         "(e.g., 'mmlu_math', 'mmlu_math_physics', 'mmlu_math_physics_chemistry'). "
         "Valid MMLU categories: math, physics, bio, chemistry, cs, other"
@@ -106,6 +116,13 @@ def get_dataset_loader(name: str, is_eval: bool = False,
         subjects: For MMLU, specify subjects list
         categories: For MMLU, specify categories list (e.g., ["math", "physics"])
     """
+    # Tau2-bench datasets
+    if name in TAU2_DATASETS:
+        from tau2_code.src.dataset import Tau2Dataset
+        domain = name.removeprefix("tau2_")
+        split = "test" if is_eval else "train"
+        return Tau2Dataset(domain=domain, split=split, is_eval=is_eval)
+
     # Handle other datasets
     if name == "gsm8k":
         split = "test" if is_eval else "train"

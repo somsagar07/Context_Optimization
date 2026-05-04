@@ -34,7 +34,30 @@ except Exception:
     # Failed to load, continue anyway
     pass
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
+# ---------------------------------------------------------------------------
+# Output hygiene: keep training output focused on training-loop info.
+# - CO_QUIET silences our worker/embedder one-time init prints.
+# - tau2's loguru spam (Setting observation, Sending message, etc.) and noisy
+#   third-party loggers get clamped to ERROR. The trainer's own prints
+#   (episode count, reward, loss, eval bar) still come through normally.
+# - Per-episode gymnasium "Overriding environment ... already in registry" warning
+#   suppressed since we register the tau2 env on every gym.make.
+# Useful errors (CUDA OOM, HTTP 500s, etc.) still surface via stderr.
+# ---------------------------------------------------------------------------
+os.environ.setdefault("CO_QUIET", "1")
+
+import logging
+import warnings
+try:
+    from loguru import logger as _loguru_logger
+    _loguru_logger.remove()
+except Exception:
+    pass
+for _noisy in ("LiteLLM", "litellm", "httpx", "openai", "urllib3", "tau2"):
+    logging.getLogger(_noisy).setLevel(logging.ERROR)
+warnings.filterwarnings("ignore", message=r"Overriding environment .* already in registry")
 
 from configs import load_config
 from algorithms import Algorithm, PPOTrainer, GRPOTrainer
@@ -65,7 +88,7 @@ def parse_args():
     
     # Algorithm hyperparameters
     parser.add_argument("--clip-epsilon", type=float, default=0.2, help="Clipping parameter")
-    parser.add_argument("--batchsize", "--batch-epochs", "--epochs", dest="epochs", type=int, default=4,
+    parser.add_argument("--batch-epochs", "--epochs", dest="batch_epochs", type=int, default=4,
                        help="Number of PPO/GRPO gradient-update passes over each collected rollout batch (not dataset epochs). Default: 4")
     parser.add_argument("--entropy-coef", type=float, default=0.05, help="Entropy coefficient")
     parser.add_argument("--struct-entropy-coef", type=float, default=None, help="Structure entropy")
@@ -109,12 +132,47 @@ def parse_args():
     # Parallel execution (only for API mode)
     parser.add_argument("--num-workers", type=int, default=1,
                        help="Number of parallel workers for API mode training (default: 1, recommended: 4-8 for API). Only used with --api flag.")
+
+    # Tau2-specific knobs (only used for tau2_* datasets)
+    parser.add_argument("--tau2-max-turns", type=int, default=12,
+                       help="Per-episode dialog turn cap for tau2 datasets. Lower = faster (default 12; try 6-8 for fast iteration). Each turn costs ~workflow_depth+1 LLM calls.")
+    parser.add_argument("--tau2-w-action", type=float, default=None,
+                       help="Stage-A weight for action-component pass fraction (default 2.0). Max contribution to reward when action-pass = 100%%.")
+    parser.add_argument("--tau2-w-communicate", type=float, default=None,
+                       help="Stage-A weight for communicate-component pass fraction (default 1.0).")
+    parser.add_argument("--tau2-w-env", type=float, default=None,
+                       help="Stage-A weight for env (DB+env_assertions) pass fraction (default 2.0).")
+    parser.add_argument("--tau2-w-nl", type=float, default=None,
+                       help="Stage-A weight for NL-assertion pass fraction (default 1.0).")
+    parser.add_argument("--tau2-completion-bonus", type=float, default=None,
+                       help="Big bonus added when ALL required components fully pass (default 5.0). This dominates the gradient on perfect trajectories.")
+    parser.add_argument("--use-shaped-rewards", dest="use_shaped_rewards",
+                       action="store_true", default=True,
+                       help="(tau2 only, default ON) Use ShapedTau2Env for per-turn dense shaping rewards (action_progress, tool_error, tool_dup, tokens). Sums into the terminal reward.")
+    parser.add_argument("--no-shaped-rewards", dest="use_shaped_rewards",
+                       action="store_false",
+                       help="Disable per-turn shaping rewards. Reward is paper-faithful tau2 reward only.")
+    parser.add_argument("--shaping-mode", choices=["training", "eval", "off"],
+                       default="training",
+                       help="training (default): full shaping incl. oracle action_progress. eval: zero out shaping (paper-faithful). off: equivalent to --no-shaped-rewards.")
+    parser.add_argument("--per-turn-config", action="store_true", default=True,
+                       help="(tau2 only, default ON) Re-run structure+prompt policies at every dialog turn instead of once per episode. Disable with --no-per-turn-config.")
+    parser.add_argument("--no-per-turn-config", dest="per_turn_config", action="store_false",
+                       help="(tau2 only) Use single-config mode: pick workflow/tools/atoms once per episode.")
     
     # Pretrained models (e.g., from SFT)
     parser.add_argument("--pretrain-structure", type=str, default=None,
                        help="Path to pretrained structure policy (e.g., from SFT)")
     parser.add_argument("--pretrain-prompt", type=str, default=None,
                        help="Path to pretrained prompt policy (e.g., from SFT)")
+
+    # Resume from a previous run (preserves episode counter + appends to same log file)
+    parser.add_argument("--resume-from", type=str, default=None,
+                       help="Path to a previous run's training-log JSON. Restores episode_count, "
+                            "correct_count, total_reward, recent rolling stats, and reuses the same "
+                            "log file so new episodes APPEND. Combine with --pretrain-structure/--pretrain-prompt "
+                            "to also restore the policy weights. Optimizer state is NOT restored "
+                            "(PPO/GRPO are on-policy; momentum from the prior run is intentionally dropped).")
     
     return parser.parse_args()
 
@@ -126,6 +184,14 @@ def main():
     cfg = load_config(args.config)
     if args.dataset:
         cfg.DATASET_NAME = args.dataset
+
+    # Tau2 max-turns is read by PromptEnv from cfg; CLI takes precedence.
+    cfg.TAU2_MAX_TURNS = int(args.tau2_max_turns)
+    # Shaping toggles likewise read from cfg.
+    cfg.USE_SHAPED_REWARDS = bool(args.use_shaped_rewards)
+    cfg.SHAPING_MODE = str(args.shaping_mode)
+    cfg.SHAPING_CFG = None  # let ShapedTau2Env defaults apply; tunable later if needed
+    cfg.PER_TURN_CONFIG = bool(args.per_turn_config)
         
     # Update Prompt Atoms based on dataset
     print(f"Checking prompt atoms for dataset: {cfg.DATASET_NAME}...")
@@ -175,6 +241,11 @@ def main():
             print("  Tip: Consider using --struct-lr 1e-4 for gentler fine-tuning from pretrained models")
         if args.prompt_lr is None and args.pretrain_prompt:
             print("  Tip: Consider using --prompt-lr 5e-5 for gentler fine-tuning from pretrained models")
+
+    # Resume cumulative stats + log file from a previous run if requested.
+    # Must come AFTER load_pretrained so we don't overwrite reset state.
+    if args.resume_from:
+        trainer.load_training_log(args.resume_from)
     
     # Override learning rates if specified
     if args.struct_lr is not None or args.prompt_lr is not None:
@@ -205,7 +276,7 @@ def main():
         # Algorithm params
         gamma=cfg.PROMPT_GAMMA,
         clip_epsilon=args.clip_epsilon,
-        epochs=args.epochs,
+        epochs=args.batch_epochs,
         struct_entropy_coef=struct_ent,
         prompt_entropy_coef=prompt_ent,
         # GRPO-specific
@@ -214,6 +285,12 @@ def main():
         # Reward
         reward_scale=args.reward_scale,
         tool_bonus=args.tool_bonus,
+        # Tau2 reward weights (None = keep trainer default)
+        tau2_w_action=args.tau2_w_action,
+        tau2_w_communicate=args.tau2_w_communicate,
+        tau2_w_env=args.tau2_w_env,
+        tau2_w_nl=args.tau2_w_nl,
+        tau2_completion_bonus=args.tau2_completion_bonus,
     )
     
     # Save final

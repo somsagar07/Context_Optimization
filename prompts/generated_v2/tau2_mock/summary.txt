@@ -1,0 +1,23 @@
+# Analysis of the `tau2_mock` Dataset
+
+## (1) Reasoning Patterns Required
+
+This dataset appears to be a **test-case specification task** for an agentic/tool-using LLM system (likely the τ-bench or tau2 evaluation framework). Each input provides two structured fields — `Purpose` and `Notes` — describing a test scenario, and the model must generate a corresponding test specification as output. The reasoning required is primarily **schema-following and semantic mapping**: the model must (a) extract the target tool/function name from the Purpose string (e.g., "Test the create_task functionality" → `create_task`), (b) translate the Purpose/Notes into a natural-language assertion about what the agent should confirm, and (c) potentially include multiple assertions when the Notes imply compound behavior (e.g., Example 5 requires acknowledging prior context AND confirming the update).
+
+## (2) Discriminating Features of Correct Answers
+
+Correct outputs consistently use two labeled sections: `Expected actions:` (a list of API/tool names) and `NL assertions:` (semicolon-separated natural-language claims about agent behavior). The tool name in `Expected actions` is always a snake_case verb phrase extracted verbatim from the Purpose field. The NL assertions follow a stereotyped template: "The agent confirmed the {thing} was {past-participle} successfully." When Notes mention extra context ("pre-existing conversation history"), an additional assertion like "The agent acknowledged the previous context" is prepended. Example 3 is notably atypical — it omits `Expected actions` and includes a quirky assertion ("The user is complimented"), suggesting some outputs are assertion-only variants.
+
+## (3) Typical LLM Failure Modes
+
+Common failures include: (i) **hallucinating tool names** that aren't literally in the Purpose (e.g., inventing `add_task` instead of `create_task`); (ii) **over-elaborating** the NL assertions with unnecessary detail rather than matching the terse template; (iii) **omitting the `Expected actions:` prefix** or using a different label like "Actions:"; (iv) **failing to pluralize/combine assertions** with semicolons when multiple are required; (v) missing subtle cues in Notes (e.g., "pre-existing conversation history" → acknowledge previous context).
+
+## (4) Expert vs. Naive Solver
+
+A naive solver will write verbose, creative test descriptions. An expert recognizes this is a **highly templated format** and mimics the exact surface form: short, declarative assertions phrased as "The agent confirmed X was Y successfully." The expert also maps the Purpose phrase deterministically to a snake_case identifier and knows when to split into multiple semicolon-delimited assertions based on compound Notes.
+
+## (5) Format / Output Constraints
+
+Output must contain the literal labels `Expected actions:` and/or `NL assertions:`. Multiple NL assertions are separated by `;`. Tool names are snake_case, singular, and drawn directly from the Purpose. No extra commentary, no JSON, no markdown. The final answer for this meta-question should be the analytical summary itself.
+
+Final Answer: The `tau2_mock` dataset is a templated test-spec generation task where inputs describe a Purpose (containing a tool name like `create_task` or `update_task_status`) and Notes (context about the test), and outputs must produce `Expected actions:` (the snake_case tool name extracted verbatim from Purpose) and `NL assertions:` (semicolon-separated, terse claims of the form "The agent confirmed the {X} was {Y} successfully," with extra assertions like "The agent acknowledged the previous context" added when Notes mention prior history); expert solvers follow this rigid template exactly while naive solvers hallucinate tool names, over-elaborate phrasing, or omit required labels.
