@@ -1,23 +1,37 @@
-# Analysis of the tau2_telecom Dataset
+# Analysis of tau2_telecom Customer Support Scenarios
 
-## (1) Reasoning Patterns Required
+## (1) Scenario Types in This Domain
 
-This dataset tests an agent's ability to diagnose and resolve **mobile data / slow internet issues** by selecting the correct sequence of troubleshooting actions. The reasoning is fundamentally **conditional on context**: the same surface-level complaint ("slow mobile data, want excellent speed") yields different correct action sets depending on (a) the user's **location** (at home in US vs. abroad in France), and (b) the **underlying root cause** of the slow data (needs roaming enabled, airplane-mode reset, network-mode change, data toggle, or data refuel). The agent must map symptoms + context → the minimal set of corrective actions drawn from a fixed vocabulary: `toggle_airplane_mode`, `toggle_roaming`, `toggle_data`, `set_network_mode_preference`, `refuel_data`.
+The examples all focus on **Mobile Data / Slow Internet Issues** — a common telecom troubleshooting path. The customer (John Smith, 555-123-2002) reports that mobile data either stops working or is very slow, and insists on "excellent" speed-test results. Key scenario variables include: **location context** (at home in the US vs. abroad in France — which triggers different policy paths around roaming), **willingness to refuel data** (2.0 GB yes, plan change no), and **strict success criteria** (only "excellent" counts as resolved). More broadly, the telecom domain covers issues like MMS/SMS failures, call-drop problems, billing/refund disputes, plan changes, line suspensions, and device-specific diagnostics — each requiring its own tool sequence.
 
-## (2) Discriminating Features
+## (2) Behaviors That Define a Successful Trajectory
 
-The **location field** is the strongest discriminator: when the user is "abroad in France," `toggle_roaming` is almost always among the expected actions (Examples 1, 4, 5). When the user is "at home in the United States," roaming is irrelevant, and instead `toggle_data` or `set_network_mode_preference` appears (Examples 2, 3). `refuel_data` is reserved for cases where the user has exhausted their data allowance (Example 5 — note the task says the user is "willing to refuel 2.0 GB if necessary"). `toggle_airplane_mode` is a generic reset and appears in many but not all cases. The expected output is always **exactly two actions** in these examples, never one or three.
+A successful agent should:
+- **Authenticate the customer first** (look up the line by phone number; verify identity per policy before making account changes).
+- **Call diagnostic tools systematically**: `get_status_bar`, `get_line_status`, `can_send_mms`, `run_speed_test`, check APN settings, check roaming status, check data usage vs. plan limit.
+- **Differentiate root causes based on context**: if the customer is abroad in France, check whether an international roaming add-on is enabled — that's likely the root cause, not a local signal issue. If at home, check whether the data allotment has been exceeded (triggering throttling) — resolution is a data refuel.
+- **Apply the customer's stated constraints**: the user allows up to 2.0 GB refuel but refuses plan changes — so the agent must not propose a plan upgrade.
+- **Loop the diagnostic until the speed test actually returns "excellent"**: run remedy → re-run speed test → narrate result → iterate. Don't declare victory on "good".
+- **Refuse/defer out-of-policy actions** (e.g., free credits not justified, plan changes the customer rejected).
 
-## (3) Typical LLM Failure Modes
+## (3) Typical Failure Modes
 
-A naive LLM will (a) **over-predict** by listing every plausible troubleshooting step (all five actions), (b) **ignore the location cue** and predict `toggle_roaming` for US-based users or omit it for abroad users, (c) **hallucinate action names** not in the canonical tool vocabulary, (d) fail to recognize that the dataset expects a specific *pair* of actions tied to a hidden ground-truth device state the agent can only discover through tool calls, and (e) confuse `toggle_data` with `refuel_data` — they address different root causes (data disabled vs. data depleted).
+- **Giving up too early** by asking vague questions like "Can you provide more details about the issue?" instead of calling a diagnostic tool. The customer's scenario already says mobile data is slow — the agent should *act*, not re-interview.
+- **Sycophancy**: accepting a "good" speed-test result as resolved when the customer explicitly requires "excellent".
+- **Skipping verification**: not confirming phone number / identity before making changes; not re-running the speed test after a remedy.
+- **Hallucinating policy** — inventing refund amounts, making up plan features, or claiming roaming is included when the tools say otherwise.
+- **Ignoring context** — running the same US-centric playbook when the customer is abroad, missing that roaming add-on is the real issue.
+- **Copying placeholder strings** or outputting canonical directives instead of having a natural, tool-grounded conversation.
+- **Batching multiple tool calls into one turn** when the interface expects one per turn, or malformed JSON arguments.
 
-## (4) Expert vs. Naive Solver
+## (4) Expert vs. Naive Agent
 
-An expert recognizes that the prompt is essentially identical across examples except for the **known_info location**, meaning location alone cannot fully determine the answer — the underlying simulated device state (discoverable via `get_status_bar`, speed tests, etc.) drives which two actions resolve the issue. Without access to that tool state, the expert must make a probabilistic guess constrained by location: for "abroad," pick two from {`toggle_roaming`, `toggle_airplane_mode`, `set_network_mode_preference`, `refuel_data`}; for "at home," pick two from {`toggle_airplane_mode`, `toggle_data`, `set_network_mode_preference`, `refuel_data`}. A naive solver will either list all tools or ignore location entirely.
+An **expert** agent reads the location signal ("abroad in France" vs. "at home"), hypothesizes the likely root cause before acting (roaming not provisioned vs. data cap exhausted), calls the minimal diagnostic tools to confirm, applies the targeted fix (enable roaming pass / refuel 2.0 GB), then **re-runs the speed test** and only closes the ticket when it returns "excellent". The expert narrates findings plainly ("I see your data is throttled because you're over your monthly cap") and respects customer constraints.
 
-## (5) Format Constraints
+A **naive** agent asks open-ended questions, suggests generic reboots without checking status first, accepts partial improvements, proposes plan upgrades the customer refused, or claims resolution without verifying.
 
-The final answer must follow the exact format: `Expected actions: <action1>, <action2>` using snake_case tool names drawn strictly from the canonical set. No prose, no extra actions, no reordering with different separators. Typically two actions, comma-separated, preceded by the literal prefix "Expected actions:".
+## (5) Per-Turn Output Format
 
-Final Answer: The task requires predicting a pair of troubleshooting tool-calls (from {toggle_airplane_mode, toggle_roaming, toggle_data, set_network_mode_preference, refuel_data}) conditioned primarily on user location (abroad ⇒ roaming likely; at-home ⇒ roaming excluded) and the latent device fault state, formatted as `Expected actions: <a>, <b>`.
+Each agent turn is either a **natural-language message** to the customer or a **single tool call** with structured JSON arguments (e.g., `run_speed_test({"phone_number": "555-123-2002"})`). Tool results are observations the agent must ground its next reply on — never fabricate. There is **no canonical final string**; the dialog ends when the customer confirms resolution or the agent properly transfers/refuses per policy.
+
+Final Answer: The tau2_telecom scenarios are multi-turn mobile-data troubleshooting dialogs where a successful agent authenticates the caller, runs context-appropriate diagnostic tools (status bar, line status, speed test, roaming/data-cap checks), applies a targeted remedy consistent with the customer's stated constraints (e.g., refuel up to 2.0 GB but no plan change), and iterates until the speed test returns "excellent" — differentiating root causes by location (roaming provisioning abroad vs. data-cap throttling at home); failure modes include giving up with generic "please provide more details" prompts, accepting "good" as resolved (sycophancy), skipping verification, hallucinating policy, ignoring the abroad-vs-home distinction, and outputting canonical/placeholder strings instead of conversing with grounded tool calls (one per turn, JSON args).

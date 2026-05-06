@@ -1,0 +1,33 @@
+# Analysis of the tau2_telecom Dataset
+
+## Step 1: Understanding the Task Structure
+
+Looking at all five examples, this dataset follows a highly consistent structure. Each example is a **customer service simulation scenario** for a telecom company, where an LLM plays the role of a support agent interacting with a simulated customer. The input contains:
+- **Purpose**: the resolution path being tested (e.g., "Mobile Data/Slow Internet Issues")
+- **reason_for_call**: the customer's underlying goal
+- **task_instructions**: behavioral constraints and acceptance criteria for resolution
+- **known_info**: customer identity and context (name, phone, location)
+
+The target output is uniformly abstract: "Resolve the customer's request by following domain policies, using the appropriate tools, and communicating clearly." This is a *meta-instruction* — the actual evaluation happens over a multi-turn trajectory involving tool calls.
+
+## Step 2: Reasoning Patterns Required
+
+The task requires **policy-grounded tool-use reasoning**. The agent must (1) diagnose the issue through diagnostic tool calls (e.g., `get_status_bar`, `can_send_mms`, speed tests), (2) apply domain policies (e.g., a user abroad in France vs. at home in the US triggers different resolution paths — roaming settings matter), (3) respect customer constraints (the user wants "excellent" speed only, will refuel 2.0 GB but won't change plans), and (4) loop diagnostics after each remediation until the acceptance criterion is met.
+
+## Step 3: Discriminating Features
+
+The critical discriminator between Examples 1/4/5 (abroad in France) and Examples 2/3 (at home in US) is **location**. Roaming-related troubleshooting (enabling international data roaming, checking roaming plans) applies only abroad; domestic-only fixes (tower issues, data refuel, APN reset) apply at home. An expert agent must branch on this. Another discriminator is the "excellent speed only" constraint — partial resolutions (poor/fair/good) must not be accepted as closure.
+
+## Step 4: Typical LLM Failure Modes
+
+Common failures include: (a) **hallucinating tool results** rather than calling `get_status_bar` / speed test tools — the instructions explicitly warn against this; (b) accepting a "good" speed test result as resolution when the customer demands "excellent"; (c) suggesting a **plan change** when the customer has forbidden it; (d) skipping the **data refuel** option up to 2.0 GB that the customer permits; (e) not re-polling status after a remediation action to confirm state change; (f) ignoring location context (trying domestic fixes for a roaming user in France).
+
+## Step 5: Expert vs. Naive Solver
+
+A naive solver gives generic advice ("try restarting your phone") without tool invocation, or prematurely declares resolution. An expert solver: systematically calls diagnostic tools, grounds every statement in tool output, follows the resolution-path decision tree, recognizes that abroad-in-France cases likely involve roaming toggles while US cases likely involve refueling depleted data, and iterates until the speed test returns exactly "excellent."
+
+## Step 6: Output Format Constraints
+
+The target output is a fixed boilerplate string. Since the meta-answer is uniform across all examples, the Final Answer should match that exact phrasing.
+
+Final Answer: Resolve the customer's request by following domain policies, using the appropriate tools, and communicating clearly.

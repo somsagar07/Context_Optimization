@@ -27,12 +27,42 @@ Usage:
 import argparse
 import json
 import os
+import subprocess
 import sys
 import time
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Dict, List, Optional
+
+
+def _pick_gpu() -> str:
+    """Pick the least-busy GPU based on memory usage (>50% = busy)."""
+    try:
+        out = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=memory.used,memory.total",
+             "--format=csv,noheader,nounits"],
+            timeout=5,
+        ).decode().strip().splitlines()
+        gpu_mem_pcts = []
+        for line in out:
+            used, total = [int(x.strip()) for x in line.split(",")]
+            gpu_mem_pcts.append(used / total * 100 if total > 0 else 0)
+        if len(gpu_mem_pcts) >= 2 and gpu_mem_pcts[0] > 50:
+            print(f"[gpu] GPU 0 memory {gpu_mem_pcts[0]:.0f}% — using GPU 1 ({gpu_mem_pcts[1]:.0f}%)")
+            return "1"
+        print(f"[gpu] GPU 0 memory {gpu_mem_pcts[0]:.0f}% — using GPU 0")
+        return "0"
+    except Exception:
+        return "0"
+
+
+os.environ["CUDA_VISIBLE_DEVICES"] = _pick_gpu()
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+# Silence litellm's "Give Feedback / Get Help" banners on transient API errors
+# from tau2's user-simulator path. See the matching block in train.py for the
+# rationale; LITELLM_LOG must be set BEFORE litellm is imported.
+os.environ.setdefault("LITELLM_LOG", "ERROR")
 
 _REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if _REPO not in sys.path:
@@ -56,6 +86,12 @@ except Exception:
 for noisy in ("LiteLLM", "litellm", "httpx", "openai", "urllib3", "tau2"):
     logging.getLogger(noisy).setLevel(logging.ERROR)
 logging.basicConfig(level=logging.ERROR)
+try:
+    import litellm as _litellm
+    _litellm.suppress_debug_info = True
+    _litellm.set_verbose = False
+except Exception:
+    pass
 
 from tqdm import tqdm
 
@@ -136,6 +172,9 @@ class _HRLState:
     api_model = None
     deterministic = True
     temperature = 1.0
+    use_action_masking = False
+    max_turns = 12
+    solo_mode = False
 
 
 _hrl_thread_local = threading.local()
@@ -173,12 +212,14 @@ def _render_tau2_question(task) -> str:
 
 
 def _run_one_task_hrl(task_id: str, domain: str, max_turns: int):
-    """Run one tau2 episode driven by the loaded HRL policies.
+    """Run one tau2 episode with per-turn reconfiguration (matches training).
+
+    Uses multiturn_rollout() which re-runs structure+prompt policies at every
+    dialog turn with updated transcript embeddings.
 
     Returns the same result-dict shape as _run_one_task_body so aggregate() works.
     """
-    import torch
-    import numpy as np
+    from env.multiturn_rollout import multiturn_rollout
 
     structure_env, prompt_env = _get_hrl_envs()
 
@@ -186,48 +227,64 @@ def _run_one_task_hrl(task_id: str, domain: str, max_turns: int):
     task = structure_env.dataset._task_by_id[task_id]
     question = _render_tau2_question(task)
 
-    # Set the task on the structure env without going through reset() (which would
-    # randomize). Mirrors the pattern in scripts/eval_hrl.run_single_episode.
+    # Set the task on the structure env so multiturn_rollout has the initial
+    # embedding and task_brief for the first turn.
     structure_env.current_q = question
-    structure_env.current_a = task_id  # tau2 dataset stores task_id in the answer slot
+    structure_env.current_a = task_id
     structure_env.question_embedding = structure_env.worker.get_embedding(question)
-    struct_obs = structure_env._get_observation()
 
-    # Structure policy decision
-    with torch.no_grad():
-        struct_action = _HRLState.structure_policy.get_action(
-            struct_obs,
-            deterministic=_HRLState.deterministic,
-            temperature=_HRLState.temperature,
-        )
-    if not isinstance(struct_action, np.ndarray):
-        struct_action = np.array(struct_action, dtype=np.int64)
-    _, _, _, _, struct_info = structure_env.step(struct_action)
-
-    # Prompt env setup
-    prompt_env.set_structure(
-        question=struct_info["question"],
-        answer=struct_info["answer"],
-        embedding=struct_info["embedding"],
-        structure=struct_info["structure"],
-    )
-    prompt_obs, _ = prompt_env.reset()
-
-    # Roll out the prompt policy. The final step triggers _execute_tau2_workflow
-    # (which calls tau2_dialog_rollout) inside the env.
-    done = False
-    info = {}
     t0 = time.time()
     try:
-        while not done:
-            with torch.no_grad():
-                action = _HRLState.prompt_policy.get_action(
-                    prompt_obs,
-                    deterministic=_HRLState.deterministic,
-                    temperature=_HRLState.temperature,
-                )
-            prompt_obs, _step_reward, done, _, info = prompt_env.step(action)
+        traj = multiturn_rollout(
+            structure_policy=_HRLState.structure_policy,
+            prompt_policy=_HRLState.prompt_policy,
+            structure_env=structure_env,
+            prompt_env=prompt_env,
+            domain=domain,
+            task_id=task_id,
+            deterministic=_HRLState.deterministic,
+            max_turns=max_turns,
+            solo_mode=_HRLState.solo_mode,
+            use_shaped_rewards=True,
+            shaping_mode="eval",
+            use_action_masking=_HRLState.use_action_masking,
+        )
         wall = time.time() - t0
+
+        exec_info = traj["exec_info"]
+        paper_reward = float(exec_info.get("tau2_original_reward",
+                                           exec_info.get("tau2_reward", traj["terminal_reward"])))
+        shaped_reward = float(traj["total_reward"])
+
+        return {
+            "task_id": task_id,
+            "domain": domain,
+            "agent_type": "hrl",
+            "agent_llm": _HRLState.api_model,
+            "tau2_reward": paper_reward,
+            "tau2_reward_shaped": shaped_reward,
+            "binary_pass": paper_reward >= 0.999,
+            "wall_seconds": round(wall, 2),
+            "tau2_action_pass":      exec_info.get("tau2_action_pass", 0),
+            "tau2_action_total":     exec_info.get("tau2_action_total", 0),
+            "tau2_action_missed":    exec_info.get("tau2_action_missed", 0),
+            "tau2_communicate_pass":   exec_info.get("tau2_communicate_pass", 0),
+            "tau2_communicate_total":  exec_info.get("tau2_communicate_total", 0),
+            "tau2_communicate_missed": exec_info.get("tau2_communicate_missed", 0),
+            "tau2_env_pass":   exec_info.get("tau2_env_pass", 0),
+            "tau2_env_total":  exec_info.get("tau2_env_total", 0),
+            "tau2_env_missed": exec_info.get("tau2_env_missed", 0),
+            "tau2_nl_pass":   exec_info.get("tau2_nl_pass", 0),
+            "tau2_nl_total":  exec_info.get("tau2_nl_total", 0),
+            "tau2_nl_missed": exec_info.get("tau2_nl_missed", 0),
+            "tau2_reward_basis":       exec_info.get("tau2_reward_basis", []),
+            "tau2_termination_reason": exec_info.get("tau2_termination_reason", ""),
+            "tau2_turns":              exec_info.get("tau2_turns", 0),
+            "agent_total_tokens": exec_info.get("total_tokens", 0),
+            "agent_steps":        exec_info.get("steps", 0),
+            "per_turn_config": True,
+            "transcript_tail": traj.get("transcript", "")[-2000:],
+        }
     except Exception as e:
         return {
             "task_id": task_id,
@@ -238,39 +295,6 @@ def _run_one_task_hrl(task_id: str, domain: str, max_turns: int):
             "tau2_reward": 0.0,
             "binary_pass": False,
         }
-
-    paper_reward = float(info.get("tau2_original_reward", info.get("correctness", 0.0)))
-    shaped_reward = float(info.get("correctness", paper_reward))
-    return {
-        "task_id": task_id,
-        "domain": domain,
-        "agent_type": "hrl",
-        "agent_llm": _HRLState.api_model,
-        "tau2_reward": paper_reward,
-        "tau2_reward_shaped": shaped_reward,
-        "binary_pass": paper_reward >= 0.999,
-        "wall_seconds": round(wall, 2),
-        "tau2_action_pass":      info.get("tau2_action_pass", 0),
-        "tau2_action_total":     info.get("tau2_action_total", 0),
-        "tau2_action_missed":    info.get("tau2_action_missed", 0),
-        "tau2_communicate_pass":   info.get("tau2_communicate_pass", 0),
-        "tau2_communicate_total":  info.get("tau2_communicate_total", 0),
-        "tau2_communicate_missed": info.get("tau2_communicate_missed", 0),
-        "tau2_env_pass":   info.get("tau2_env_pass", 0),
-        "tau2_env_total":  info.get("tau2_env_total", 0),
-        "tau2_env_missed": info.get("tau2_env_missed", 0),
-        "tau2_nl_pass":   info.get("tau2_nl_pass", 0),
-        "tau2_nl_total":  info.get("tau2_nl_total", 0),
-        "tau2_nl_missed": info.get("tau2_nl_missed", 0),
-        "tau2_reward_basis":       info.get("tau2_reward_basis", []),
-        "tau2_termination_reason": info.get("tau2_termination_reason", ""),
-        "tau2_turns":              info.get("tau2_turns", 0),
-        "agent_total_tokens": info.get("total_tokens", 0),
-        "agent_steps":        info.get("steps_taken", 0),
-        "workflow":           info.get("workflow", ""),
-        "agent1_tools":       struct_info["structure"].get("agent1_tools_idx"),
-        "agent2_tools":       struct_info["structure"].get("agent2_tools_idx"),
-    }
 
 
 # --------------------------------------------------------------------------- #
@@ -403,6 +427,8 @@ def parse_args():
                    help="OpenRouter model id used by the HRL agent (defaults to --agent-llm).")
     p.add_argument("--config", default="hierarchical",
                    help="HRL config to load (default: hierarchical).")
+    p.add_argument("--mask", action="store_true",
+                   help="Enable action masking for structure policy (must match training).")
     p.add_argument("--stochastic", action="store_true",
                    help="Sample policy actions instead of taking argmax (HRL eval).")
     p.add_argument("--temperature", type=float, default=1.0,
@@ -432,25 +458,26 @@ def aggregate(results: List[Dict], num_trials: int = 1) -> Dict:
         den = sum(r.get(denom_field, 0) for r in succ)
         return (num / den * 100.0) if den > 0 else None
 
-    # Group by task_id, sort by trial_idx, compute pass^k curve.
+    # Group by task_id, compute pass^k curve using the paper's combinatorial
+    # formula: pass^k = C(successes, k) / C(num_trials, k), averaged over tasks.
+    # Ref: https://arxiv.org/pdf/2406.12045 and tau2 upstream agent_metrics.py
+    from math import comb
     by_task = defaultdict(list)
     for r in results:
         by_task[r.get("task_id")].append(r)
-    for tid in list(by_task):
-        by_task[tid].sort(key=lambda r: r.get("trial_idx", 0))
 
     n_tasks = len(by_task)
     pass_curve = {}     # "pass^1", "pass^2", ...
     if n_tasks > 0:
-        for j in range(1, num_trials + 1):
-            n_pass_at_j = 0
+        for k in range(1, num_trials + 1):
+            task_scores = []
             for tid, trials in by_task.items():
-                if len(trials) < j:
+                n_t = len(trials)
+                if n_t < k:
                     continue
-                all_pass = all(bool(t.get("binary_pass")) for t in trials[:j])
-                if all_pass:
-                    n_pass_at_j += 1
-            pass_curve[f"pass^{j}"] = n_pass_at_j / n_tasks
+                successes = sum(1 for t in trials if bool(t.get("binary_pass")))
+                task_scores.append(comb(successes, k) / comb(n_t, k))
+            pass_curve[f"pass^{k}"] = (sum(task_scores) / len(task_scores)) if task_scores else 0.0
 
     # pass^1 (binary pass rate) is the standard headline number even at num_trials=1
     headline_pass = pass_curve.get("pass^1")
@@ -539,12 +566,17 @@ def main():
         _HRLState.api_model = args.api_model or args.agent_llm
         _HRLState.deterministic = not args.stochastic
         _HRLState.temperature = float(args.temperature)
+        _HRLState.use_action_masking = args.mask
+        _HRLState.max_turns = int(args.max_turns)
+        _HRLState.solo_mode = args.solo
         print(f"[eval] HRL policies loaded ({struct_algo}/{prmpt_algo}); "
-              f"api_model={_HRLState.api_model} deterministic={_HRLState.deterministic}")
+              f"api_model={_HRLState.api_model} deterministic={_HRLState.deterministic} "
+              f"mask={_HRLState.use_action_masking} per_turn_config=True")
 
     n_trials = max(1, int(args.num_trials))
     work = [(tid, j) for tid in task_ids for j in range(n_trials)]
-    print(f"[eval] domain={args.domain} split={args.split} agent={args.agent_type}/{args.agent_llm} "
+    display_llm = _HRLState.api_model if args.agent_type == "hrl" else args.agent_llm
+    print(f"[eval] domain={args.domain} split={args.split} agent={args.agent_type}/{display_llm} "
           f"tasks={len(task_ids)} trials/task={n_trials} total_runs={len(work)} workers={args.workers}")
 
     # Run with a tqdm progress bar showing live pass-rate / avg reward.
@@ -553,21 +585,36 @@ def main():
     bar = tqdm(total=len(work), desc=f"eval {args.domain}", unit="run", dynamic_ncols=True)
 
     def _on_done(r):
+        from math import comb
         with _log_lock:
             results.append(r)
             n = len(results)
-            passes = sum(1 for x in results if x.get("binary_pass"))
             avg_r = sum(x.get("tau2_reward", 0.0) for x in results) / max(n, 1)
             with _inflight_lock:
                 inflight_now = _inflight
+
+            # Compute live pass^1 using the paper formula (per-task, averaged)
+            from collections import defaultdict as _dd
+            _by_task = _dd(list)
+            for x in results:
+                _by_task[x.get("task_id")].append(x)
+            tasks_done = sum(1 for t in _by_task.values() if len(t) >= n_trials)
+            if _by_task:
+                p1_scores = []
+                for tid, trials in _by_task.items():
+                    s = sum(1 for t in trials if t.get("binary_pass"))
+                    p1_scores.append(s / len(trials))
+                live_p1 = sum(p1_scores) / len(p1_scores)
+            else:
+                live_p1 = 0.0
+
             postfix = {
                 "ongoing": f"{inflight_now}/{args.workers}",
-                "pass^1": f"{passes}/{n} ({passes/max(n,1)*100:.1f}%)",
-                "avg_reward": f"{avg_r:.3f}",
+                "tasks": f"{tasks_done}/{len(task_ids)}",
+                "pass^1": f"{live_p1:.1%}",
+                "avg_r": f"{avg_r:.3f}",
                 "last": "OK" if r.get("binary_pass") else f"r={r.get('tau2_reward',0):.2f}",
             }
-            if n_trials > 1:
-                postfix["trial"] = f"{r.get('task_id')}#{r.get('trial_idx', 0)+1}/{n_trials}"
             bar.set_postfix(postfix)
             bar.update(1)
 
@@ -599,7 +646,7 @@ def main():
     #     results.json      -- full per-task records (truncated transcripts inline)
     #     transcripts/      -- per-task full transcripts, one file per task
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    llm_slug = args.agent_llm.replace("/", "-")
+    llm_slug = display_llm.replace("/", "-")
     run_dir = os.path.join(
         args.out_dir, "tau2", args.domain, args.agent_type, llm_slug, ts
     )
@@ -657,19 +704,20 @@ def main():
     lines = [
         "=" * 60,
         f"Tau2 eval: domain={args.domain} split={args.split}",
-        f"Agent:    type={args.agent_type} llm={args.agent_llm}",
+        f"Agent:    type={args.agent_type} llm={display_llm}",
         f"Tasks:    {len(task_ids)}  Trials/task: {n_trials}  Total runs: {len(results)}",
         f"Workers:  {args.workers}  Wall: {wall:.1f}s",
         f"Run dir:  {run_dir}",
         "-" * 60,
     ]
-    if n_trials > 1:
-        lines.append("  pass^k curve (paper metric):")
-        for j in range(1, n_trials + 1):
-            v = summary.get(f"pass^{j}")
-            if v is not None:
-                lines.append(f"    pass^{j}: {v:.4f}  ({int(round(v * summary['n_tasks']))}/{summary['n_tasks']} tasks)")
-        lines.append("-" * 60)
+    # pass^k table
+    lines.append(f"  {'k':<6} {'pass^k':>10} {'pct':>10}")
+    lines.append(f"  {'---':<6} {'------':>10} {'---':>10}")
+    for k in range(1, n_trials + 1):
+        v = summary.get(f"pass^{k}")
+        if v is not None:
+            lines.append(f"  {k:<6} {v:>10.4f} {v*100:>9.1f}%")
+    lines.append("-" * 60)
     for k, v in summary.items():
         if k.startswith("pass^"):
             continue  # already shown above

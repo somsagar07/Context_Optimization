@@ -102,6 +102,7 @@ def multiturn_rollout(
     shaping_mode: str = "training",
     shaping_cfg: Optional[dict] = None,
     total_token_cap: int = 200_000,
+    use_action_masking: bool = False,
 ) -> Dict:
     """Drive a per-turn-reconfigured tau2 dialog.
 
@@ -213,12 +214,16 @@ def multiturn_rollout(
             structure_env.question_embedding = state_emb
             structure_env.current_q = task_brief  # for any downstream reads
             struct_obs = structure_env._get_observation()
-            action_mask = structure_env._get_action_mask() if structure_env.use_action_masking else None
-            struct_action, struct_log_prob, struct_value = structure_policy.get_action(
-                struct_obs, deterministic, action_mask=action_mask,
-            ) if action_mask is not None else structure_policy.get_action(
-                struct_obs, deterministic,
-            )
+            action_mask = structure_env._get_action_mask() if use_action_masking else None
+            if action_mask is not None:
+                s_out = structure_policy.get_action(struct_obs, deterministic, action_mask=action_mask)
+            else:
+                s_out = structure_policy.get_action(struct_obs, deterministic)
+            # Training policies return (action, log_prob, value); eval policies return just the action.
+            if isinstance(s_out, tuple):
+                struct_action, struct_log_prob, struct_value = s_out
+            else:
+                struct_action, struct_log_prob, struct_value = s_out, 0.0, 0.0
             workflow_depth = int(struct_action[0])
             agent1_tools_idx = int(struct_action[1])
             agent1_budget_idx = int(struct_action[2])
@@ -258,7 +263,11 @@ def multiturn_rollout(
                 prompt_obs = prompt_env._get_observation()
                 done = False
                 while not done:
-                    p_action, p_log_prob, p_value = prompt_policy.get_action(prompt_obs, deterministic)
+                    p_out = prompt_policy.get_action(prompt_obs, deterministic)
+                    if isinstance(p_out, tuple):
+                        p_action, p_log_prob, p_value = p_out
+                    else:
+                        p_action, p_log_prob, p_value = p_out, 0.0, 0.0
                     prompt_obs_list.append(np.asarray(prompt_obs, dtype=np.float32).copy())
                     prompt_actions.append(int(p_action))
                     prompt_log_probs.append(float(p_log_prob))

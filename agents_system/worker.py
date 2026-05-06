@@ -74,6 +74,14 @@ class MetaCLIPEmbedder:
     _precomputed_cache = None
     _cache_loaded = False
     _cache_stats = {"hits": 0, "misses": 0}
+
+    # Thread-safe model sharing: loaded once, reused across all instances
+    _init_lock = threading.Lock()
+    _shared_model = None
+    _shared_processor = None
+    _shared_device = None
+    _shared_embedding_dim = None
+    _shared_max_length = None
     
     def __init__(self, target_dim: int = None, use_precomputed: bool = True):
         """
@@ -213,44 +221,68 @@ class MetaCLIPEmbedder:
         return self._to_text_feature_tensor(out)
 
     def _init_embedder(self):
-        """Initialize the MetaCLIP model (only when needed for cache misses)."""
+        """Initialize the MetaCLIP model (only when needed for cache misses).
+
+        Thread-safe: the first caller loads the model; subsequent callers
+        (including from other threads) reuse the class-level shared copy.
+        """
         if self._initialized:
             return
 
-        try:
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
-            _quiet = bool(os.environ.get("CO_QUIET"))
-            if not _quiet:
-                print(f"Loading MetaCLIP-H14 embedder: {self.model_name}...", end=" ", flush=True)
+        with MetaCLIPEmbedder._init_lock:
+            # Another thread may have loaded while we waited for the lock
+            if MetaCLIPEmbedder._shared_model is not None:
+                self.model = MetaCLIPEmbedder._shared_model
+                self.processor = MetaCLIPEmbedder._shared_processor
+                self.device = MetaCLIPEmbedder._shared_device
+                self.embedding_dim = MetaCLIPEmbedder._shared_embedding_dim
+                self.max_length = MetaCLIPEmbedder._shared_max_length
+                if self.target_dim and self.embedding_dim != self.target_dim:
+                    self._init_projection(self.embedding_dim)
+                self._initialized = True
+                return
 
-            self.processor = AutoProcessor.from_pretrained(self.model_name)
-            self.model = AutoModel.from_pretrained(self.model_name)
-            self.model.to(self.device).eval()
+            try:
+                self.device = "cuda" if torch.cuda.is_available() else "cpu"
+                _quiet = bool(os.environ.get("CO_QUIET"))
+                if not _quiet:
+                    print(f"Loading MetaCLIP-H14 embedder: {self.model_name}...", end=" ", flush=True)
 
-            # Get embedding dimension
-            with torch.no_grad():
-                inputs = self.processor(text=["test"], return_tensors="pt").to(self.device)
-                outputs = self._get_text_features(inputs)
-                self.embedding_dim = outputs.shape[1]
+                self.processor = AutoProcessor.from_pretrained(self.model_name)
+                self.model = AutoModel.from_pretrained(self.model_name)
+                self.model.to(self.device).eval()
 
-            # Get max sequence length from tokenizer
-            if hasattr(self.processor, 'tokenizer') and hasattr(self.processor.tokenizer, 'model_max_length'):
-                self.max_length = self.processor.tokenizer.model_max_length
-            else:
-                self.max_length = 77  # Default for CLIP-like models
+                # Get embedding dimension
+                with torch.no_grad():
+                    inputs = self.processor(text=["test"], return_tensors="pt").to(self.device)
+                    outputs = self._get_text_features(inputs)
+                    self.embedding_dim = outputs.shape[1]
 
-            # Initialize projection if needed
-            if self.target_dim and self.embedding_dim != self.target_dim:
-                self._init_projection(self.embedding_dim)
+                # Get max sequence length from tokenizer
+                if hasattr(self.processor, 'tokenizer') and hasattr(self.processor.tokenizer, 'model_max_length'):
+                    self.max_length = self.processor.tokenizer.model_max_length
+                else:
+                    self.max_length = 77  # Default for CLIP-like models
 
-            output_dim = self.target_dim if self.target_dim else self.embedding_dim
-            if not _quiet:
-                print(f"✓ Loaded. Dimension: {self.embedding_dim} -> {output_dim}")
-            self._initialized = True
-            
-        except Exception as e:
-            raise RuntimeError(f"Failed to load MetaCLIP-H14 embedder: {e}. "
-                             f"Make sure the model exists and you have access (run: huggingface-cli login)")
+                # Initialize projection if needed
+                if self.target_dim and self.embedding_dim != self.target_dim:
+                    self._init_projection(self.embedding_dim)
+
+                # Share for other threads/instances
+                MetaCLIPEmbedder._shared_model = self.model
+                MetaCLIPEmbedder._shared_processor = self.processor
+                MetaCLIPEmbedder._shared_device = self.device
+                MetaCLIPEmbedder._shared_embedding_dim = self.embedding_dim
+                MetaCLIPEmbedder._shared_max_length = self.max_length
+
+                output_dim = self.target_dim if self.target_dim else self.embedding_dim
+                if not _quiet:
+                    print(f"✓ Loaded. Dimension: {self.embedding_dim} -> {output_dim}")
+                self._initialized = True
+
+            except Exception as e:
+                raise RuntimeError(f"Failed to load MetaCLIP-H14 embedder: {e}. "
+                                 f"Make sure the model exists and you have access (run: huggingface-cli login)")
     
     def _init_projection(self, input_dim: int):
         """Initialize projection matrix (fixed random projection)."""

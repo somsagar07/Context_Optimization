@@ -1,0 +1,47 @@
+# Analysis of tau2_retail Customer Support Scenarios
+
+## (1) Kinds of Scenarios in This Domain
+
+The tau2_retail domain covers typical online retail customer service interactions centered on a single authenticated user (here, Yusuf Rossi, zip 19122). The scenarios cluster around a handful of recurring intents:
+
+- **Exchanges on delivered orders** — e.g., swapping a mechanical keyboard variant (switch type, backlight, size) or a smart thermostat (HomeKit vs Google Home compatibility), often with conditional fallbacks ("if no matching item exists, do X instead").
+- **Returns of delivered items** — e.g., returning a cleaner, headphones, smart watch.
+- **Modifying pending orders** — e.g., changing color/size/material of pending t-shirts.
+- **Catalog queries** — e.g., "how many t-shirt options are available right now."
+
+Scenarios also embed user *personality* constraints (detail-oriented vs. private) and *information gaps* (customer forgets their email), forcing the agent to authenticate via alternate means (name + zip code + order ID).
+
+## (2) Behaviors That Distinguish a Successful Trajectory
+
+An effective agent does the following in sequence:
+
+1. **Authenticates the user** before taking any account-modifying action. Since the customer doesn't remember their email, the agent must call `find_user_id_by_name_zip` (or equivalent) using name + zip code.
+2. **Retrieves order details** via `get_order_details` for the referenced order (e.g., #W2378156) to confirm the items, their item_ids, and the order status (delivered vs. pending — this determines whether exchange, return, or modify is the correct action).
+3. **Uses `get_product_details`** to list variants and find item_ids matching the requested attributes (e.g., a keyboard that is *clicky*, *RGB backlit*, *full size*). The agent must search variants carefully and report honestly when no exact match exists.
+4. **Applies the customer's conditional logic correctly** — e.g., Example 1 says fall back to "no backlight" if no clicky+RGB+full-size exists; Example 2 says instead only exchange the thermostat. These are *different* correct behaviors and the agent must respect which fallback applies.
+5. **Batches exchanges per order**: retail policy typically requires all exchange items from one order to be submitted in a single `exchange_delivered_order_items` call. The agent should gather all decisions first, confirm with the user, then execute once.
+6. **Confirms explicitly** before any state-changing call ("I will now submit the exchange — do you confirm?").
+7. **For catalog questions** ("how many t-shirt options"), the agent calls `list_products` / `get_product_details` on the t-shirt product and reports the count of variants actually available (in stock / listed).
+8. **For pending-order modifications**, uses `modify_pending_order_items` with correctly-matched target item_ids (right color, size, neck style, material).
+
+## (3) Typical Failure Modes
+
+- **Skipping authentication** and acting on the user's word alone.
+- **Giving up early** with vague prompts like "Could you provide more details?" instead of proactively calling `get_product_details` to enumerate variants.
+- **Sycophancy** — agreeing to a swap the catalog doesn't support, or promising refunds/discounts not permitted by policy.
+- **Hallucinating variants** (e.g., claiming a clicky+RGB+full-size keyboard exists without verifying via tool).
+- **Misapplying conditional fallbacks** — treating Example 1 and Example 2 identically despite their different "if no match" instructions.
+- **Executing exchanges piecewise** (two separate exchange calls on one order) when policy requires a single batched call.
+- **Confusing exchange vs return vs modify** — e.g., trying to "modify" a delivered order or "exchange" a pending one.
+- **Copying a placeholder/canonical string** instead of having a natural conversation.
+- **Leaking information** with a "private" user, or being too terse with a "detail-oriented" user.
+
+## (4) What an Expert Agent Does Differently
+
+An expert agent **drives the dialog**: it authenticates immediately, reads the order, enumerates variants via tools, and then presents concrete options to the customer ("I found three clicky variants; none are RGB + full size. Per your instruction, I'll fall back to the no-backlight full-size clicky version — item_id X. Shall I proceed?"). It **respects the conditional branch** the user specified and **confirms before mutating state**. For catalog-count questions, it returns a precise number grounded in tool output, not a guess. It **batches** multi-item exchanges into one API call. It **refuses politely** when a request violates policy (e.g., modifying a delivered order).
+
+## (5) Per-Turn Output Format
+
+Each agent turn is either (a) a natural-language message to the customer, or (b) a single tool call with JSON arguments — not both mashed together, and not multiple tool calls at once. Tool names and argument keys must match the domain schema exactly (e.g., `order_id="#W2378156"`, `item_ids=[...]`). There is **no canonical final-answer string**; success is measured by the tool-call trace, the factual content conveyed, and policy adherence across the whole dialog.
+
+Final Answer: The tau2_retail scenarios are multi-turn dialogs requiring the agent to authenticate Yusuf Rossi via name+zip (email forgotten), call `get_order_details` / `get_product_details` to verify items and variants, correctly apply each scenario's conditional fallback logic, batch exchanges per order into a single tool call, distinguish exchange/return/modify based on order status, confirm before state changes, and report catalog counts grounded in tool output — while avoiding failure modes like skipping verification, giving up with generic clarification requests, hallucinating variants, sycophantic policy violations, or copying placeholder strings instead of conversing naturally.

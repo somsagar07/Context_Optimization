@@ -50,6 +50,30 @@ class AtomGeneratorV2(AtomGenerator):
         "aime", "gaia", "drop ", "mmlu",
     )
 
+    # tau2-specific patterns. These indicate the LLM mistook a placeholder for a
+    # canonical answer string and is now telling the agent to copy it verbatim
+    # — which causes the agent to stall (one-line generic reply, no tool use,
+    # user simulator gives up). Observed on tau2_telecom and tau2_mock when the
+    # placeholder substituted for the eval-criteria answer was itself plausibly
+    # readable as a target output. See generator._get_dataset_examples.
+    _TAU2_FORBIDDEN_PATTERNS = (
+        "verbatim",
+        "canonical",
+        "resolution directive",
+        "target output",
+        "word-for-word",
+        "word for word",
+        "exact directive",
+        "single plain-text line",
+        "one plain-text line",
+        "as one plain-text line",
+        "copied verbatim",
+        "match the canonical",
+        "do not paraphrase",
+        "not paraphrase",
+        "the canonical sentence",
+    )
+
     def _dataset_name_leak(self, text: str, dataset_name: str) -> str:
         """
         Returns a short reason string if the atom text mentions the dataset name
@@ -64,6 +88,11 @@ class AtomGeneratorV2(AtomGenerator):
         for phrase in self._LEAK_BLOCKLIST:
             if phrase in lower:
                 return f"contains '{phrase.strip()}'"
+        # tau2: also block canonical/verbatim phrasing (eval-criteria leak).
+        if dataset_name and dataset_name.startswith("tau2_"):
+            for phrase in self._TAU2_FORBIDDEN_PATTERNS:
+                if phrase in lower:
+                    return f"tau2 canonical-string leak ('{phrase}')"
         return ""
 
     @staticmethod
@@ -89,18 +118,52 @@ class AtomGeneratorV2(AtomGenerator):
             except Exception as e:
                 print(f"[Prompts v2] Could not read cached summary, regenerating: {e}")
 
-        meta_prompt = (
-            f"Analyze the following examples from the '{dataset_name}' dataset:\n\n"
-            f"{examples}\n\n"
-            "Provide a thorough analysis (around 6-10 sentences, multiple paragraphs are fine) covering:\n"
-            "(1) the specific reasoning patterns the task requires,\n"
-            "(2) the discriminating features that distinguish correct answers from distractors,\n"
-            "(3) the typical failure modes an LLM exhibits on this task,\n"
-            "(4) what distinguishes an expert solver from a naive one,\n"
-            "(5) any format or output constraints the final answer must follow.\n"
-            "Be concrete and dataset-specific. Cite the kind of inputs / outputs / pitfalls you see in the examples. "
-            "This summary will ground all subsequent atom generation, so do not be terse."
-        )
+        is_tau2 = dataset_name.startswith("tau2_")
+        if is_tau2:
+            meta_prompt = (
+                f"Analyze the following customer-support scenarios from the '{dataset_name}' tau2-bench domain:\n\n"
+                f"{examples}\n\n"
+                "## CRITICAL CONTEXT — tau2-bench is a multi-turn DIALOG benchmark\n"
+                "An agent talks to a SIMULATED CUSTOMER over many turns. There is NO single text 'answer'. "
+                "The simulator scores the agent on three things: (a) the SEQUENCE of tool calls the agent "
+                "made during the dialog, (b) the FACTS the agent communicated back to the customer, and "
+                "(c) whether the agent FOLLOWED THE DOMAIN POLICY (e.g., refund rules, authentication, "
+                "permitted/forbidden remedies). The agent is NEVER expected to output a 'canonical phrase', "
+                "'resolution directive', or any verbatim string. Successful agents converse naturally — they "
+                "ask clarifying questions, call diagnostic tools, narrate findings, and follow policy.\n\n"
+                "## Forbidden framings (do NOT use any of these in your analysis)\n"
+                "- 'The target output is a canonical/generic/verbatim directive'\n"
+                "- 'The agent should copy the resolution directive word-for-word'\n"
+                "- 'The expected output is a fixed/uniform string'\n"
+                "- 'Output ... as a single plain-text line matching the canonical phrasing'\n"
+                "Any of the above is a misreading. The 'answer' string you see in earlier versions of these "
+                "examples was a placeholder, not a target.\n\n"
+                "Provide a thorough analysis (around 6-10 sentences, multiple paragraphs are fine) covering:\n"
+                "(1) the kinds of customer scenarios that appear in this domain,\n"
+                "(2) the BEHAVIORS that distinguish a successful trajectory (which tools to call, which "
+                "facts to verify, which policies to enforce, when to refuse),\n"
+                "(3) typical agent FAILURE MODES — including sycophancy, skipping verification, "
+                "GIVING UP TOO EARLY by asking generic 'please provide more details' questions, "
+                "hallucinating policy, and copying a placeholder string instead of conversing,\n"
+                "(4) what an expert agent does that a naive one doesn't,\n"
+                "(5) any per-turn output FORMAT (e.g., one tool call per turn, JSON args) — but NOT a "
+                "canonical-answer format.\n"
+                "Be concrete and domain-specific. The downstream atoms will train an agent to BEHAVE "
+                "in the dialog, so your analysis must teach behavior, not text-copying."
+            )
+        else:
+            meta_prompt = (
+                f"Analyze the following examples from the '{dataset_name}' dataset:\n\n"
+                f"{examples}\n\n"
+                "Provide a thorough analysis (around 6-10 sentences, multiple paragraphs are fine) covering:\n"
+                "(1) the specific reasoning patterns the task requires,\n"
+                "(2) the discriminating features that distinguish correct answers from distractors,\n"
+                "(3) the typical failure modes an LLM exhibits on this task,\n"
+                "(4) what distinguishes an expert solver from a naive one,\n"
+                "(5) any format or output constraints the final answer must follow.\n"
+                "Be concrete and dataset-specific. Cite the kind of inputs / outputs / pitfalls you see in the examples. "
+                "This summary will ground all subsequent atom generation, so do not be terse."
+            )
         # Summary is grounding context for ~24 downstream atom generations,
         # so we give it room to be thorough.
         summary_token_budget = 2048
@@ -163,13 +226,37 @@ class AtomGeneratorV2(AtomGenerator):
             existing_block = (
                 "\n".join(f"- {a}" for a in existing_atoms) if existing_atoms else "(none yet)"
             )
+            is_tau2 = dataset_name.startswith("tau2_")
+            tau2_guardrail = ""
+            if is_tau2:
+                tau2_guardrail = (
+                    "\n## CRITICAL — tau2 dialog rules (failure to follow these will cause the agent to stall)\n"
+                    "tau2 is a multi-turn customer-support DIALOG. There is NO fixed text answer. The agent "
+                    "talks to a simulated customer over many turns and is scored on tool calls, facts "
+                    "communicated, and policy compliance. Atoms must teach BEHAVIOR (verify with tools, "
+                    "follow policy, ask specific clarifying questions, refuse improper requests, transfer "
+                    "to a human when appropriate), NOT text formatting.\n\n"
+                    "DO NOT write atoms that contain or imply any of these:\n"
+                    "  - 'output the canonical/verbatim/generic resolution directive'\n"
+                    "  - 'reproduce the target output / canonical sentence word-for-word'\n"
+                    "  - 'as a single plain-text line matching the canonical phrasing'\n"
+                    "  - 'do not paraphrase the directive'\n"
+                    "  - 'strip any troubleshooting commentary from the visible answer'\n"
+                    "  - any instruction to NOT mention the customer's specific issue, location, or context\n"
+                    "  - any instruction telling the agent to give a generic/short reply that avoids engaging\n"
+                    "Do NOT instruct the agent to ask 'please provide more details' as a default — that "
+                    "behavior causes the simulated customer to give up and the episode to score 0. Atoms "
+                    "must teach the agent to ENGAGE: identify what tool call resolves the request, ask "
+                    "SPECIFIC clarifying questions when needed, and follow domain policy.\n"
+                )
             meta_prompt = (
                 f"You are an expert prompt engineer producing a reusable system instruction.\n\n"
                 f"## Task Analysis\n{summary}\n\n"
                 f"## Real Examples (each shows the full task end-to-end: problem, reasoning, answer)\n"
                 f"{examples}\n"
                 f"NOTE: These examples cover every stage of the task. For this generation, "
-                f"focus only on the parts relevant to a '{role}' agent and ignore the rest.\n\n"
+                f"focus only on the parts relevant to a '{role}' agent and ignore the rest.\n"
+                f"{tau2_guardrail}\n"
                 f"## Role\nWrite a system instruction that helps a '{role}' agent {goal}.\n\n"
                 f"## Strategy\n{strat_desc}\n\n"
                 f"## Already-generated atoms (avoid producing semantically similar instructions)\n"

@@ -535,6 +535,20 @@ class BaseTrainer(ABC):
         # Stage E: hygiene bonus for clean termination
         self.tau2_clean_termination_bonus = 0.2
 
+        # Stage F: anti-stall penalty. We observed (telecom run, ep 2500-2999)
+        # that the structure policy can find a "do-nothing" local optimum: the
+        # agent emits one generic stalling line, the user simulator gives up,
+        # and the episode terminates with all per-component totals = 0. With
+        # totals=0 the stage_a/bonuses/penalties all evaluate to 0, leaving
+        # the episode at ~0 reward — which dominates "try-and-fail" runs that
+        # earn ~-0.4. Once the policy learns reward(stall) > reward(try), it
+        # collapses. The gate below detects these stall episodes deterministically
+        # and subtracts a fixed penalty so trying is always preferred. Tunable.
+        self.tau2_stall_penalty = 1.0
+        self.tau2_stall_max_turns = 2          # stall iff dialog ended in ≤ 2 turns
+        self.tau2_stall_max_tokens = 500       # AND used <500 agent tokens
+        # (we also require tools_count==0 and all component totals==0 below)
+
     def _compute_episode_reward(
         self,
         info: dict,
@@ -680,6 +694,34 @@ class BaseTrainer(ABC):
         if clean_term:
             final_reward += self.tau2_clean_termination_bonus
 
+        # Stage F: anti-stall penalty. Detect "did-nothing" episodes — short
+        # dialog, no tool calls, and tau2 returned no scoring breakdown (all
+        # per-component totals = 0, which happens when the user simulator gave
+        # up before any gold check fired). Without this gate, such episodes
+        # net ~0 reward and dominate "try-and-fail" runs that net ~-0.4,
+        # causing the structure policy to collapse to "Direct workflow / 0
+        # tools / 1 turn". AGENT_STOP is excluded because that's a legitimate
+        # explicit termination by the agent (e.g., transferring to a human
+        # after gathering needed info), not a stall.
+        no_components = (action_total + comm_total + env_total + nl_total) == 0
+        # Exclusions:
+        #   AGENT_STOP — agent intentionally ended (e.g., transferred to human)
+        #   too_many_errors — exogenous API failures (not the agent's fault);
+        #     these are rare (~1% of episodes) but penalizing them would
+        #     misattribute infrastructure issues to the policy.
+        is_exogenous_failure = "too_many_errors" in term_reason.lower()
+        stall_detected = (
+            int(info.get("tau2_turns", 0)) <= self.tau2_stall_max_turns
+            and int(info.get("tools_count", 0)) == 0
+            and int(info.get("total_tokens", 0)) < self.tau2_stall_max_tokens
+            and no_components
+            and "AGENT_STOP" not in term_reason
+            and not is_exogenous_failure
+        )
+        stall_penalty_applied = self.tau2_stall_penalty if stall_detected else 0.0
+        if stall_detected:
+            final_reward -= stall_penalty_applied
+
         # Per-step / atom-selection rewards from PromptEnv (kept for parity with standard path)
         final_reward += accumulated_reward
 
@@ -704,6 +746,8 @@ class BaseTrainer(ABC):
             "tau2_penalty_communicate": comm_penalty_total,
             "tau2_penalty_env": env_penalty_total,
             "tau2_clean_termination": clean_term,
+            "tau2_stall_detected": stall_detected,
+            "tau2_stall_penalty_applied": stall_penalty_applied,
             "scaled_reward": final_reward,
         }
         return final_reward, reward_log
@@ -1032,6 +1076,7 @@ class BaseTrainer(ABC):
             solo_mode=solo_mode,
             use_shaped_rewards=use_shaped,
             shaping_mode=shaping_mode,
+            use_action_masking=self.use_action_masking,
         )
 
         exec_info = traj["exec_info"]
@@ -1544,6 +1589,15 @@ class BaseTrainer(ABC):
                                     tools_selected = sum(1 for e in recent_episodes if e.get("agent1_tools") or e.get("agent2_tools"))
                                     correct_count = sum(1 for e in recent_episodes if e.get("correct", False))
                                     print(f"\n[{next_episode+1}/{num_episodes}] Acc: {acc:.1f}% ({self.correct_count}/{self.episode_count}) | Reward: {avg_rew:.3f} | Tools Used: {tools:.2f} | Tools Selected: {tools_selected}/{len(recent_episodes)} | Recent Correct: {correct_count}/{len(recent_episodes)}")
+
+                                    # Early-warning: detect user-sim / API failures
+                                    one_turn_count = sum(1 for e in recent_episodes if int(e.get("tau2_turns", 99)) <= 1)
+                                    if len(recent_episodes) >= 10 and one_turn_count / len(recent_episodes) > 0.6:
+                                        print(f"\n{'='*70}")
+                                        print(f"  WARNING: {one_turn_count}/{len(recent_episodes)} recent episodes ended in <=1 turn!")
+                                        print(f"  This usually means the user simulator API is failing (quota/auth).")
+                                        print(f"  Check OPENROUTER_USER_MODEL in .env and API key validity.")
+                                        print(f"{'='*70}")
 
                             # Checkpointing
                             if (next_episode + 1) % save_every == 0:

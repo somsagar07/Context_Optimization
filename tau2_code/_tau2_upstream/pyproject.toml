@@ -7,7 +7,7 @@ name = "tau2"
 version = "1.0.0"
 description = "tau-bench: Benchmarking tool-agent-user interaction in real-world domains"
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.10,<3.14"
 license = "MIT"
 authors = [
     { name = "Victor Barres", email = "victor.barres@gmail.com" },

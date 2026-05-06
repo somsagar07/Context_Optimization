@@ -13,6 +13,7 @@ Usage:
 """
 import argparse
 import os
+import subprocess
 import sys
 from datetime import datetime
 
@@ -34,7 +35,29 @@ except Exception:
     # Failed to load, continue anyway
     pass
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
+def _pick_gpu() -> str:
+    """Pick the least-busy GPU based on memory usage (>50% = busy)."""
+    try:
+        out = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=memory.used,memory.total",
+             "--format=csv,noheader,nounits"],
+            timeout=5,
+        ).decode().strip().splitlines()
+        gpu_mem_pcts = []
+        for line in out:
+            used, total = [int(x.strip()) for x in line.split(",")]
+            gpu_mem_pcts.append(used / total * 100 if total > 0 else 0)
+        if len(gpu_mem_pcts) >= 2 and gpu_mem_pcts[0] > 50:
+            print(f"[gpu] GPU 0 memory {gpu_mem_pcts[0]:.0f}% — using GPU 1 ({gpu_mem_pcts[1]:.0f}%)")
+            return "1"
+        print(f"[gpu] GPU 0 memory {gpu_mem_pcts[0]:.0f}% — using GPU 0")
+        return "0"
+    except Exception:
+        return "0"
+
+
+os.environ["CUDA_VISIBLE_DEVICES"] = _pick_gpu()
 
 # ---------------------------------------------------------------------------
 # Output hygiene: keep training output focused on training-loop info.
@@ -47,6 +70,15 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # Useful errors (CUDA OOM, HTTP 500s, etc.) still surface via stderr.
 # ---------------------------------------------------------------------------
 os.environ.setdefault("CO_QUIET", "1")
+# litellm reads LITELLM_LOG at import time. tau2's user-simulator path uses
+# litellm directly (bypassing our OpenRouterWorker._call_with_retry), so on
+# transient API errors litellm's internal retries print "Give Feedback / Get
+# Help" banners that drown out the tqdm bar. ERROR clamps the verbose logger;
+# suppress_debug_info silences the hardcoded print() in the exception handler.
+# NOTE: This also suppresses persistent failures like quota exhaustion — the
+# training loop in base.py has a stall-rate detector that warns when >60% of
+# recent episodes end in <=1 turn (the symptom of user-sim API failure).
+os.environ.setdefault("LITELLM_LOG", "ERROR")
 
 import logging
 import warnings
@@ -58,6 +90,12 @@ except Exception:
 for _noisy in ("LiteLLM", "litellm", "httpx", "openai", "urllib3", "tau2"):
     logging.getLogger(_noisy).setLevel(logging.ERROR)
 warnings.filterwarnings("ignore", message=r"Overriding environment .* already in registry")
+try:
+    import litellm as _litellm
+    _litellm.suppress_debug_info = True
+    _litellm.set_verbose = False
+except Exception:
+    pass
 
 from configs import load_config
 from algorithms import Algorithm, PPOTrainer, GRPOTrainer

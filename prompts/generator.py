@@ -162,9 +162,26 @@ class AtomGenerator:
 
                 # 3. Extract Answer
                 # Handle 'answer' vs 'Final answer' (GAIA) vs 'ground_truth'
-                a = item.get('answer') or item.get('Final answer') or item.get('output') or item.get('ground_truth') or ""
-                
-                examples_text.append(f"Example {count+1}:\nInput: {q}\nTarget Output: {a}\n")
+                # For tau2 datasets, there is NO single text answer — the benchmark
+                # is a multi-turn dialog scored by the simulator (correct tool calls,
+                # facts communicated, policy compliance). Showing any "Target Output"
+                # line risks the LLM treating that string as a canonical answer the
+                # agent should output verbatim, which has happened before (telecom,
+                # mock). So we omit the field entirely for tau2 and instead show a
+                # structured note that cannot be misread as a target string.
+                if dataset_name.startswith("tau2_"):
+                    examples_text.append(
+                        f"Example {count+1}:\n"
+                        f"Customer scenario (the simulated user the agent will talk to):\n{q}\n"
+                        f"[Evaluation: This is a multi-turn customer-support dialog. There is NO fixed text answer. "
+                        f"The agent and customer exchange messages over many turns; the simulator scores the agent on "
+                        f"(a) which tool calls it makes, (b) the facts it communicates back, and (c) whether it "
+                        f"follows the domain's policy. The agent must converse naturally — never output a 'canonical' "
+                        f"or 'verbatim' phrase, never copy the customer's scenario text into its reply.]\n"
+                    )
+                else:
+                    a = item.get('answer') or item.get('Final answer') or item.get('output') or item.get('ground_truth') or ""
+                    examples_text.append(f"Example {count+1}:\nInput: {q}\nTarget Output: {a}\n")
                 count += 1
                 
             return "\n".join(examples_text)

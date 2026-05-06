@@ -1,23 +1,41 @@
-# Analysis of the `tau2_mock` Dataset
+# Analysis of tau2_mock Customer-Support Scenarios
 
-## (1) Reasoning Patterns Required
+## Step 1: Understanding the Domain
 
-This dataset appears to be a **test-case specification task** for an agentic/tool-using LLM system (likely the τ-bench or tau2 evaluation framework). Each input provides two structured fields — `Purpose` and `Notes` — describing a test scenario, and the model must generate a corresponding test specification as output. The reasoning required is primarily **schema-following and semantic mapping**: the model must (a) extract the target tool/function name from the Purpose string (e.g., "Test the create_task functionality" → `create_task`), (b) translate the Purpose/Notes into a natural-language assertion about what the agent should confirm, and (c) potentially include multiple assertions when the Notes imply compound behavior (e.g., Example 5 requires acknowledging prior context AND confirming the update).
+The `tau2_mock` domain is a minimal, test-oriented tau2-bench domain focused on exercising basic **task-management tooling**. From the five examples, the scenarios all target tool-level functionality rather than rich business workflows:
 
-## (2) Discriminating Features of Correct Answers
+- Examples 1–3: `create_task` — basic task creation with a simple title.
+- Example 4: `update_task_status` — basic status update.
+- Example 5: `update_task_status` with pre-existing conversation history — tests that the agent correctly uses prior context rather than re-asking.
 
-Correct outputs consistently use two labeled sections: `Expected actions:` (a list of API/tool names) and `NL assertions:` (semicolon-separated natural-language claims about agent behavior). The tool name in `Expected actions` is always a snake_case verb phrase extracted verbatim from the Purpose field. The NL assertions follow a stereotyped template: "The agent confirmed the {thing} was {past-participle} successfully." When Notes mention extra context ("pre-existing conversation history"), an additional assertion like "The agent acknowledged the previous context" is prepended. Example 3 is notably atypical — it omits `Expected actions` and includes a quirky assertion ("The user is complimented"), suggesting some outputs are assertion-only variants.
+Because this is a "mock" domain, scenarios are intentionally lightweight: the simulated customer essentially wants a task created or a task's status changed. The evaluator cares whether the agent invokes the correct tool with the correct arguments, not whether it produces eloquent prose.
 
-## (3) Typical LLM Failure Modes
+## Step 2: Behaviors That Distinguish a Successful Trajectory
 
-Common failures include: (i) **hallucinating tool names** that aren't literally in the Purpose (e.g., inventing `add_task` instead of `create_task`); (ii) **over-elaborating** the NL assertions with unnecessary detail rather than matching the terse template; (iii) **omitting the `Expected actions:` prefix** or using a different label like "Actions:"; (iv) **failing to pluralize/combine assertions** with semicolons when multiple are required; (v) missing subtle cues in Notes (e.g., "pre-existing conversation history" → acknowledge previous context).
+(1) **Tool selection discipline.** For a "create task" scenario, the agent must call `create_task` with a `title` argument derived from what the customer actually said. For a "update status" scenario, it must call `update_task_status` with a `task_id` (or equivalent identifier) and the new `status` value.
+(2) **Minimal but sufficient clarification.** If the customer gives a title like "Buy groceries", the agent should just create it — not interrogate the user for priority, due date, tags, etc. that weren't requested.
+(3) **Using conversation history** (Example 5). If prior turns already establish the task being referenced, the agent should extract the task id/title from history rather than asking "which task?"
+(4) **Confirming completion in natural language** after the tool returns success — e.g., "I've created the task 'Buy groceries' for you."
+(5) **One tool call per turn**, with JSON-formatted arguments matching the tool schema.
 
-## (4) Expert vs. Naive Solver
+## Step 3: Typical Failure Modes
 
-A naive solver will write verbose, creative test descriptions. An expert recognizes this is a **highly templated format** and mimics the exact surface form: short, declarative assertions phrased as "The agent confirmed X was Y successfully." The expert also maps the Purpose phrase deterministically to a snake_case identifier and knows when to split into multiple semicolon-delimited assertions based on compound Notes.
+- **Giving up too early / generic stalling**: Responding "Could you provide more details about the task?" when the customer already said "create a task called X". This is the single biggest failure mode on mock/simple domains.
+- **Skipping the tool call entirely** and just saying "Done, I've created your task" without actually invoking `create_task` — the evaluator checks the tool-call trace.
+- **Hallucinating fields** like priority, assignee, or deadline that the customer never mentioned, then passing them to the tool.
+- **Ignoring conversation history** in Example 5 and re-asking for info that's already on record.
+- **Sycophancy**: agreeing to change arbitrary fields the user hints at without actually calling the update tool.
+- **Copying the scenario's "Purpose" / "Notes" text** into a reply, treating it as a canonical answer — it's metadata for the evaluator, not dialog content.
+- **Hallucinating policy** (e.g., "I need your account verification before creating a task") when this mock domain has no such policy.
 
-## (5) Format / Output Constraints
+## Step 4: What an Expert Agent Does Differently
 
-Output must contain the literal labels `Expected actions:` and/or `NL assertions:`. Multiple NL assertions are separated by `;`. Tool names are snake_case, singular, and drawn directly from the Purpose. No extra commentary, no JSON, no markdown. The final answer for this meta-question should be the analytical summary itself.
+An expert agent treats the customer's first message as likely sufficient for a simple action. It maps intent → tool immediately: "create a task titled X" → `create_task(title="X")`. It reads prior messages before asking anything. After the tool returns, it summarizes the concrete result (task id, new status) in one short, natural sentence. It does not moralize, over-confirm, or pad with boilerplate. A naive agent, in contrast, either loops asking for clarification, fabricates parameters, or skips the tool call and pretends success.
 
-Final Answer: The `tau2_mock` dataset is a templated test-spec generation task where inputs describe a Purpose (containing a tool name like `create_task` or `update_task_status`) and Notes (context about the test), and outputs must produce `Expected actions:` (the snake_case tool name extracted verbatim from Purpose) and `NL assertions:` (semicolon-separated, terse claims of the form "The agent confirmed the {X} was {Y} successfully," with extra assertions like "The agent acknowledged the previous context" added when Notes mention prior history); expert solvers follow this rigid template exactly while naive solvers hallucinate tool names, over-elaborate phrasing, or omit required labels.
+## Step 5: Per-Turn Output Format
+
+- Each agent turn is either (a) a single tool invocation with JSON arguments conforming to the tool schema, or (b) a short natural-language message to the customer.
+- Tool calls should contain only fields the schema defines and the user supplied or implied.
+- Final user-facing message should confirm the action with the specific title/id/status — in the agent's own words, not a fixed string.
+
+Final Answer: The tau2_mock domain tests basic `create_task` and `update_task_status` tool usage in short multi-turn dialogs. A successful agent identifies the intent from the customer's first message (and any prior history), calls the correct tool once with minimal, user-supplied arguments in JSON, and then confirms the result in natural language. Failure modes include generic "please provide more details" stalling on already-clear requests, skipping the tool call, hallucinating fields or policies, ignoring conversation history, and mistaking scenario metadata for a canonical reply. Expert behavior = immediate intent→tool mapping, no over-clarification, faithful use of prior context, and concise natural confirmation after tool success.
