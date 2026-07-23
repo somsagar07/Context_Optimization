@@ -83,6 +83,8 @@ class StructureEnv(gym.Env):
             self._tau2_registry = Tau2ToolRegistry(domain)
             self._tau2_groups = self._tau2_registry.list_groups()
             tool_action_size = 2 ** len(self._tau2_groups)
+            if hasattr(self.worker, "tau2_mode"):
+                self.worker.tau2_mode = True
         else:
             self._tau2_registry = None
             self._tau2_groups = None

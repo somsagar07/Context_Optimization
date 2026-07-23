@@ -82,6 +82,14 @@ class MetaCLIPEmbedder:
     _shared_device = None
     _shared_embedding_dim = None
     _shared_max_length = None
+
+    # Optional EmbeddingPool for parallel computation across threads.
+    _pool = None
+
+    @classmethod
+    def set_pool(cls, pool):
+        """Attach an EmbeddingPool. All subsequent embed() calls delegate to it."""
+        cls._pool = pool
     
     def __init__(self, target_dim: int = None, use_precomputed: bool = True):
         """
@@ -295,13 +303,17 @@ class MetaCLIPEmbedder:
         """
         Embed text using MetaCLIP-H14.
         Uses precomputed embeddings if available, otherwise computes on-the-fly.
-        
+
         Args:
             text: Input text to embed
-            
+
         Returns:
             numpy array embedding (1024D if target_dim=None, otherwise target_dim)
         """
+        # Delegate to pool when one is attached (handles cache internally)
+        if MetaCLIPEmbedder._pool is not None:
+            return MetaCLIPEmbedder._pool.embed(text)
+
         # Try precomputed cache first (O(1) lookup)
         if self.use_precomputed and MetaCLIPEmbedder._precomputed_cache:
             text_hash = self._compute_hash(text)
@@ -683,6 +695,11 @@ class OpenRouterWorker:
         # Store additional tool descriptions
         self.additional_tool_descriptions = {}
 
+        # When True, _generate uses prompt_suffix as the full system prompt and
+        # passes the user message through as-is (no "Question:" wrapping, no
+        # "Final Answer" format, no "Answer using your own knowledge only").
+        self.tau2_mode = False
+
     def _wait_for_network(self, max_wait: int = 600) -> bool:
         """
         Wait for network connectivity to be restored.
@@ -948,7 +965,7 @@ class OpenRouterWorker:
         """
         Core generation method with optional tool prompting and prompt modifiers.
         Same interface as LLMWorker._generate for compatibility.
-        
+
         Args:
             prompt: The user prompt
             active_tools: List of tool names to enable
@@ -956,6 +973,16 @@ class OpenRouterWorker:
             prompt_suffix: Additional instructions to add to system prompt (from RL)
             additional_tool_descriptions: Optional dict of additional tool descriptions
         """
+        # tau2 mode: prompt_suffix already contains tool descriptions + persona +
+        # RL atoms (built by ConfiguredAgent or BaseAgent). Use it as the complete
+        # system prompt and pass the conversation history through as-is.
+        if self.tau2_mode:
+            messages = [
+                {"role": "system", "content": prompt_suffix or ""},
+                {"role": "user", "content": prompt},
+            ]
+            return self._call_api(messages, max_tokens=max_tokens, temperature=0.0)
+
         # Tool descriptions with usage examples - made more compelling and specific (same as LLMWorker)
         TOOL_DESCRIPTIONS = {
             "calculator": (
@@ -989,11 +1016,11 @@ class OpenRouterWorker:
                 "  Example: TOOL: ocr_reader || QUERY: '/path/to/document.png'"
             )
         }
-        
+
         # Change default tool descriptions with additional tool descriptions
         if additional_tool_descriptions:
             TOOL_DESCRIPTIONS.update(additional_tool_descriptions)
-        
+
         # Build system prompt (same as LLMWorker)
         sys_prompt = (
             "You are an expert autonomous agent capable of solving complex tasks. "
@@ -1004,14 +1031,14 @@ class OpenRouterWorker:
             "3. Use Python for all complex calculations or data filtering.\n"
             "4. Format your final conclusion exactly as: Final Answer: <your_answer>"
         )
-        
+
         # Add RL-selected prompt modifiers (if any)
         if prompt_suffix:
             sys_prompt += f" {prompt_suffix}"
-        
+
         if active_tools:
             tools_text = "\n".join([TOOL_DESCRIPTIONS[t] for t in active_tools if t in TOOL_DESCRIPTIONS])
-            
+
             # Stronger tool usage instructions, especially for web_search
             tool_usage_instructions = (
                 "IMPORTANT: To use a tool, you MUST write EXACTLY this format: TOOL: <tool_name> || QUERY: <your_query>\n\n"
@@ -1033,7 +1060,7 @@ class OpenRouterWorker:
                 "   - Not using available tools = WRONG answer\n"
                 "   - Using tools = CORRECT answer\n"
             )
-            
+
             sys_prompt += (
                 f"\n\nYou have access to these tools:\n{tools_text}\n\n"
                 f"{tool_usage_instructions}"
@@ -1051,35 +1078,44 @@ class OpenRouterWorker:
 
     def reason(self, question: str, tools: list = None, tokens: int = 512, prompt_suffix: str = None) -> str:
         """Generate step-by-step reasoning for a question."""
-        prompt = (
-            f"Question: {question}\n"
-            "Please break this down and think step-by-step to solve it. "
-            "Do not just give the answer, show your work."
-        )
+        if self.tau2_mode:
+            prompt = question
+        else:
+            prompt = (
+                f"Question: {question}\n"
+                "Please break this down and think step-by-step to solve it. "
+                "Do not just give the answer, show your work."
+            )
         return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix, additional_tool_descriptions=self.additional_tool_descriptions)
 
     def verify(self, question: str, reasoning: str, tools: list = None, tokens: int = 256, prompt_suffix: str = None) -> str:
         """Verify and critique reasoning for a question."""
-        prompt = (
-            f"Question: {question}\n"
-            f"Proposed Reasoning: {reasoning}\n"
-            "Review this reasoning for logical errors or calculation mistakes. "
-            "If it is correct, say 'The reasoning is correct.' "
-            "If there is an error, point it out."
-        )
+        if self.tau2_mode:
+            prompt = f"{question}\n\nPrior analysis:\n{reasoning}"
+        else:
+            prompt = (
+                f"Question: {question}\n"
+                f"Proposed Reasoning: {reasoning}\n"
+                "Review this reasoning for logical errors or calculation mistakes. "
+                "If it is correct, say 'The reasoning is correct.' "
+                "If there is an error, point it out."
+            )
         return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix, additional_tool_descriptions=self.additional_tool_descriptions)
 
     def answer_direct(self, question: str, tools: list = None, tokens: int = 128, prompt_suffix: str = None) -> str:
         """Generate a direct, concise answer."""
-        prompt = f"Question: {question}\nAnswer concisely."
+        prompt = question if self.tau2_mode else f"Question: {question}\nAnswer concisely."
         return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix, additional_tool_descriptions=self.additional_tool_descriptions)
 
     def answer_with_context(self, question: str, context: str, tools: list = None, tokens: int = 128, prompt_suffix: str = None) -> str:
         """Generate an answer based on provided context/reasoning."""
-        prompt = (
-            f"Question: {question}\n"
-            f"Context/Reasoning: {context}\n"
-            "Based on the above, provide the final answer."
-        )
+        if self.tau2_mode:
+            prompt = f"{question}\n\nContext:\n{context}"
+        else:
+            prompt = (
+                f"Question: {question}\n"
+                f"Context/Reasoning: {context}\n"
+                "Based on the above, provide the final answer."
+            )
         return self._generate(prompt, active_tools=tools, max_tokens=tokens, prompt_suffix=prompt_suffix, additional_tool_descriptions=self.additional_tool_descriptions)
 

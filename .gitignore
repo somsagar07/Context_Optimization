@@ -32,3 +32,6 @@ test/
 
 # Generated prompts from dspy and gepa
 gen_prompts/
+
+# GEPA baseline run artifacts (optimizer state + generated outputs)
+scripts/baselines/gepa/gepa_logs/

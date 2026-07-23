@@ -211,7 +211,12 @@ def parse_args():
                             "log file so new episodes APPEND. Combine with --pretrain-structure/--pretrain-prompt "
                             "to also restore the policy weights. Optimizer state is NOT restored "
                             "(PPO/GRPO are on-policy; momentum from the prior run is intentionally dropped).")
-    
+
+    parser.add_argument("--embedding-pool-size", type=int, default=0,
+                       help="Number of MetaCLIP model copies for parallel embedding. "
+                            "0 (default) = single shared model. "
+                            "Recommended: 2-4 for per-turn tau2 training with many workers.")
+
     return parser.parse_args()
 
 
@@ -263,7 +268,15 @@ def main():
             torch.cuda.empty_cache()
     
     print(f"  Active Atoms: {library.NUM_ATOMS}")
-    
+
+    # Optional embedding pool for parallel per-turn embedding computation.
+    if args.embedding_pool_size > 0:
+        from agents_system.embedding_pool import EmbeddingPool
+        from agents_system.worker import MetaCLIPEmbedder
+        pool = EmbeddingPool(pool_size=args.embedding_pool_size)
+        MetaCLIPEmbedder.set_pool(pool)
+        print(f"  Embedding pool: {args.embedding_pool_size} model copies")
+
     # Create trainer
     if args.algorithm == "ppo":
         trainer = PPOTrainer(cfg, use_action_masking=args.mask, use_api=args.api, api_model=args.api_model, hf_model=args.hf_model)

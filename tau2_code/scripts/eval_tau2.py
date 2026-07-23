@@ -121,9 +121,17 @@ class BaseAgent:
         self.cumulative_steps = 0
         self.cumulative_tool_calls = 0
 
+        # Enable tau2 mode so the worker uses prompt_suffix as the full system
+        # prompt instead of the generic "expert autonomous agent" framing.
+        if hasattr(worker, "tau2_mode"):
+            worker.tau2_mode = True
+
         tool_block = ""
         if hasattr(tool_registry, "get_descriptions_dict"):
-            tool_block = _build_tool_descriptions_block(tool_registry.get_descriptions_dict())
+            tool_block = _build_tool_descriptions_block(
+                tool_registry.get_descriptions_dict(),
+                tool_registry=tool_registry,
+            )
         self.system_prompt = "\n\n".join(s for s in (tool_block, _PER_TURN_SYSTEM_INSTRUCTION) if s)
 
     def respond(self, conversation_history: str) -> str:
@@ -433,6 +441,10 @@ def parse_args():
                    help="Sample policy actions instead of taking argmax (HRL eval).")
     p.add_argument("--temperature", type=float, default=1.0,
                    help="Policy softmax temperature (HRL eval, only with --stochastic).")
+    p.add_argument("--embedding-pool-size", type=int, default=0,
+                   help="Number of MetaCLIP model copies for parallel embedding. "
+                        "0 (default) = single shared model. "
+                        "Recommended: 2-4 for HRL eval with many workers.")
     return p.parse_args()
 
 
@@ -518,6 +530,14 @@ def main():
         except ValueError:
             raise SystemExit(f"--episodes must be 'all' or an integer, got {args.episodes!r}")
         task_ids = task_ids[:n]
+
+    # Optional embedding pool for parallel per-turn embedding computation.
+    if args.embedding_pool_size > 0:
+        from agents_system.embedding_pool import EmbeddingPool
+        from agents_system.worker import MetaCLIPEmbedder
+        pool = EmbeddingPool(pool_size=args.embedding_pool_size)
+        MetaCLIPEmbedder.set_pool(pool)
+        print(f"[eval] Embedding pool: {args.embedding_pool_size} model copies")
 
     # HRL setup: load policies + atoms once, then per-thread envs come up lazily.
     if args.agent_type == "hrl":

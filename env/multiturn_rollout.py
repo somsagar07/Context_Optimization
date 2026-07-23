@@ -185,6 +185,7 @@ def multiturn_rollout(
     last_terminal_reward = 0.0
     last_info: dict = {}
     tool_call_attempts = 0
+    cumulative_agent_tokens = 0
 
     # Imported here for atom-text resolution (matches PromptEnv._execute_workflow path)
     from prompts import library
@@ -310,6 +311,7 @@ def multiturn_rollout(
             )
             history = "\n".join(transcript_parts).strip()
             action_internal = agent_obj.respond(history)
+            cumulative_agent_tokens += getattr(agent_obj, "cumulative_tokens", 0)
 
             # Token budget guard
             if getattr(agent_obj, "cumulative_tokens", 0) > total_token_cap:
@@ -353,7 +355,7 @@ def multiturn_rollout(
         "steps": max(len(per_turn_rewards), 1),
         "tools_count": tool_call_attempts,
         "tools_attempted": tool_call_attempts,
-        "total_tokens": 0,  # ConfiguredAgent doesn't expose this directly here
+        "total_tokens": cumulative_agent_tokens,
         "valid_code_count": 0,
         "file_access_count": 0,
         "tau2_reward": last_terminal_reward,

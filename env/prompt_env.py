@@ -117,6 +117,8 @@ class PromptEnv(gym.Env):
         if ds_name.startswith("tau2_"):
             self._tau2_registry = self.tools  # Tau2ToolRegistry
             self._tau2_num_groups = self._tau2_registry.num_groups()
+            if hasattr(self.worker, "tau2_mode"):
+                self.worker.tau2_mode = True
         else:
             self._tau2_registry = None
             self._tau2_num_groups = 0
