@@ -11,6 +11,7 @@ This separation allows:
 - Structure policy to learn WHAT configuration to use
 - Prompt policy to learn HOW to prompt each agent
 """
+import os
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
@@ -291,6 +292,10 @@ class PromptEnv(gym.Env):
         return obs
     
     def step(self, action):
+        # Train-time prompt-dimension ablation: force DONE on every prompt slot
+        # so no learned atoms are ever appended (ARC_FREEZE_PROMPT=1). No-op otherwise.
+        if os.environ.get("ARC_FREEZE_PROMPT"):
+            action = 0
         """Execute prompt selection step."""
         action = int(action)
         reward = 0.0

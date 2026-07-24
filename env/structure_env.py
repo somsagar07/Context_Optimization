@@ -10,6 +10,8 @@ NOTE: In TRUE hierarchical setup, this env does NOT execute the LLM.
 It only picks the structure. The PromptEnv handles execution.
 Both policies learn from the final reward.
 """
+import os
+import json
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
@@ -192,6 +194,25 @@ class StructureEnv(gym.Env):
         agent1_budget_mask = np.ones(3, dtype=bool)
         agent2_budget_mask = np.ones(3, dtype=bool)
         answerer_budget_mask = np.ones(3, dtype=bool)
+
+        # Train-time leave-one-out ablation (rebuttal): ARC_TRAIN_FREEZE is a JSON
+        # dict, e.g. '{"workflow": 2, "tools": 3, "budget": 1}'. A named decision
+        # dimension is constrained to a single legal action so masked PPO trains
+        # with that dimension removed from the search space. Default: unset/no-op.
+        _freeze = os.environ.get("ARC_TRAIN_FREEZE")
+        if _freeze:
+            _freeze = json.loads(_freeze)
+            if "workflow" in _freeze:
+                workflow_mask[:] = False
+                workflow_mask[int(_freeze["workflow"])] = True
+            if "tools" in _freeze:
+                for _m in (agent1_tools_mask, agent2_tools_mask):
+                    _m[:] = False
+                    _m[int(_freeze["tools"])] = True
+            if "budget" in _freeze:
+                for _m in (agent1_budget_mask, agent2_budget_mask, answerer_budget_mask):
+                    _m[:] = False
+                    _m[int(_freeze["budget"])] = True
         
         # Workflow-dependent masking: Mask agent2 for workflows that don't use it
         # Workflows 0, 1, 5 don't use agent2 (verifier/workers/aspect2)

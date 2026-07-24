@@ -1,0 +1,13 @@
+The dataset provided from the 'gsm8k' (Grade School Mathematics) dataset consists of mathematical word problems that require a student to apply basic arithmetic and logical reasoning to arrive at the correct solution. Each problem involves multiple steps to derive the final answer, often necessitating the use of arithmetic operations such as addition, subtraction, multiplication, and division.
+
+The core of the reasoning pattern involved in solving these problems typically includes the identification of given quantities and relationships within the problem statement, followed by the application of arithmetic operations to compute these relationships to reach a final answer. For example, in Example 1, one must recognize that the number of clips sold in May is half of the April sales, then sum these quantities to determine the total sales across the two months.
+
+The key to distinguishing correct answers from incorrect ones lies in the accurate interpretation of the problem and the application of arithmetic correctly. Incorrect answers often stem from misinterpreting the problem or making computational errors. For instance, in Example 2, the crucial step is converting hourly earnings to per-minute earnings before calculating the total earnings for 50 minutes. Misinterpreting this step (e.g., directly multiplying hours with minutes without conversion) would lead to a wrong answer.
+
+Typical failure modes for language models on this task include misreading numbers (e.g., transposing digits) or misunderstanding the sequence of operations required to solve the problem (e.g., incorrectly identifying which operations to apply first). In Example 3, a failure might occur if the solver neglects to account for the additional money given by Betty's grandparents, leading to an incorrect total needed to buy the wallet.
+
+Expert solvers adeptly handle these problems by carefully parsing the information given, systematically listing the necessary steps, and performing the calculations accurately. They also validate their reasoning through intermediate steps, like checking that the intermediate values align with the problem's context. For instance, in Example 4, an expert solver would ensure that the calculations for the remaining pages and the half reading plan are correctly formulated.
+
+In terms of output format, the final answer must be clearly stated with all necessary intermediate steps and calculations shown, adhering to the format of the examples provided. For example, the output should explicitly show all calculations and the final answer in a concise manner.
+
+By focusing on these aspects, an agent can effectively solve problems from the 'gsm8k' dataset accurately and comprehensively.

@@ -34,7 +34,7 @@ except Exception:
     # Failed to load, continue anyway
     pass
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")
 
 # ---------------------------------------------------------------------------
 # Output hygiene: keep training output focused on training-loop info.

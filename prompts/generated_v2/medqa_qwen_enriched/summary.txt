@@ -1,0 +1,24 @@
+To analyze the 'medqa' dataset, we need to understand the structure and the task requirements. The dataset consists of medical questions, each with a set of options and a correct answer. Here’s a step-by-step breakdown of the analysis:
+
+1. **Reasoning Patterns Required**:
+   - **Medical Knowledge**: The correct answer is always one of the provided options, which means the solver must have a strong understanding of medical terminology and concepts. For instance, in Example 1, the correct answer is 'Nitrofurantoin', which is a specific antibiotic used to treat urinary tract infections.
+   - **Contextual Understanding**: The solver must be able to understand the context of the question, such as the patient's symptoms, medical history, and physical exam findings. This is crucial for selecting the correct treatment or diagnosis. For example, in Example 2, the correct answer is 'Placing the infant in a supine position on a firm mattress while sleeping', which is a precaution to prevent SIDS (Sudden Infant Death Syndrome).
+
+2. **Discriminating Features**:
+   - **Correct Answer vs. Distractors**: The correct answer is always a specific medical term or treatment that directly addresses the question. Distractors are plausible but incorrect options. For example, in Example 3, the correct answer is 'Abnormal migration of ventral pancreatic bud', which is a specific embryologic error, while the other options describe different medical conditions or anatomical anomalies.
+   - **Contextual Clues**: The context provided in the question often includes patient symptoms, physical exam findings, and medical history, which help in identifying the correct answer. For instance, in Example 4, the patient's recent surgery and the presence of fibrous connective tissue around the pulmonary artery suggest thromboembolism as the most likely pathogenesis.
+
+3. **Typical Failure Modes**:
+   - **Lack of Medical Knowledge**: An LLM might fail if it lacks specific medical knowledge. For example, it might not recognize 'Nitrofurantoin' as a correct treatment for urinary tract infections.
+   - **Misinterpretation of Context**: The LLM might misinterpret the context, leading to incorrect answers. For instance, in Example 2, it might confuse the correct answer with other plausible but incorrect options like 'Keeping the infant covered and maintaining a high room temperature'.
+   - **Overgeneralization**: The LLM might overgeneralize from one example to another, leading to incorrect answers. For example, it might assume that all urinary tract infections are treated with the same antibiotic without considering the specific patient's condition.
+
+4. **Expert vs. Naive Solver**:
+   - **Expert Solver**: An expert solver would have a deep understanding of medical terminology, pathophysiology, and clinical reasoning. They would be able to quickly identify the correct answer based on the context and medical knowledge.
+   - **Naive Solver**: A naive solver might rely on surface-level similarities between options or might not fully understand the medical context, leading to incorrect answers. They might also struggle with complex medical terms and concepts.
+
+5. **Format and Output Constraints**:
+   - The final answer must be in the format: `Final Answer: <your_answer>`. For example, from Example 1, the answer would be `Final Answer: Nitrofurantoin`.
+   - The answer should be concise and directly address the question without additional commentary.
+
+By following these steps, we can systematically analyze the 'medqa' dataset and understand the requirements and challenges of solving these medical questions.

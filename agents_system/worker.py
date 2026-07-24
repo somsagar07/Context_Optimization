@@ -625,7 +625,12 @@ class OpenRouterWorker:
                 "or pass api_key parameter."
             )
         
-        self.api_url = "https://openrouter.ai/api/v1/chat/completions"
+        # Overridable so local OpenAI-compatible servers (e.g. vLLM) can stand in
+        # for OpenRouter — used for local-backbone experiments (Qwen3 on-GPU).
+        self.api_url = os.getenv(
+            "OPENROUTER_BASE_URL",
+            "https://openrouter.ai/api/v1/chat/completions",
+        )
         
         # Initialize MetaCLIP-H14 embedder for embeddings (native 1024D, no projection)
         _quiet = bool(os.environ.get("CO_QUIET"))

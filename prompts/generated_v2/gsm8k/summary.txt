@@ -1,0 +1,31 @@
+# Analysis of the GSM8K Dataset
+
+## (1) Required Reasoning Patterns
+
+GSM8K problems are **grade-school math word problems** that require **multi-step arithmetic reasoning** (typically 2–8 steps). The reasoning patterns involve:
+- **Parsing natural language into arithmetic operations** (e.g., "half as many" → divide by 2; "twice as much" → multiply by 2).
+- **Sequential dependency**: intermediate results feed into later steps (e.g., in Example 3, we compute Betty's savings, then grandparents' gift, then subtract all from $100).
+- **Unit conversions and rate calculations** (Example 2: $12/hour → $0.20/minute → multiply by 50 minutes).
+- **Aggregation over time or entities** (Example 5: pages per friend × friends × times per week × weeks per year).
+- **Tracking remaining quantities** after subtractions (Example 4: 120 − 12 − 24 = 84 remaining).
+
+## (2) Discriminating Features of Correct Answers
+
+Correct answers require **every intermediate arithmetic step to be exact**, and each step must correctly map a linguistic cue to an operation. Distractors often arise from: mis-identifying the base quantity ("half of X" — half of what?), off-by-one errors, forgetting a term in a sum (e.g., forgetting to include the parents' $15 in Example 3), or applying an operation to the wrong quantity (e.g., computing "twice yesterday" as 2×today rather than 2×yesterday). The final numerical answer must exactly match the target after `####`.
+
+## (3) Typical LLM Failure Modes
+
+- **Arithmetic slips** on multi-digit multiplication/division (e.g., 12 × 52 = 624), especially without step-by-step scratchpad computation.
+- **Misinterpreting comparative phrases** like "twice as much as her parents" — anchoring to the wrong reference quantity.
+- **Skipping a subtraction term**, particularly when multiple contributions must all be subtracted from a total.
+- **Confusing rates and totals** (e.g., per-week vs. per-year, per-hour vs. per-minute).
+- **Premature rounding** or losing precision in fractional intermediate values (e.g., $0.20/min).
+- **Reading comprehension errors**: treating "3-page letter to 2 friends twice a week" as 3×2 instead of 3×2×2 per week.
+
+## (4) Expert vs. Naive Solver
+
+An **expert solver** decomposes the problem into named intermediate variables, writes each equation explicitly, verifies each arithmetic step (ideally with a calculator or Python), and re-reads the question to confirm the final quantity requested (e.g., "how much *more* does she need" — not the total). An expert also **sanity-checks units** (dollars, pages, clips, minutes) and confirms every phrase in the problem was used. A **naive solver** rushes to a single expression, conflates similar quantities, and often answers a related but wrong question (e.g., total pages read vs. pages remaining).
+
+## (5) Format and Output Constraints
+
+The canonical GSM8K target format ends with `#### <number>`, where the number is a **plain integer or decimal with no units, no commas, no currency symbols**. Intermediate calculator annotations like `<<12*2=24>>` appear in the reasoning trace but the final answer is just the number after `####`. For this task's "Final Answer:" convention, the answer should be the bare number (e.g., `72`, `10`, `5`, `42`, `624`), matching the value after `####` exactly. No explanatory text should follow the number.
