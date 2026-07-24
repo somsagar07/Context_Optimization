@@ -1,0 +1,19 @@
+llm:
+  api_type: "openai"
+  base_url: "https://openrouter.ai/api/v1"
+  api_key: "YOUR_OPENROUTER_KEY"
+  model: "qwen/qwen-2.5-7b-instruct"
+  temperature: 0
+models:
+  "qwen/qwen-2.5-7b-instruct":
+    api_type: "openai"
+    base_url: "https://openrouter.ai/api/v1"
+    api_key: "YOUR_OPENROUTER_KEY"
+    temperature: 0
+  "openai/gpt-4o-mini":
+    api_type: "openai"
+    base_url: "https://openrouter.ai/api/v1"
+    api_key: "YOUR_OPENROUTER_KEY"
+    temperature: 0
+available_llms:
+  - "qwen/qwen-2.5-7b-instruct"

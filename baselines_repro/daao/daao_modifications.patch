@@ -1,0 +1,463 @@
+diff --git a/daao/ext/maas/benchmark/experiment_configs.py b/daao/ext/maas/benchmark/experiment_configs.py
+index 34e9a88..3821dfd 100644
+--- a/daao/ext/maas/benchmark/experiment_configs.py
++++ b/daao/ext/maas/benchmark/experiment_configs.py
+@@ -1,25 +1,45 @@
+-from typing import Dict, List
+-
+-class ExperimentConfig:
+-    def __init__(self, dataset: str, question_type: str, operators: List[str]):
+-        self.dataset = dataset
+-        self.question_type = question_type
+-        self.operators = operators
+-
+-EXPERIMENT_CONFIGS: Dict[str, ExperimentConfig] = {
+-    "MATH": ExperimentConfig(
+-        dataset="MATH",
+-        question_type="math",
+-        operators=["Generate", "GenerateCoT", "MultiGenerateCoT", "ScEnsemble", "Programmer", "SelfRefine", "EarlyStop"],
+-    ),
+-    "GSM8K": ExperimentConfig(
+-        dataset="GSM8K",
+-        question_type="math",
+-        operators=["Generate", "GenerateCoT", "MultiGenerateCoT", "ScEnsemble", "Programmer", "SelfRefine", "EarlyStop"],
+-    ),
+-    "HumanEval": ExperimentConfig(
+-        dataset="HumanEval",
+-        question_type="code",
+-        operators=["Generate", "GenerateCoT", "MultiGenerateCoT", "ScEnsemble", "Test", "SelfRefine", "EarlyStop"],
+-    ),
+-}
++from typing import Dict, List
++
++class ExperimentConfig:
++    def __init__(self, dataset: str, question_type: str, operators: List[str]):
++        self.dataset = dataset
++        self.question_type = question_type
++        self.operators = operators
++
++EXPERIMENT_CONFIGS: Dict[str, ExperimentConfig] = {
++    "MATH": ExperimentConfig(
++        dataset="MATH",
++        question_type="math",
++        operators=["Generate", "GenerateCoT", "MultiGenerateCoT", "ScEnsemble", "Programmer", "SelfRefine", "EarlyStop"],
++    ),
++    "GSM8K": ExperimentConfig(
++        dataset="GSM8K",
++        question_type="math",
++        operators=["Generate", "GenerateCoT", "MultiGenerateCoT", "ScEnsemble", "Programmer", "SelfRefine", "EarlyStop"],
++    ),
++    "HotpotQA": ExperimentConfig(
++        dataset="HotpotQA",
++        question_type="qa",
++        operators=["Generate", "GenerateCoT", "MultiGenerateCoT", "ScEnsemble", "SelfRefine"],
++    ),
++    "DROP": ExperimentConfig(
++        dataset="DROP",
++        question_type="qa",
++        operators=["Generate", "GenerateCoT", "MultiGenerateCoT", "ScEnsemble", "SelfRefine"],
++    ),
++    "GAIA": ExperimentConfig(
++        dataset="GAIA",
++        question_type="qa",
++        operators=["Generate", "GenerateCoT", "MultiGenerateCoT", "ScEnsemble", "SelfRefine"],
++    ),
++    "MedQA": ExperimentConfig(
++        dataset="MedQA",
++        question_type="qa",
++        operators=["Generate", "GenerateCoT", "MultiGenerateCoT", "ScEnsemble", "SelfRefine"],
++    ),
++    "HumanEval": ExperimentConfig(
++        dataset="HumanEval",
++        question_type="code",
++        operators=["Generate", "GenerateCoT", "MultiGenerateCoT", "ScEnsemble", "Test", "SelfRefine", "EarlyStop"],
++    ),
++}
+diff --git a/daao/ext/maas/scripts/evaluator.py b/daao/ext/maas/scripts/evaluator.py
+index 13d17a9..05a05b1 100644
+--- a/daao/ext/maas/scripts/evaluator.py
++++ b/daao/ext/maas/scripts/evaluator.py
+@@ -3,8 +3,12 @@ from daao.ext.maas.benchmark.benchmark import BaseBenchmark
+ from daao.ext.maas.benchmark.gsm8k import GSM8KBenchmark
+ from daao.ext.maas.benchmark.humaneval import HumanEvalBenchmark
+ from daao.ext.maas.benchmark.math import MATHBenchmark
++from daao.ext.maas.benchmark.hotpotqa import HotpotQABenchmark
++from daao.ext.maas.benchmark.drop import DROPBenchmark
++from daao.ext.maas.benchmark.gaia import GAIABenchmark
++from daao.ext.maas.benchmark.medqa import MedQABenchmark
+ 
+-DatasetType = Literal["HumanEval", "GSM8K", "MATH"]
++DatasetType = Literal["HumanEval", "GSM8K", "MATH", "HotpotQA", "DROP", "GAIA", "MedQA"]
+ 
+ 
+ class Evaluator:
+@@ -15,6 +19,10 @@ class Evaluator:
+             "GSM8K": GSM8KBenchmark,
+             "MATH": MATHBenchmark,
+             "HumanEval": HumanEvalBenchmark,
++            "HotpotQA": HotpotQABenchmark,
++            "DROP": DROPBenchmark,
++            "GAIA": GAIABenchmark,
++            "MedQA": MedQABenchmark,
+         }
+ 
+     async def graph_evaluate(
+diff --git a/daao/ext/maas/scripts/optimized/GSM8K/test/graph.py b/daao/ext/maas/scripts/optimized/GSM8K/test/graph.py
+index d2c67d5..bd3e0c0 100644
+--- a/daao/ext/maas/scripts/optimized/GSM8K/test/graph.py
++++ b/daao/ext/maas/scripts/optimized/GSM8K/test/graph.py
+@@ -3,8 +3,10 @@ import daao.ext.maas.scripts.optimized.GSM8K.test.template.prompt as prompt_cust
+ import daao.ext.maas.scripts.optimized.GSM8K.test.template.operator as operator
+ from daao.ext.maas.scripts.optimized.GSM8K.test.template.operator_registry import operator_mapping, operator_names
+ from daao.provider.llm_provider_registry import create_llm_instance
+-from daao.utils.cost_manager import CostManager
++from daao.utils.cost_manager import CostManager, TokenCostManager
+ from daao.logs import logger
++from daao.configs.models_config import ModelsConfig
++from daao.configs.llm_config import LLMType
+ 
+ class Workflow:
+     def __init__(
+@@ -14,6 +16,7 @@ class Workflow:
+         dataset,
+         controller: torch.nn.Module,
+         operator_embeddings,
++        llm_embeddings
+     ) -> None:
+         self.name = name
+         self.dataset = dataset
+@@ -21,27 +24,79 @@ class Workflow:
+         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+         self.llm.cost_manager = CostManager()
+         self.custom = operator.Generate(self.llm)
++        self.models_config = ModelsConfig.default()
++        self.llm_names = self.models_config.get_available_llms()
++        self.llm_embeddings = llm_embeddings.to(self.device)
+         self.programmer = operator.Programmer(self.llm)
+         self.sc_ensemble = operator.ScEnsemble(self.llm)
+ 
+         self.controller = controller.to(self.device)
+         self.operator_embeddings = operator_embeddings.to(self.device)
+-        self.selection_operator_instances = {
+-            operator_name: operator_mapping[operator_name](self.llm)
+-            for operator_name in operator_names
+-        }
++        # self.selection_operator_instances = {
++        #     operator_name: operator_mapping[operator_name](self.llm)
++        #     for operator_name in operator_names
++        # }
+         self.selection_operator_names = operator_names
+-        
++
++    def llm_ins(self, llm_name):
++        models_config = ModelsConfig.default()
++        exec_llm_config = models_config.get(llm_name)
++        return create_llm_instance(exec_llm_config)
++    
+     async def __call__(self, problem: str):
+-        log_probs_layers, selected_names_layers = self.controller.forward(problem, self.operator_embeddings, self.selection_operator_names)
+-        
+-        current_solution = "" 
++        log_probs_layers, selected_names_layers, selected_llms_layers, z_difficulty, difficulty_scalar, mu, logvar = self.controller.forward(
++            problem,
++            self.operator_embeddings,
++            self.llm_embeddings,
++            self.selection_operator_names
++        )
++        print("===================llm")
++        print(selected_llms_layers)
++        print("==================operator")
++        print(selected_names_layers)
++        vae = {
++            "z_difficulty": z_difficulty,
++            "difficulty_scalar": difficulty_scalar,
++            "mu": mu,
++            "logvar": logvar
++        }
++        # 实例化所有llm
++        primary_llm_name = self.llm_names[0]
++        llm_instance = {primary_llm_name: self.llm}
++        for llm_name in self.llm_names:
++            if llm_name == primary_llm_name:
++                continue
++            llm = self.llm_ins(llm_name)
++            llm_config = self.models_config.get(llm_name)
++            if llm_config and llm_config.api_type in (LLMType.OPENAI, LLMType.AZURE):
++                llm.cost_manager = CostManager()
++            else:
++                llm.cost_manager = TokenCostManager()
++            llm_instance[llm_name] = llm
++        print("==========================llm_instance")
++        print(llm_instance)
++
++
++        current_solution = ""
+         solutions = []
+-        sum_log_prob = 0.0
++        # Keep log-prob as a tensor: .item() detaches the policy gradient and
++        # breaks torch.stack in benchmark.py's loss aggregation.
++        sum_log_prob = torch.tensor(0.0, device=self.device)
++        total_cost = 0
++
++        for i, (ops, llms) in enumerate(zip(selected_names_layers, selected_llms_layers)):
++            assert len(ops) == len(llms), f"第 {i} 层 selected_names 和 selected_llms 数量不一致！"
+ 
+         for layer_idx, selected_names in enumerate(selected_names_layers):
+-            for op_name in selected_names:
+-                selected_operator = self.selection_operator_instances[op_name]
++            for op_idx, op_name in enumerate(selected_names):
++                
++                try:
++                    llm_name = self.llm_names[selected_llms_layers[layer_idx][op_idx]]
++                except IndexError:
++                    print(f"[警告] 索引越界: selected_llms_layers[{layer_idx}][{op_idx}]")
++                    llm_name = self.llm_names[0]
++
++                selected_operator = operator_mapping[op_name](llm_instance[llm_name])
+ 
+                 if op_name in ["Generate", "GenerateCoT"]:
+                     result = await selected_operator(input=problem, instruction=prompt_custom.MATH_SOLVE_PROMPT)
+@@ -76,7 +131,7 @@ class Workflow:
+ 
+                 current_solution = new_solution
+ 
+-            sum_log_prob += log_probs_layers[layer_idx].item()
++            sum_log_prob = sum_log_prob + log_probs_layers[layer_idx]
+ 
+         if len(solutions) > 1:
+             final_solution = await self.sc_ensemble(solutions=solutions, problem=problem)
+@@ -85,8 +140,16 @@ class Workflow:
+             final_solution = current_solution
+         
+         verification = await self.programmer(problem=problem, analysis=final_solution)
++
++        for key, value in llm_instance.items():
++            print("============================llm cost")
++            print(value.cost_manager.total_cost)
++            total_cost += value.cost_manager.total_cost
+         
+-        if verification['output']:
+-            return verification['output'], self.llm.cost_manager.total_cost, sum_log_prob
++        print("能成功出去")
++        print(total_cost)
++        print(vae)
++        if verification['output'] and verification['output'] != "No code generated":
++            return verification['output'], total_cost, sum_log_prob, vae
+         else:
+-            return final_solution, self.llm.cost_manager.total_cost, sum_log_prob
++            return final_solution, total_cost, sum_log_prob, vae
+diff --git a/daao/ext/maas/scripts/optimized/GSM8K/test/template/operator_registry.py b/daao/ext/maas/scripts/optimized/GSM8K/test/template/operator_registry.py
+index b5e3019..753fe4b 100644
+--- a/daao/ext/maas/scripts/optimized/GSM8K/test/template/operator_registry.py
++++ b/daao/ext/maas/scripts/optimized/GSM8K/test/template/operator_registry.py
+@@ -1,4 +1,4 @@
+-from daao.ext.maas.scripts.optimized.GSM8K.train.template.operator import (
++from daao.ext.maas.scripts.optimized.GSM8K.test.template.operator import (
+     Generate,
+     GenerateCoT,
+     MultiGenerateCoT,
+diff --git a/daao/ext/maas/scripts/optimized/GSM8K/train/graph.py b/daao/ext/maas/scripts/optimized/GSM8K/train/graph.py
+index eefe692..8b4928d 100644
+--- a/daao/ext/maas/scripts/optimized/GSM8K/train/graph.py
++++ b/daao/ext/maas/scripts/optimized/GSM8K/train/graph.py
+@@ -77,9 +77,11 @@ class Workflow:
+         print(llm_instance)
+ 
+ 
+-        current_solution = "" 
++        current_solution = ""
+         solutions = []
+-        sum_log_prob = 0.0
++        # Keep log-prob as a tensor: .item() detaches the policy gradient and
++        # breaks torch.stack in benchmark.py's loss aggregation.
++        sum_log_prob = torch.tensor(0.0, device=self.device)
+         total_cost = 0
+ 
+         for i, (ops, llms) in enumerate(zip(selected_names_layers, selected_llms_layers)):
+@@ -129,7 +131,7 @@ class Workflow:
+ 
+                 current_solution = new_solution
+ 
+-            sum_log_prob += log_probs_layers[layer_idx].item()
++            sum_log_prob = sum_log_prob + log_probs_layers[layer_idx]
+ 
+         if len(solutions) > 1:
+             final_solution = await self.sc_ensemble(solutions=solutions, problem=problem)
+diff --git a/daao/ext/maas/scripts/optimized/GSM8K/train/results.json b/daao/ext/maas/scripts/optimized/GSM8K/train/results.json
+index d2e0381..f34428f 100644
+--- a/daao/ext/maas/scripts/optimized/GSM8K/train/results.json
++++ b/daao/ext/maas/scripts/optimized/GSM8K/train/results.json
+@@ -62,5 +62,13 @@
+         "total_cost": null,
+         "token": null,
+         "time": "2025-07-15T17:57:14.457075"
++    },
++    {
++        "round": 1,
++        "score": 0.9090909090909091,
++        "avg_cost": null,
++        "total_cost": null,
++        "token": null,
++        "time": "2026-07-23T10:30:38.482033"
+     }
+ ]
+\ No newline at end of file
+diff --git a/daao/ext/maas/scripts/optimized/GSM8K/train/round_1/log.json b/daao/ext/maas/scripts/optimized/GSM8K/train/round_1/log.json
+index f3973b6..873b115 100644
+--- a/daao/ext/maas/scripts/optimized/GSM8K/train/round_1/log.json
++++ b/daao/ext/maas/scripts/optimized/GSM8K/train/round_1/log.json
+@@ -12,5 +12,117 @@
+         "model_output": "47.25",
+         "extracted_output": 47.25,
+         "extract_answer_code": "None"
++    },
++    {
++        "question": "Johnny is a dog walker. He can walk 3 dogs at once. He gets paid $15 for a 30-minute walk and $20 for a 60-minute walk. Johnny works for 4 hours per day. If he always walks the maximum number of dogs possible and 6 dogs have 60-minute walks per day, how much money does he make in a week where he works 5 days?",
++        "right_answer": 1500.0,
++        "model_output": "650",
++        "extracted_output": 650.0,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "A wild tiger escapes the zoo.  He escapes at 1 AM and zookeepers do not notice he is missing until 4 AM.  He runs at a speed of 25 mph.  It takes 2 more hours to find him but after 4 hours of running, the tiger slows his speed to 10 mph.  He then gets chased for half an hour going 50 mph.  How far away from the zoo was he caught?",
++        "right_answer": 135.0,
++        "model_output": "145.0",
++        "extracted_output": 145.0,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "Hayden works for a limousine company as a driver. He gets reimbursed for any gas he puts in the limo, his hourly wage is $15, and he gets paid an additional $5 for every ride he gives. A positive review from a rider in his limo also gets him a $20 bonus. Today, he gave rides to three groups, drove for eight hours, and had to put 17 gallons of gas at $3 per gallon in the limo to refill the tank. He got two good reviews. How many dollars is he owed for his work today?",
++        "right_answer": 226.0,
++        "model_output": "124",
++        "extracted_output": 124.0,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "When doing her exercises, Mairead runs for 40 miles, walks for 3/5 times as many miles as she ran, and walks for five times the number of miles she jogged. Calculate the total distance Mairead has covered while doing her exercises.",
++        "right_answer": 184.0,
++        "model_output": "68.8",
++        "extracted_output": 68.8,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "Scott runs 3 miles every Monday through Wednesday. Then he runs twice as far he ran on Monday every Thursday and Friday. How many miles will he run in a month with 4 weeks?",
++        "right_answer": 84.0,
++        "model_output": "60",
++        "extracted_output": 60.0,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "A charity organization's goal is to distribute 400 boxes of food to a community that was recently destroyed by a flood. Each box contains $80 worth of food and $165 worth of additional supplies such as toiletries and fresh linens. Then, an anonymous donor gives the organization 4 times the amount of money they had already spent, allowing them to pack many more boxes. How many boxes do they pack in total?",
++        "right_answer": 2000.0,
++        "model_output": "2400",
++        "extracted_output": 2400.0,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "Kiki made 10 cucumber sandwiches and 8 egg sandwiches for the tea party.  Each cucumber sandwich was cut into 4 triangles.  Each egg sandwich was cut into 2 rectangles.  If her guests ate 28 triangles and 12 rectangles, how many slices of bread did they eat?",
++        "right_answer": 26.0,
++        "model_output": "104",
++        "extracted_output": 104.0,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "A local farmer is paying 4 kids to help plant rows of corn. Every row of corn contains 70 ears. A bag of corn seeds contains 48 seeds and you need 2 seeds per ear of corn. He pays the kids $1.5 per row. Afterward, the kids are so hungry that they end up spending half their money on dinner. The dinner cost $36 per kid. How many bags of corn seeds did each kid use?",
++        "right_answer": 140.0,
++        "model_output": "70",
++        "extracted_output": 70.0,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "Mikail's birthday is tomorrow. He will be 3 times older than he was when he was three. On his birthday, his parents give him $5 for every year old he is. How much money will they give him?",
++        "right_answer": 45.0,
++        "model_output": "22.5",
++        "extracted_output": 22.5,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "James takes 5 oranges and breaks each orange into 8 pieces.  He splits the pieces between 4 people.  If an orange has 80 calories how many calories does each person get?",
++        "right_answer": 100.0,
++        "model_output": "800.0",
++        "extracted_output": 800.0,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "A 26-mile circular marathon has four checkpoints inside it. The first is one mile from the start line, and the last checkpoint is one mile from the finish line. The checkpoints have equal spacing between them. How many miles apart are each of the consecutive checkpoints between the start-finish line?",
++        "right_answer": 6.0,
++        "model_output": "8.0",
++        "extracted_output": 8.0,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "Donna worked 2 hours every morning walking dogs in her neighborhood for $10.00 an hour.  5 days a week, after school, she worked at a card shop for 2 hours and made $12.50 an hour.  On the weekends, she usually made $10.00 an hour babysitting and was guaranteed 4 hours every Saturday from her neighbor.  How much money did she make over 7 days?",
++        "right_answer": 305.0,
++        "model_output": "265.0",
++        "extracted_output": 265.0,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "Ned is an explosives specialist racing to deactivate a time bomb on the top floor of a building. The building has twenty flights of stairs to the top floor, and Ned can run up one flight of stairs in eleven seconds. The time bomb has 72 seconds left on the timer, and Ned has spent 165 seconds running up the stairs. How many seconds will Ned have to diffuse the bomb when he reaches it?",
++        "right_answer": 17.0,
++        "model_output": "0",
++        "extracted_output": 0.0,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "Five coworkers were talking during the lunch break. Roger, the oldest one, said that he has the same amount of experience in years as all four of the others combined and that his retirement should come when he accumulates 50 years of experience. Peter said that when he came to the company his daughter was 7 years old, and now she is 19 years old. Tom then said he has twice as many years of experience as Robert. Robert said that he has 4 years of experience less than Peter but 2 more years of experience than Mike. How many more years does Roger have to work before he retires?",
++        "right_answer": 8.0,
++        "model_output": "Execution error: The combined experience of the other four coworkers does not match Roger's experience.\nTraceback (most recent call last):\n  File \"/data/ssagar6/NeurIPS_26/baselines/DAAO/daao/ext/maas/scripts/optimized/GSM8K/train/template/operator.py\", line 99, in run_code\n    result = global_namespace['solve']()\n  File \"<string>\", line 15, in solve\nAssertionError: The combined experience of the other four coworkers does not match Roger's experience.\n",
++        "extracted_output": 15.0,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "Lee is saving up for a new pair of sneakers which cost $90. He already has $15 saved. He plans to sell his old action figures to make the rest. If he sells 10 action figures and still has $25 left after buying the sneakers how much did he charge per action figure?",
++        "right_answer": 10.0,
++        "model_output": "5.0",
++        "extracted_output": 5.0,
++        "extract_answer_code": "None"
++    },
++    {
++        "question": "A club with 30 members ordered fruit juices. Two-fifths of them ordered lemon juice. One-third of the remaining members ordered mango juice, and the rest ordered orange juice. How many members ordered orange juice?",
++        "right_answer": 6.0,
++        "model_output": "12",
++        "extracted_output": 12.0,
++        "extract_answer_code": "None"
+     }
+ ]
+\ No newline at end of file
+diff --git a/daao/tools/schemas/GPTvGenerator.yml b/daao/tools/schemas/GPTvGenerator.yml
+index f850393..f5e80ad 100644
+--- a/daao/tools/schemas/GPTvGenerator.yml
++++ b/daao/tools/schemas/GPTvGenerator.yml
+@@ -18,13 +18,9 @@ methods:
+       Generated webpages content.'
+   save_webpages:
+     type: function
+-    description: 'staticmethod(function) -> method Convert a function to be a static
+-      method. A static method does not receive an implicit first argument. To declare
+-      a static method, use this idiom: class C: @staticmethod def f(arg1, arg2, ...):
+-      ... It can be called either on the class (e.g. C.f()) or on an instance (e.g.
+-      C().f()). Both the class and the instance are ignored, and neither is passed
+-      implicitly as the first argument to the method. Static methods in Python are
+-      similar to those found in Java or C++. For a more advanced concept, see the
+-      classmethod builtin.'
++    description: 'Save webpages including all code (HTML, CSS, and JavaScript) at
++      once. '
+     signature: '(webpages: str, save_folder_name: str = ''example'') -> pathlib.Path'
+-    parameters: ''
++    parameters: 'Args: webpages (str): The generated webpages content. save_folder_name
++      (str, optional): The name of the folder to save the webpages. Defaults to ''example''.
++      Returns: Path: The path of the saved webpages.'
+diff --git a/requirements.txt b/requirements.txt
+index 05345bb..283334b 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -277,7 +277,7 @@ trove-classifiers==2025.3.19.19
+ twine==5.0.0
+ typer==0.9.0
+ typing-inspect==0.8.0
+-typing_extensions==4.9.0
++typing_extensions==4.12.2
+ tzdata==2025.2
+ tzlocal==5.3.1
+ uritemplate==4.1.1

@@ -1,0 +1,11 @@
+models:
+  "qwen/qwen-2.5-7b-instruct":
+    api_type: "openai"
+    base_url: "https://openrouter.ai/api/v1"
+    api_key: "YOUR_OPENROUTER_KEY"
+    temperature: 0
+  "anthropic/claude-sonnet-5":
+    api_type: "openai"
+    base_url: "https://openrouter.ai/api/v1"
+    api_key: "YOUR_OPENROUTER_KEY"
+    temperature: 0
